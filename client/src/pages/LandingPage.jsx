@@ -36,7 +36,7 @@ const LandingPage = () => {
             {/* --- HEADER / PARTNER GATE --- */}
             <header className="relative z-50 px-6 pt-14 pb-6 md:pt-6 flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <span className="font-black tracking-tighter text-3xl italic uppercase text-[var(--text-primary)]">Green</span>
+                    <span className="font-black tracking-tighter text-3xl italic uppercase text-[var(--text-primary)]">Grien</span>
                 </div>
                 
                 <div className="flex items-center gap-3">
@@ -58,8 +58,8 @@ const LandingPage = () => {
                     transition={{ duration: 0.8, ease: "easeOut" }}
                     className="max-w-2xl translate-y-[10vh]"
                 >
-                    <p className="text-xl text-[var(--text-secondary)] font-black max-w-2xl mx-auto uppercase tracking-widest leading-relaxed mb-12">
-                        The Future of Urban Mobility is Green. Join the Elite Network of Drivers and Passengers.
+                    <p className="text-xl md:text-2xl text-[var(--text-secondary)] font-black max-w-2xl mx-auto uppercase tracking-widest leading-relaxed mb-12">
+                        NICHT SUCHEN – GRIENEN. DEINE PLATTFORM FÜR ALLES.
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">

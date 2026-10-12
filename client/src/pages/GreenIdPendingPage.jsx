@@ -86,7 +86,7 @@ const GreenIdPendingPage = () => {
                         Registration <span className="text-brand">Complete</span>
                     </h1>
                     <p className="text-[var(--text-muted)] font-bold uppercase tracking-widest text-[11px] md:text-sm lg:text-base">
-                        Welcome to the Green Network, {userName}
+                        Welcome to the Grien Network, {userName}
                     </p>
                     <p className="text-[10px] md:text-xs lg:text-sm font-black text-gray-600 uppercase tracking-widest mt-1">
                         {userRole}
@@ -105,7 +105,7 @@ const GreenIdPendingPage = () => {
 
                     <div className="flex items-center gap-3 mb-5">
                         <Sparkles size={14} className="text-brand" />
-                        <p className="text-[9px] md:text-[11px] lg:text-xs font-black text-brand uppercase tracking-[0.25em]">Your Unique Green ID</p>
+                        <p className="text-[9px] md:text-[11px] lg:text-xs font-black text-brand uppercase tracking-[0.25em]">Your Unique Grien ID</p>
                     </div>
 
                     <div className="flex items-center justify-between gap-4">
@@ -144,7 +144,7 @@ const GreenIdPendingPage = () => {
                         <div>
                             <p className="text-[11px] md:text-sm lg:text-base font-black text-white uppercase tracking-widest mb-1">Waiting for Manager Onboarding</p>
                             <p className="text-[10px] md:text-xs lg:text-sm text-[var(--text-muted)] font-medium leading-relaxed">
-                                Your account is registered but not yet active. Your Manager must enter your Green ID in their dashboard to link you to the business and activate your access.
+                                Your account is registered but not yet active. Your Manager must enter your Grien ID in their dashboard to link you to the business and activate your access.
                             </p>
                         </div>
                     </div>
@@ -152,8 +152,8 @@ const GreenIdPendingPage = () => {
                     {/* Steps */}
                     <div className="space-y-3 pl-2">
                         {[
-                            { step: '01', label: 'Share your Green ID with your Manager', done: true },
-                            { step: '02', label: 'Manager searches your Green ID in their dashboard', done: false },
+                            { step: '01', label: 'Share your Grien ID with your Manager', done: true },
+                            { step: '02', label: 'Manager searches your Grien ID in their dashboard', done: false },
                             { step: '03', label: 'Manager activates your account + sets permissions', done: false },
                             { step: '04', label: 'You receive access and can log in to your dashboard', done: false },
                         ].map(({ step, label, done }) => (

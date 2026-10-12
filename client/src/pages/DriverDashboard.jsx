@@ -165,6 +165,29 @@ const MapRecenter = ({ pos }) => {
     return null;
 };
 
+// Distance calculation helper in meters using Haversine formula
+const calculateDistanceInMeters = (coord1, coord2) => {
+    if (!coord1 || !coord2) return 999999;
+    const lat1 = coord1.lat !== undefined ? coord1.lat : coord1.latitude;
+    const lng1 = coord1.lng !== undefined ? coord1.lng : coord1.longitude;
+    const lat2 = coord2.lat !== undefined ? coord2.lat : coord2.latitude;
+    const lng2 = coord2.lng !== undefined ? coord2.lng : coord2.longitude;
+    if (lat1 === undefined || lng1 === undefined || lat2 === undefined || lng2 === undefined) return 999999;
+
+    const R = 6371e3; // Earth radius in meters
+    const phi1 = (lat1 * Math.PI) / 180;
+    const phi2 = (lat2 * Math.PI) / 180;
+    const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+    const deltaLambda = ((lng2 - lng1) * Math.PI) / 180;
+
+    const a =
+        Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+        Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return Math.round(R * c);
+};
+
 const DriverDashboard = () => {
     const { user, logout } = useAuth();
     const { socket } = useSocket();
@@ -348,7 +371,7 @@ const DriverDashboard = () => {
             try {
                 const waypoints = [
                     `${currentPos.lng},${currentPos.lat}`,
-                    ...currentSequence.map(s => `${s.coord.lng},${s.coord.lat}`)
+                    ...currentSequence.filter(s => s && s.coord && s.coord.lat !== undefined && s.coord.lng !== undefined).map(s => `${s.coord.lng},${s.coord.lat}`)
                 ].join(';');
 
                 const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${waypoints}?geometries=geojson`);
@@ -897,18 +920,19 @@ const DriverDashboard = () => {
         if (!isOnline || rideStatus === 'none' || currentSequence.length === 0) return;
         
         const interval = setInterval(() => {
-            const target = currentSequence[0].coord;
+            const target = currentSequence[0]?.coord;
+            if (!target || target.lat === undefined || target.lng === undefined) return;
             setCurrentPos(prev => {
                 const dLat = target.lat - prev.lat;
                 const dLng = target.lng - prev.lng;
                 const distance = Math.sqrt(dLat * dLat + dLng * dLng);
                 
-                if (distance < 0.0005) return prev; // Already arrived
+                if (distance < 0.0001) return prev; // Closer than ~10 meters
 
-                // Move 10% closer to target each tick for smooth visual progression
+                // Move 15% closer to target each tick for smooth visual progression
                 return {
-                    lat: prev.lat + dLat * 0.1,
-                    lng: prev.lng + dLng * 0.1
+                    lat: prev.lat + dLat * 0.15,
+                    lng: prev.lng + dLng * 0.15
                 };
             });
         }, 2000);
@@ -929,16 +953,20 @@ const DriverDashboard = () => {
 
         // Logic: Always show the immediate next target in the sequence
         pickups.forEach(m => {
-            sequence.push({ id: m.id, type: 'pickup', coord: m.pickupCoord, label: `Pick-up: ${m.customer}`, customer: m.customer, address: m.pickup });
+            const coord = m.pickupCoord || { lat: 50.1109, lng: 8.6821 };
+            sequence.push({ id: m.id, type: 'pickup', coord, label: `Pick-up: ${m.customer}`, customer: m.customer, address: m.pickup });
         });
         dropoffs.forEach(m => {
-            sequence.push({ id: m.id, type: 'dropoff', coord: m.destCoord, label: `Drop-off: ${m.customer}`, customer: m.customer, address: m.destination });
+            const coord = m.destCoord || { lat: 50.1150, lng: 8.6850 };
+            sequence.push({ id: m.id, type: 'dropoff', coord, label: `Drop-off: ${m.customer}`, customer: m.customer, address: m.destination });
         });
 
         // Nearest-neighbor sorting for the sequence
         sequence.sort((a, b) => {
-            const distA = Math.sqrt(Math.pow(a.coord.lat - currentPos.lat, 2) + Math.pow(a.coord.lng - currentPos.lng, 2));
-            const distB = Math.sqrt(Math.pow(b.coord.lat - currentPos.lat, 2) + Math.pow(b.coord.lng - currentPos.lng, 2));
+            const coordA = a.coord || { lat: 50.1109, lng: 8.6821 };
+            const coordB = b.coord || { lat: 50.1109, lng: 8.6821 };
+            const distA = Math.sqrt(Math.pow(coordA.lat - currentPos.lat, 2) + Math.pow(coordA.lng - currentPos.lng, 2));
+            const distB = Math.sqrt(Math.pow(coordB.lat - currentPos.lat, 2) + Math.pow(coordB.lng - currentPos.lng, 2));
             return distA - distB;
         });
 
@@ -998,6 +1026,14 @@ const DriverDashboard = () => {
         const mission = activeMissions.find(m => m.id === id);
         
         if (mission) {
+            // Guard: Must be within 50 meters of pickup location
+            const pickupCoord = mission.pickupCoord || mission.coords || { lat: 50.115, lng: 8.685 };
+            const dist = calculateDistanceInMeters(currentPos, pickupCoord);
+            if (dist > 50) {
+                alert(`⚠️ Du bist noch ${dist > 1000 ? (dist / 1000).toFixed(1) + 'km' : dist + 'm'} vom Abholort entfernt!\nDer Status "Angekommen" kann erst innerhalb von 50 Metern bestätigt werden.`);
+                return;
+            }
+
             // Guard: Prevent duplicate notification for the same mission
             if (notifiedMissions.current.has(mission.id)) {
                 // If already notified but status isn't arrived yet (race condition), just update status
@@ -1063,13 +1099,22 @@ const DriverDashboard = () => {
         const id = missionId || currentSequence[0]?.id;
         const mission = activeMissions.find(m => m.id === id);
         
-        if (mission && mission.status === 'guest_in_car') {
+        if (mission) {
             lockAction();
-            // Transition to payment phase instead of immediate removal
-            setActiveMissions(prev => prev.map(m => 
-                m.id === id ? { ...m, status: 'collect_payment' } : m
-            ));
-            return;
+            if (mission.isShuttle) {
+                if (socket && mission.passengerId) {
+                    socket.emit('complete-ride', { passengerId: mission.passengerId });
+                }
+                setActiveMissions(prev => prev.filter(m => m.id !== id));
+                alert(`🏁 SHUTTLE FAHRT BEENDET!\n\nDie Fahrt für ${mission.customer} wurde erfolgreich abgeschlossen.`);
+                return;
+            }
+            if (mission.status === 'guest_in_car') {
+                setActiveMissions(prev => prev.map(m => 
+                    m.id === id ? { ...m, status: 'collect_payment' } : m
+                ));
+                return;
+            }
         }
 
         if (mission && mission.status === 'collect_payment') {
@@ -2073,6 +2118,9 @@ const DriverDashboard = () => {
                                             const isNextObjective = currentSequence.length > 0 && currentSequence[0].label.includes(m.customer);
                                             const maxWait = sharingMode === 'autobahn' ? 40 : 25;
                                             const isHighPressure = minutesInCar > (maxWait * 0.6);
+                                            const pickupCoord = m.pickupCoord || m.coords || { lat: 50.115, lng: 8.685 };
+                                            const distToPickup = calculateDistanceInMeters(currentPos, pickupCoord);
+                                            const isWithin50m = distToPickup <= 50;
                                             
                                              return (
                                                 <React.Fragment key={m.id}>
@@ -2106,19 +2154,54 @@ const DriverDashboard = () => {
 
                                                     <div className="pt-0.5">
                                                         <AnimatePresence mode="wait">
-                                                            {(m.status === 'accepted' || m.status === 'requested' || m.status === 'pending') && (
-                                                                <motion.button 
-                                                                    key="arrived-btn"
-                                                                    initial={{ opacity: 0, scale: 0.95 }}
-                                                                    animate={{ opacity: 1, scale: 1 }}
-                                                                    exit={{ opacity: 0, scale: 0.95 }}
-                                                                    whileHover={{ scale: 1.02 }}
-                                                                    whileTap={{ scale: 0.98 }}
-                                                                    onClick={() => handleArrived(m.id)}
-                                                                    className="w-full py-4 bg-btn-sec border border-main rounded-2xl text-[13px] font-black uppercase tracking-widest text-muted hover:text-primary hover:border-white/20 transition-colors"
-                                                                >
-                                                                    ARRIVED
-                                                                </motion.button>
+                                                            {(m.status === 'accepted' || m.status === 'assigned' || m.status === 'requested' || m.status === 'pending') && (
+                                                                <div className="space-y-1.5">
+                                                                    <motion.button 
+                                                                        key="arrived-btn"
+                                                                        initial={{ opacity: 0, scale: 0.95 }}
+                                                                        animate={{ opacity: 1, scale: 1 }}
+                                                                        exit={{ opacity: 0, scale: 0.95 }}
+                                                                        whileHover={isWithin50m ? { scale: 1.02 } : {}}
+                                                                        whileTap={isWithin50m ? { scale: 0.98 } : {}}
+                                                                        disabled={!isWithin50m}
+                                                                        onClick={() => {
+                                                                            if (!isWithin50m) return;
+                                                                            handleArrived(m.id);
+                                                                        }}
+                                                                        className={`w-full py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${
+                                                                            isWithin50m 
+                                                                                ? 'bg-brand text-dark-900 border border-brand/60 shadow-lg shadow-brand/30 animate-pulse cursor-pointer' 
+                                                                                : 'bg-white/5 text-gray-500 border border-white/10 cursor-not-allowed opacity-50 shadow-none'
+                                                                        }`}
+                                                                        title={isWithin50m ? "Am Abholort angekommen" : `Noch ${distToPickup}m entfernt. Freischaltung erst ab 50m.`}
+                                                                    >
+                                                                        {isWithin50m ? (
+                                                                            <span>📍 ANGEKOMMEN (Am Abholort)</span>
+                                                                        ) : (
+                                                                            <span>🔒 NOCH {distToPickup > 1000 ? (distToPickup / 1000).toFixed(1) + 'km' : distToPickup + 'm'} (ab 50m)</span>
+                                                                        )}
+                                                                    </motion.button>
+
+                                                                    {!isWithin50m && (
+                                                                        <div className="flex items-center justify-between text-[9px] font-bold text-gray-400 px-1">
+                                                                            <span className="text-[8px] uppercase tracking-wider text-amber-400/90 font-mono">Erst &le; 50m aktiv</span>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setCurrentPos({
+                                                                                        lat: (pickupCoord.lat || 50.115) - 0.0002,
+                                                                                        lng: (pickupCoord.lng || 8.685) - 0.0002
+                                                                                    });
+                                                                                }}
+                                                                                className="text-[9px] text-cyan-400 hover:text-cyan-300 underline font-black uppercase tracking-wider cursor-pointer"
+                                                                                title="Fahrzeug auf 30m an den Abholort setzen"
+                                                                            >
+                                                                                ⚡ Test: Anfahren (&lt;50m)
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             )}
                                                             {m.status === 'arrived' && (
                                                                 <motion.div 
@@ -2132,8 +2215,8 @@ const DriverDashboard = () => {
                                                                         whileHover={{ scale: 1.05 }}
                                                                         whileTap={{ scale: 0.95 }}
                                                                         onClick={() => setActiveMissions(prev => prev.map(mission => mission.id === m.id ? { ...mission, status: 'accepted' } : mission))}
-                                                                        className="w-12 h-10 bg-surface border border-main rounded-xl flex items-center justify-center text-muted hover:text-primary transition-all"
-                                                                        title="Undo Arrival"
+                                                                        className="w-12 h-10 bg-surface border border-main rounded-xl flex items-center justify-center text-muted hover:text-primary transition-all cursor-pointer"
+                                                                        title="Rückgängig"
                                                                     >
                                                                         <RotateCcw size={16} />
                                                                     </motion.button>
@@ -2141,9 +2224,9 @@ const DriverDashboard = () => {
                                                                         whileHover={{ scale: 1.02 }}
                                                                         whileTap={{ scale: 0.98 }}
                                                                         onClick={() => handleStartTrip(m.id)}
-                                                                        className="flex-1 py-4 bg-[var(--brand)] text-[var(--bg-primary)] rounded-2xl text-[13px] font-black uppercase tracking-widest shadow-lg shadow-brand/20 transition-all"
+                                                                        className="flex-1 py-4 bg-brand text-dark-900 rounded-2xl text-[11px] md:text-xs font-black uppercase tracking-widest shadow-lg shadow-brand/20 transition-all cursor-pointer"
                                                                     >
-                                                                        START
+                                                                        🚀 GÄSTE ABGEHOLT & FAHRT STARTEN
                                                                     </motion.button>
                                                                 </motion.div>
                                                             )}
@@ -2687,59 +2770,65 @@ const DriverDashboard = () => {
 
                                     {/* SHUTTLE OFFERS LIST */}
                                     <div className="space-y-6">
-                                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-secondary ml-2">Verfügbare 24h-Vorab Shuttle Anfragen</h3>
+                                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-secondary ml-2">Vom Manager bestätigte Shuttle-Aufträge</h3>
 
-                                        {/* CARD 1: 2-VEHICLE AUTO-SPLIT SHUTTLE */}
-                                        <div className="bg-surface border border-red-500/40 rounded-[2.5rem] p-6 md:p-8 space-y-6 relative overflow-hidden shadow-2xl">
-                                            <div className="absolute top-0 right-0 px-6 py-2 bg-red-500/20 border-b border-l border-red-500/40 text-red-400 rounded-bl-2xl font-black text-[9px] md:text-[11px] uppercase tracking-widest flex items-center gap-1.5">
-                                                <Zap size={12} className="animate-pulse" /> 🚨 2 Fahrzeuge Benötigt (Auto-Split)
+                                        {/* CARD 1: MANAGER CONFIRMED SHUTTLE 1 */}
+                                        <div className="bg-surface border border-emerald-500/40 rounded-[2.5rem] p-6 md:p-8 space-y-6 relative overflow-hidden shadow-2xl">
+                                            <div className="absolute top-0 right-0 px-6 py-2 bg-emerald-500/20 border-b border-l border-emerald-500/40 text-emerald-400 rounded-bl-2xl font-black text-[9px] md:text-[11px] uppercase tracking-widest flex items-center gap-1.5">
+                                                <ShieldCheck size={14} className="text-emerald-400" /> Vom Manager Bestätigt & Freigegeben
                                             </div>
 
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 rounded-2xl bg-brand/10 border border-brand/30 flex items-center justify-center text-brand">
+                                            <div className="flex items-center gap-3 pt-4 md:pt-0">
+                                                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                                                     <Bus size={24} />
                                                 </div>
                                                 <div>
                                                     <h4 className="text-xl font-black italic uppercase text-primary">Marcus Vance Delegation</h4>
-                                                    <p className="text-[10px] md:text-xs text-brand font-bold uppercase tracking-wider">Flug LH 401 • Ankunft Morgen 15:15 Uhr (FRA T2)</p>
+                                                    <p className="text-[10px] md:text-xs text-emerald-400 font-bold uppercase tracking-wider">📅 Morgen, 28. Sep 2026 • 🕒 15:15 - 15:45 Uhr</p>
                                                 </div>
                                             </div>
 
-                                            {/* CAPACITY BADGE */}
+                                            {/* DETAILS & PASSENGER/LUGGAGE INFO */}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-dark-950 p-4 rounded-2xl border border-white/5">
                                                 <div className="space-y-1">
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-secondary">Gäste & Gepäck Status</p>
-                                                    <p className="text-sm font-black text-white">5 Passagiere • 7 Koffer (Überkapazität)</p>
-                                                    <p className="text-[9px] text-red-400 font-bold uppercase">Regel getriggert: ≥ 5 Gäste / ≥ 7 Koffer ➔ 2 Fahrzeuge</p>
+                                                    <p className="text-[9px] font-black uppercase tracking-widest text-secondary">Abholung & Flug</p>
+                                                    <p className="text-sm font-black text-white">📍 Frankfurt Airport Terminal 2</p>
+                                                    <p className="text-[10px] text-brand font-bold uppercase">Flug LH 401</p>
                                                 </div>
                                                 <div className="space-y-1 md:border-l md:border-white/10 md:pl-4">
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-secondary">Vergütung & Team</p>
-                                                    <p className="text-base font-black text-brand">€95.00 Total (€47.50 / Pkw)</p>
-                                                    <p className="text-[9px] text-secondary font-semibold uppercase">Nur für Fahrer der selben Flotte (Team Khiam)</p>
+                                                    <p className="text-[9px] font-black uppercase tracking-widest text-secondary">Zieladresse</p>
+                                                    <p className="text-sm font-black text-white">🏁 Grand Hotel Frankfurt</p>
+                                                    <p className="text-[10px] text-secondary font-semibold uppercase">Hotel Shuttle Transfer</p>
                                                 </div>
                                             </div>
 
-                                            {/* PAIRED VEHICLES BREAKDOWN */}
+                                            {/* CAPACITY BADGE & TEAM STATUS */}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="p-4 bg-brand/5 border border-brand/20 rounded-2xl space-y-2">
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-[10px] font-black uppercase text-brand">🚗 Auto 1: Personen-Shuttle</span>
-                                                        <span className="text-[8px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Fahrer 1 (Du)</span>
-                                                    </div>
-                                                    <p className="text-xs text-primary font-bold">5 Passagiere + Handgepäck</p>
-                                                    <p className="text-[9px] text-secondary font-semibold">Abholung FRA T2 ➔ Grand Hotel Frankfurt</p>
+                                                <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl space-y-1">
+                                                    <span className="text-[10px] font-black uppercase text-emerald-400">👥 Passagiere & 🧳 Koffer</span>
+                                                    <p className="text-sm text-primary font-black">5 Passagiere • 7 Koffer</p>
+                                                    <p className="text-[9px] text-secondary font-semibold">2 Fahrzeuge vom Manager zugewiesen (Auto-Split)</p>
                                                 </div>
-                                                <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-2xl space-y-2">
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-[10px] font-black uppercase text-blue-400">🚚 Auto 2: Gepäck-Begleitung</span>
-                                                        <span className="text-[8px] font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded">Fahrer 2 (Team Thomas K.)</span>
-                                                    </div>
-                                                    <p className="text-xs text-primary font-bold">7 Koffer / Schwergepäck</p>
-                                                    <p className="text-[9px] text-secondary font-semibold">Direkt-Transport FRA T2 ➔ Grand Hotel</p>
+                                                <div className="p-4 bg-brand/5 border border-brand/20 rounded-2xl space-y-1">
+                                                    <span className="text-[10px] font-black uppercase text-brand">🛡️ Manager Status</span>
+                                                    <p className="text-xs text-primary font-bold">Freigabe durch Manager</p>
+                                                    <p className="text-[9px] text-secondary font-semibold uppercase">Bereit zur Übernahme im Cockpit</p>
                                                 </div>
                                             </div>
 
-                                            <div className="pt-2 flex flex-col md:flex-row gap-3">
+                                            {/* TIMING & DISTANCE CALCULATION */}
+                                            <div className="space-y-3">
+                                                <div className="bg-dark-950 p-4 rounded-2xl border border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 text-xs">
+                                                    <div className="flex items-center gap-2 text-secondary">
+                                                        <Navigation size={14} className="text-brand" />
+                                                        <span>Anfahrtsstrecke: <strong className="text-primary">12.8 km</strong> (~20 Min. Fahrzeit)</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-emerald-400 font-bold">
+                                                        <Clock size={14} />
+                                                        <span>Empfohlene Abfahrt: <strong>14:55 Uhr</strong> • Freigabe max. 1 Std. vor Abholung (ab 14:15 Uhr)</span>
+                                                    </div>
+                                                </div>
+
                                                 <button
                                                     onClick={() => {
                                                         const newShuttleMission = {
@@ -2748,8 +2837,10 @@ const DriverDashboard = () => {
                                                             pickup: 'Frankfurt Airport (FRA T2)',
                                                             dropoff: 'Grand Hotel Frankfurt',
                                                             destination: 'Grand Hotel Frankfurt',
-                                                            price: 47.50,
-                                                            basePrice: 47.50,
+                                                            pickupCoord: { lat: 50.1030, lng: 8.6650 },
+                                                            destCoord: { lat: 50.1109, lng: 8.6750 },
+                                                            price: 0,
+                                                            basePrice: 0,
                                                             distance: '12.8 km',
                                                             status: 'assigned',
                                                             passengerCount: 5,
@@ -2761,42 +2852,69 @@ const DriverDashboard = () => {
                                                             startTime: Date.now()
                                                         };
                                                         setActiveMissions(prev => [...prev, newShuttleMission]);
+                                                        setRideStatus('active_multi');
                                                         setView('dashboard');
-                                                        alert("🤝 2-FAHRZEUG TEAM-SHUTTLE 24H VORAB AKZEPTIERT!\n\nDein Auftrag (Auto 1: 5 Passagiere) wurde im Cockpit aktiviert. Dein Teamkollege Thomas K. übernimmt Auto 2 für die 7 Koffer.");
+                                                        alert("🤝 SHUTTLE-AUFTRAG ANGENOMMEN!\n\nDer vom Manager bestätigte Shuttle-Auftrag wurde im Cockpit gestartet.");
                                                     }}
-                                                    className="flex-1 py-4 bg-brand text-dark-900 rounded-2xl font-black uppercase tracking-widest text-xs md:text-sm hover:scale-[1.01] active:scale-[0.99] transition-all shadow-xl shadow-brand/20 flex items-center justify-center gap-2 cursor-pointer"
+                                                    className="w-full py-4 bg-brand text-dark-900 rounded-2xl font-black uppercase tracking-widest text-xs md:text-sm hover:scale-[1.01] active:scale-[0.99] transition-all shadow-xl shadow-brand/20 flex items-center justify-center gap-2 cursor-pointer"
                                                 >
-                                                    <Handshake size={18} /> 🤝 2-FAHRZEUG TEAM-SHUTTLE 24H VORAB ANNEHMEN (€95.00)
+                                                    <Car size={18} /> 🚖 Jetzt zum Abholort starten (Im Cockpit öffnen)
                                                 </button>
                                             </div>
                                         </div>
 
-                                        {/* CARD 2: STANDARD SINGLE VEHICLE SHUTTLE */}
-                                        <div className="bg-surface border border-main rounded-[2.5rem] p-6 md:p-8 space-y-6 relative overflow-hidden">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-12 h-12 rounded-2xl bg-brand/10 border border-brand/30 flex items-center justify-center text-brand">
+                                        {/* CARD 2: MANAGER CONFIRMED SHUTTLE 2 */}
+                                        <div className="bg-surface border border-emerald-500/40 rounded-[2.5rem] p-6 md:p-8 space-y-6 relative overflow-hidden shadow-2xl">
+                                            <div className="absolute top-0 right-0 px-6 py-2 bg-emerald-500/20 border-b border-l border-emerald-500/40 text-emerald-400 rounded-bl-2xl font-black text-[9px] md:text-[11px] uppercase tracking-widest flex items-center gap-1.5">
+                                                <ShieldCheck size={14} className="text-emerald-400" /> Vom Manager Bestätigt & Freigegeben
+                                            </div>
+
+                                            <div className="flex items-center gap-3 pt-4 md:pt-0">
+                                                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                                                     <Car size={24} />
                                                 </div>
                                                 <div>
                                                     <h4 className="text-xl font-black italic uppercase text-primary">Lukas Weber Shuttle</h4>
-                                                    <p className="text-[10px] md:text-xs text-brand font-bold uppercase tracking-wider">Flug LH 402 • Ankunft Morgen 14:30 Uhr (FRA T1)</p>
+                                                    <p className="text-[10px] md:text-xs text-emerald-400 font-bold uppercase tracking-wider">📅 Morgen, 28. Sep 2026 • 🕒 14:00 - 14:30 Uhr</p>
                                                 </div>
                                             </div>
 
+                                            {/* DETAILS & PASSENGER/LUGGAGE INFO */}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-dark-950 p-4 rounded-2xl border border-white/5">
                                                 <div className="space-y-1">
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-secondary">Gäste & Gepäck Status</p>
-                                                    <p className="text-sm font-black text-white">3 Passagiere • 4 Koffer (Standard)</p>
-                                                    <p className="text-[9px] text-brand font-bold uppercase">1 Fahrzeug ausreichend (≤ 4 Gäste & ≤ 6 Koffer)</p>
+                                                    <p className="text-[9px] font-black uppercase tracking-widest text-secondary">Abholung & Flug</p>
+                                                    <p className="text-sm font-black text-white">📍 Frankfurt Airport Terminal 1</p>
+                                                    <p className="text-[10px] text-brand font-bold uppercase">Flug LH 402</p>
                                                 </div>
                                                 <div className="space-y-1 md:border-l md:border-white/10 md:pl-4">
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-secondary">Vergütung</p>
-                                                    <p className="text-base font-black text-brand">€48.00</p>
-                                                    <p className="text-[9px] text-secondary font-semibold uppercase">Einzel-Shuttle für Steigenberger Icon Parkhotel</p>
+                                                    <p className="text-[9px] font-black uppercase tracking-widest text-secondary">Zieladresse</p>
+                                                    <p className="text-sm font-black text-white">🏁 Steigenberger Icon Parkhotel</p>
+                                                    <p className="text-[10px] text-secondary font-semibold uppercase">Hotel Shuttle Transfer</p>
                                                 </div>
                                             </div>
 
-                                            <div className="pt-2">
+                                            {/* CAPACITY BADGE */}
+                                            <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+                                                <div>
+                                                    <span className="text-[10px] font-black uppercase text-emerald-400">👥 Passagiere & 🧳 Koffer</span>
+                                                    <p className="text-sm text-primary font-black">3 Passagiere • 4 Koffer</p>
+                                                </div>
+                                                <span className="text-[9px] text-emerald-400 font-bold uppercase bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30">✓ Einzel-Fahrzeug Bestätigt</span>
+                                            </div>
+
+                                            {/* TIMING & DISTANCE CALCULATION */}
+                                            <div className="space-y-3">
+                                                <div className="bg-dark-950 p-4 rounded-2xl border border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 text-xs">
+                                                    <div className="flex items-center gap-2 text-secondary">
+                                                        <Navigation size={14} className="text-brand" />
+                                                        <span>Anfahrtsstrecke: <strong className="text-primary">14.2 km</strong> (~22 Min. Fahrzeit)</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-emerald-400 font-bold">
+                                                        <Clock size={14} />
+                                                        <span>Empfohlene Abfahrt: <strong>13:38 Uhr</strong> • Freigabe max. 1 Std. vor Abholung (ab 13:00 Uhr)</span>
+                                                    </div>
+                                                </div>
+
                                                 <button
                                                     onClick={() => {
                                                         const newStandardShuttle = {
@@ -2805,8 +2923,10 @@ const DriverDashboard = () => {
                                                             pickup: 'Frankfurt Airport (FRA T1)',
                                                             dropoff: 'Steigenberger Icon Parkhotel',
                                                             destination: 'Steigenberger Icon Parkhotel',
-                                                            price: 48.00,
-                                                            basePrice: 48.00,
+                                                            pickupCoord: { lat: 50.1050, lng: 8.6620 },
+                                                            destCoord: { lat: 50.1150, lng: 8.6800 },
+                                                            price: 0,
+                                                            basePrice: 0,
                                                             distance: '14.2 km',
                                                             status: 'assigned',
                                                             passengerCount: 3,
@@ -2818,12 +2938,13 @@ const DriverDashboard = () => {
                                                             startTime: Date.now()
                                                         };
                                                         setActiveMissions(prev => [...prev, newStandardShuttle]);
+                                                        setRideStatus('active_multi');
                                                         setView('dashboard');
-                                                        alert("⚡ SHUTTLE-AUFTRAG 24H VORAB AKZEPTIERT!\n\nDie Fahrt wurde in dein Cockpit übernommen.");
+                                                        alert("🚖 SHUTTLE-AUFTRAG ANGENOMMEN!\n\nDie Fahrt wurde in dein Cockpit übernommen.");
                                                     }}
-                                                    className="w-full py-4 bg-btn-sec border border-brand/30 text-brand rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-brand hover:text-dark-900 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                                    className="w-full py-4 bg-brand text-dark-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl shadow-brand/20"
                                                 >
-                                                    <Zap size={16} /> ⚡ SHUTTLE 24H VORAB ANNEHMEN (€48.00)
+                                                    <Car size={18} /> 🚖 Jetzt zum Abholort starten (Im Cockpit öffnen)
                                                 </button>
                                             </div>
                                         </div>

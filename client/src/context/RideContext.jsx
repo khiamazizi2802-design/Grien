@@ -195,11 +195,13 @@ export const RideProvider = ({ children }) => {
     const [baseFare, setBaseFare] = useState(() => parseFloat(localStorage.getItem('green_base_fare') || '2.00'));
     const [baseFareMax, setBaseFareMax] = useState(() => parseFloat(localStorage.getItem('green_base_fare_max') || '4.00'));
     const [baseFarePremium, setBaseFarePremium] = useState(() => parseFloat(localStorage.getItem('green_base_fare_premium') || '6.00'));
+    const [baseFarePremiumMax, setBaseFarePremiumMax] = useState(() => parseFloat(localStorage.getItem('green_base_fare_premium_max') || '8.00'));
     const [baseFareShared, setBaseFareShared] = useState(() => parseFloat(localStorage.getItem('green_base_fare_shared') || '1.50'));
 
     const [perKmRate, setPerKmRate] = useState(() => parseFloat(localStorage.getItem('green_per_km_rate') || '2.50'));
     const [perKmRateMax, setPerKmRateMax] = useState(() => parseFloat(localStorage.getItem('green_per_km_rate_max') || '3.50'));
     const [perKmRatePremium, setPerKmRatePremium] = useState(() => parseFloat(localStorage.getItem('green_per_km_rate_premium') || '4.50'));
+    const [perKmRatePremiumMax, setPerKmRatePremiumMax] = useState(() => parseFloat(localStorage.getItem('green_per_km_rate_premium_max') || '5.50'));
     const [perKmRateShared, setPerKmRateShared] = useState(() => parseFloat(localStorage.getItem('green_per_km_rate_shared') || '1.80'));
 
     useEffect(() => {
@@ -213,6 +215,10 @@ export const RideProvider = ({ children }) => {
     useEffect(() => {
         localStorage.setItem('green_base_fare_premium', String(baseFarePremium));
     }, [baseFarePremium]);
+
+    useEffect(() => {
+        localStorage.setItem('green_base_fare_premium_max', String(baseFarePremiumMax));
+    }, [baseFarePremiumMax]);
 
     useEffect(() => {
         localStorage.setItem('green_base_fare_shared', String(baseFareShared));
@@ -231,6 +237,10 @@ export const RideProvider = ({ children }) => {
     }, [perKmRatePremium]);
 
     useEffect(() => {
+        localStorage.setItem('green_per_km_rate_premium_max', String(perKmRatePremiumMax));
+    }, [perKmRatePremiumMax]);
+
+    useEffect(() => {
         localStorage.setItem('green_per_km_rate_shared', String(perKmRateShared));
     }, [perKmRateShared]);
 
@@ -242,11 +252,13 @@ export const RideProvider = ({ children }) => {
                 if (data.baseFare !== undefined) setBaseFare(parseFloat(data.baseFare));
                 if (data.baseFareMax !== undefined) setBaseFareMax(parseFloat(data.baseFareMax));
                 if (data.baseFarePremium !== undefined) setBaseFarePremium(parseFloat(data.baseFarePremium));
+                if (data.baseFarePremiumMax !== undefined) setBaseFarePremiumMax(parseFloat(data.baseFarePremiumMax));
                 if (data.baseFareShared !== undefined) setBaseFareShared(parseFloat(data.baseFareShared));
 
                 if (data.perKmRate !== undefined) setPerKmRate(parseFloat(data.perKmRate));
                 if (data.perKmRateMax !== undefined) setPerKmRateMax(parseFloat(data.perKmRateMax));
                 if (data.perKmRatePremium !== undefined) setPerKmRatePremium(parseFloat(data.perKmRatePremium));
+                if (data.perKmRatePremiumMax !== undefined) setPerKmRatePremiumMax(parseFloat(data.perKmRatePremiumMax));
                 if (data.perKmRateShared !== undefined) setPerKmRateShared(parseFloat(data.perKmRateShared));
             }
         });
@@ -257,7 +269,13 @@ export const RideProvider = ({ children }) => {
         if (socket) {
             socket.on('update-pricing', (data) => {
                 if (data.baseFare !== undefined) setBaseFare(data.baseFare);
+                if (data.baseFareMax !== undefined) setBaseFareMax(data.baseFareMax);
+                if (data.baseFarePremium !== undefined) setBaseFarePremium(data.baseFarePremium);
+                if (data.baseFarePremiumMax !== undefined) setBaseFarePremiumMax(data.baseFarePremiumMax);
                 if (data.perKmRate !== undefined) setPerKmRate(data.perKmRate);
+                if (data.perKmRateMax !== undefined) setPerKmRateMax(data.perKmRateMax);
+                if (data.perKmRatePremium !== undefined) setPerKmRatePremium(data.perKmRatePremium);
+                if (data.perKmRatePremiumMax !== undefined) setPerKmRatePremiumMax(data.perKmRatePremiumMax);
                 console.log('Live pricing updated from Admin:', data);
             });
             return () => socket.off('update-pricing');
@@ -270,11 +288,13 @@ export const RideProvider = ({ children }) => {
         let activeBaseFare = parseFloat(baseFare);
         if (typeToUse === 'max') activeBaseFare = parseFloat(baseFareMax);
         else if (typeToUse === 'premium') activeBaseFare = parseFloat(baseFarePremium);
+        else if (typeToUse === 'premium_max' || typeToUse === 'premiumMax') activeBaseFare = parseFloat(baseFarePremiumMax);
         else if (typeToUse === 'shared') activeBaseFare = parseFloat(baseFareShared);
 
         let activeKmRate = parseFloat(perKmRate);
         if (typeToUse === 'max') activeKmRate = parseFloat(perKmRateMax);
         else if (typeToUse === 'premium') activeKmRate = parseFloat(perKmRatePremium);
+        else if (typeToUse === 'premium_max' || typeToUse === 'premiumMax') activeKmRate = parseFloat(perKmRatePremiumMax);
         else if (typeToUse === 'shared') activeKmRate = parseFloat(perKmRateShared);
 
         const originalPrice = activeBaseFare + (distance * activeKmRate);
@@ -364,6 +384,8 @@ export const RideProvider = ({ children }) => {
             setBaseFareMax,
             baseFarePremium,
             setBaseFarePremium,
+            baseFarePremiumMax,
+            setBaseFarePremiumMax,
             baseFareShared,
             setBaseFareShared,
             perKmRate,
@@ -372,6 +394,8 @@ export const RideProvider = ({ children }) => {
             setPerKmRateMax,
             perKmRatePremium,
             setPerKmRatePremium,
+            perKmRatePremiumMax,
+            setPerKmRatePremiumMax,
             perKmRateShared,
             setPerKmRateShared
         }}>

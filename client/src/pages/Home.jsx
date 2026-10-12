@@ -1895,7 +1895,7 @@ const Home = () => {
                                         <button
                                             onClick={() => {
                                                 setIsEditingProfile(false);
-                                                alert("PROFILE UPDATED: Your personal records have been securely synchronized with the GREEN Network.");
+                                                alert("PROFILE UPDATED: Your personal records have been securely synchronized with the GRIEN Network.");
                                             }}
                                             className="px-4 py-2 bg-brand text-dark-900 rounded-xl text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-[0_0_15px_rgba(255,255,255,0.3)]"
                                         >

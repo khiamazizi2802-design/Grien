@@ -48,7 +48,7 @@ const PartnerOnboarding = () => {
                 </button>
                 <div className="text-center">
                     <h1 className="text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-[0.3em] text-brand">Partner Onboarding</h1>
-                    <p className="text-[8px] md:text-[10px] lg:text-xs font-bold text-gray-500 uppercase tracking-widest mt-0.5">Joining the Green Ecosystem</p>
+                    <p className="text-[8px] md:text-[10px] lg:text-xs font-bold text-gray-500 uppercase tracking-widest mt-0.5">Joining the Grien Ecosystem</p>
                 </div>
                 <div className="w-10 h-10 bg-brand/10 border border-brand/20 rounded-xl flex items-center justify-center text-brand">
                     <Building2 size={18} />

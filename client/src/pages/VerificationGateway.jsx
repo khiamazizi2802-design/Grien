@@ -124,7 +124,7 @@ const VerificationGateway = () => {
                         <ShieldCheck className="text-brand" size={32} />
                     </div>
                     <h1 className="text-2xl font-black text-gray-900 tracking-tight uppercase">Security Verification</h1>
-                    <p className="text-gray-500 mt-2 text-sm">Please verify your identity to access the Green network.</p>
+                    <p className="text-gray-500 mt-2 text-sm">Please verify your identity to access the Grien network.</p>
                 </div>
 
                 <div className="space-y-6">

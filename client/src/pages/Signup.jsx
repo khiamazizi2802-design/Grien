@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, ShieldCheck, Car, Mail, Lock, ChevronRight, Handshake, Upload, MapPin, Box, Phone, Search, ArrowLeft } from 'lucide-react';
+import { User, ShieldCheck, Car, Mail, Lock, ChevronRight, Handshake, Upload, MapPin, Box, Phone, Search, ArrowLeft, Key, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Signup = () => {
@@ -25,7 +25,8 @@ const Signup = () => {
         email: '',
         password: '',
         age: '',
-        businessType: 'FM'
+        businessType: 'FM',
+        driverCode: ''
     });
     const [profilePic, setProfilePic] = useState(null);
     const [companySearch, setCompanySearch] = useState('');
@@ -35,6 +36,8 @@ const Signup = () => {
     const [privacyAccepted, setPrivacyAccepted] = useState(false);
     const [showPrivacyModal, setShowPrivacyModal] = useState(true);
     const [signupError, setSignupError] = useState('');
+    const [matchedDriver, setMatchedDriver] = useState(null);
+    const [driverCodeError, setDriverCodeError] = useState('');
 
     const businessCategories = [
         { id: 'FM', label: 'Fleet' },
@@ -43,14 +46,140 @@ const Signup = () => {
     ];
 
     const verifiedCompanies = [
-        { id: 'HM', name: 'Green Palace & Spa', industry: 'Hotel' },
-        { id: 'FM', name: 'Green Fleet Ops', industry: 'Logistics' },
-        { id: 'SM', name: 'Green Stadium Arena', industry: 'Events' }
+        { id: 'HM', name: 'Grien Palace & Spa', industry: 'Hotel' },
+        { id: 'FM', name: 'Grien Fleet Ops', industry: 'Logistics' },
+        { id: 'SM', name: 'Grien Stadium Arena', industry: 'Events' }
     ];
 
     const filteredCompanies = verifiedCompanies.filter(c => 
         c.name.toLowerCase().includes(companySearch.toLowerCase())
     );
+
+    // Helper to retrieve all drivers across all fleet managers (defaults + saved in localStorage)
+    const getAllFleetDrivers = () => {
+        const defaultDrivers = [
+            {
+                id: 'drv_1',
+                name: 'Sami Rahimi',
+                phone: '+49 176 8829 1029',
+                email: 'sami.rahimi@green-fleet.de',
+                licenseNumber: 'B0892019382',
+                vehicleAssigned: 'Tesla Model S Plaid (F-GR 777E)',
+                status: 'Aktiv',
+                approvalStatus: 'Approved',
+                accessCode: 'DRV-7771-FM',
+                managerName: 'Grien Fleet Ops',
+                managerEmail: 'manager@green.de',
+                managerKey: 'manager_green_de'
+            },
+            {
+                id: 'drv_2',
+                name: 'Darius Meier',
+                phone: '+49 172 4432 9911',
+                email: 'darius.m@green-fleet.de',
+                licenseNumber: 'B0441920311',
+                vehicleAssigned: 'Mercedes-Benz EQS (F-GR 888E)',
+                status: 'Aktiv',
+                approvalStatus: 'Approved',
+                accessCode: 'DRV-8882-FM',
+                managerName: 'Grien Fleet Ops',
+                managerEmail: 'manager@green.de',
+                managerKey: 'manager_green_de'
+            },
+            {
+                id: 'drv_3',
+                name: 'Elena Rostova',
+                phone: '+49 151 8877 6655',
+                email: 'elena.r@green-fleet.de',
+                licenseNumber: 'B0993021948',
+                vehicleAssigned: 'Porsche Taycan (F-GR 999E)',
+                status: 'Pause',
+                approvalStatus: 'Approved',
+                accessCode: 'DRV-9993-FM',
+                managerName: 'Grien Fleet Ops',
+                managerEmail: 'manager@green.de',
+                managerKey: 'manager_green_de'
+            }
+        ];
+
+        let foundDrivers = [...defaultDrivers];
+
+        try {
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('green_fleet_drivers_')) {
+                    const managerKey = key.replace('green_fleet_drivers_', '');
+                    const raw = localStorage.getItem(key);
+                    if (raw) {
+                        try {
+                            const parsed = JSON.parse(raw);
+                            if (Array.isArray(parsed)) {
+                                parsed.forEach(d => {
+                                    if (d.accessCode) {
+                                        const exists = foundDrivers.some(ex => ex.accessCode && ex.accessCode.toUpperCase() === d.accessCode.toUpperCase());
+                                        if (!exists) {
+                                            foundDrivers.push({
+                                                ...d,
+                                                managerKey,
+                                                managerEmail: d.managerEmail || managerKey.replace(/_/g, '.'),
+                                                managerName: d.managerName || 'Grien Fleet Ops'
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+                        } catch (e) {}
+                    }
+                }
+            }
+        } catch (e) {}
+
+        return foundDrivers;
+    };
+
+    const allDrivers = getAllFleetDrivers();
+    const enteredEmail = formData.email.trim().toLowerCase();
+    const enteredPhone = formData.phone.trim().replace(/\s+/g, '');
+    const hasEnteredContact = enteredEmail.length > 3 || enteredPhone.length > 5;
+
+    // Check if this driver was pre-registered/uploaded by a fleet manager
+    const registeredDriverFound = allDrivers.find(d => 
+        (enteredEmail && d.email && d.email.toLowerCase() === enteredEmail) ||
+        (enteredPhone && d.phone && d.phone.replace(/\s+/g, '') === enteredPhone)
+    );
+
+    const isCodeVerified = Boolean(matchedDriver);
+    // If contact info has been typed, and driver is NOT found in any manager fleet and code is not verified -> BLINK INFO!
+    const isNotRegistered = role === 'driver' && hasEnteredContact && !registeredDriverFound && !isCodeVerified;
+    // If driver was found in system by email or phone:
+    const isFoundInSystem = role === 'driver' && Boolean(registeredDriverFound);
+
+    const handleDriverCodeChange = (val) => {
+        const codeUpper = val.toUpperCase().trim();
+        setFormData(prev => ({ ...prev, driverCode: codeUpper }));
+
+        if (!codeUpper) {
+            setMatchedDriver(null);
+            setDriverCodeError('');
+            return;
+        }
+
+        const found = allDrivers.find(d => d.accessCode && d.accessCode.toUpperCase() === codeUpper);
+        if (found) {
+            setMatchedDriver(found);
+            setDriverCodeError('');
+            if (!formData.name && found.name) {
+                setFormData(prev => ({ ...prev, name: found.name }));
+            }
+        } else {
+            setMatchedDriver(null);
+            if (codeUpper.length >= 7) {
+                setDriverCodeError('Code nicht gefunden. Bitte frage deinen Flotten-Manager.');
+            } else {
+                setDriverCodeError('');
+            }
+        }
+    };
 
     const handleSignup = async (e) => {
         e.preventDefault();
@@ -58,6 +187,17 @@ const Signup = () => {
 
         // Map UI roles to auth database roles
         let finalRole = role;
+
+        if (finalRole === 'driver') {
+            if (!formData.driverCode) {
+                setSignupError('Bitte gib den Flotten-Manager Code ein, den du von deinem Manager erhalten hast.');
+                return;
+            }
+            if (!matchedDriver) {
+                setSignupError('Der eingegebene Flotten-Manager Code ist ungültig oder existiert nicht im System.');
+                return;
+            }
+        }
 
         const newUserData = {
             name: formData.name,
@@ -69,8 +209,13 @@ const Signup = () => {
             phone: formData.phone,
             age: finalRole === 'passenger' ? formData.age : null,
             businessType: finalRole === 'manager' ? formData.businessType : null,
-            invitedByManager: inviteEmail || null,
-            // Staff/driver no longer need to provide a company — manager will link them via Green ID
+            invitedByManager: matchedDriver ? (matchedDriver.managerEmail || matchedDriver.managerKey) : (inviteEmail || null),
+            driverCode: formData.driverCode || null,
+            managerId: matchedDriver ? (matchedDriver.managerEmail || matchedDriver.managerKey) : null,
+            managerKey: matchedDriver ? (matchedDriver.managerKey || 'manager_green_de') : null,
+            businessName: matchedDriver ? (matchedDriver.managerName || 'Grien Fleet Ops') : null,
+            fleetCode: formData.driverCode || null,
+            onboarded: true,
             gdprAccepted: true,
             gdprAcceptedAt: new Date().toISOString()
         };
@@ -80,6 +225,43 @@ const Signup = () => {
             if (!res.success) {
                 setSignupError(res.message);
                 return;
+            }
+
+            // Exclusively link driver to this fleet manager's dashboard
+            if (finalRole === 'driver' && matchedDriver) {
+                try {
+                    const mgrKey = matchedDriver.managerKey || 'manager_green_de';
+                    const storageKey = `green_fleet_drivers_${mgrKey}`;
+                    const raw = localStorage.getItem(storageKey);
+                    let currentDrivers = raw ? JSON.parse(raw) : [];
+                    const idx = currentDrivers.findIndex(d => d.accessCode && d.accessCode.toUpperCase() === formData.driverCode.toUpperCase());
+                    if (idx !== -1) {
+                        currentDrivers[idx] = {
+                            ...currentDrivers[idx],
+                            name: formData.name || currentDrivers[idx].name,
+                            email: formData.email.toLowerCase(),
+                            phone: formData.phone || currentDrivers[idx].phone,
+                            status: 'Aktiv',
+                            registeredAt: new Date().toISOString()
+                        };
+                    } else {
+                        currentDrivers.push({
+                            id: `drv_${Date.now()}`,
+                            name: formData.name,
+                            email: formData.email.toLowerCase(),
+                            phone: formData.phone,
+                            status: 'Aktiv',
+                            approvalStatus: 'Approved',
+                            accessCode: formData.driverCode,
+                            vehicleAssigned: matchedDriver.vehicleAssigned || 'Flottenfahrzeug zugewiesen',
+                            rating: 5.0,
+                            tripsCompleted: 0
+                        });
+                    }
+                    localStorage.setItem(storageKey, JSON.stringify(currentDrivers));
+                } catch (err) {
+                    console.error("Failed to update manager fleet list:", err);
+                }
             }
 
             if (finalRole === 'manager') {
@@ -137,9 +319,51 @@ const Signup = () => {
                                     </button>
                                 ))}
                             </div>
-                            <p className="text-[9px] md:text-[11px] lg:text-xs font-black text-brand/80 uppercase tracking-widest text-center italic">
-                                💡 Note: To become a B2B partner, please use a separate email address from your customer account.
-                            </p>
+                            {role === 'driver' ? (
+                                <div 
+                                    className={`p-4 rounded-2xl border text-center transition-all duration-300 mt-2 ${
+                                        isCodeVerified 
+                                            ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400'
+                                            : isNotRegistered 
+                                                ? 'bg-red-500/15 border-red-500 text-red-400 shadow-[0_0_25px_rgba(239,68,68,0.4)] animate-pulse'
+                                                : isFoundInSystem
+                                                    ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-300'
+                                                    : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-center gap-2 mb-1">
+                                        {isCodeVerified ? (
+                                            <CheckCircle2 size={16} className="text-emerald-400" />
+                                        ) : isNotRegistered ? (
+                                            <AlertTriangle size={16} className="text-red-400 animate-bounce" />
+                                        ) : (
+                                            <Key size={16} className="text-amber-400" />
+                                        )}
+                                        <span className="text-[10px] md:text-xs font-black uppercase tracking-wider">
+                                            {isCodeVerified 
+                                                ? 'Flotte Verifiziert'
+                                                : isNotRegistered 
+                                                    ? '⚠️ Noch nicht vom Flotten-Manager erfasst!' 
+                                                    : isFoundInSystem
+                                                        ? '✓ Fahrerprofil im System gefunden'
+                                                        : 'Flotten-Code erforderlich'}
+                                        </span>
+                                    </div>
+                                    <p className="text-[10px] md:text-xs font-bold leading-relaxed">
+                                        {isCodeVerified 
+                                            ? `Erfolgreich mit Flotten-Manager "${matchedDriver?.managerName || 'Grien Fleet'}" verknüpft. Dein Account wird exklusiv diesem Dashboard zugeordnet.`
+                                            : isNotRegistered
+                                                ? 'Für deine E-Mail/Nummer liegt noch keine Freischaltung vor! Bitte verlange den Code von deinem Flotten-Manager und warte, bis er dich im Dashboard hochlädt.'
+                                                : isFoundInSystem
+                                                    ? 'Dein Flotten-Manager hat dich im System erfasst! Bitte gib jetzt unten deinen persönlichen Flotten-Code ein.'
+                                                    : 'Du benötigst einen Code von deinem Flotten-Manager. Bitte verlange den Code von deinem Manager und warte, bis er deine Dokumente hochlädt.'}
+                                    </p>
+                                </div>
+                            ) : (
+                                <p className="text-[9px] md:text-[11px] lg:text-xs font-black text-brand/80 uppercase tracking-widest text-center italic">
+                                    💡 Note: To become a B2B partner, please use a separate email address from your customer account.
+                                </p>
+                            )}
                         </div>
                     )}
 
@@ -253,26 +477,53 @@ const Signup = () => {
                         </div>
                     )}
 
-                    {/* Staff / Driver — no company needed, just a friendly note */}
-                    {(role === 'staff' || role === 'driver') && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="p-5 bg-brand/5 border border-brand/20 rounded-[2rem] space-y-3"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-2xl bg-brand/10 border border-brand/30 flex items-center justify-center">
-                                    <ShieldCheck size={16} className="text-brand" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] md:text-xs lg:text-sm font-black text-brand uppercase tracking-widest">Green ID System</p>
-                                    <p className="text-[9px] md:text-[11px] lg:text-xs text-[var(--text-muted)] font-bold mt-0.5">No company search needed</p>
-                                </div>
+                    {/* Driver Flotten-Manager Code Input */}
+                    {role === 'driver' && (
+                        <div className="space-y-2 p-5 bg-[var(--bg-tertiary)]/40 border border-white/10 rounded-[2rem]">
+                            <label className="text-[10px] md:text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] flex items-center justify-between">
+                                <span className="flex items-center gap-1.5">
+                                    <Key size={14} className={isCodeVerified ? 'text-emerald-400' : 'text-brand'} /> Flotten-Manager Code
+                                </span>
+                                {isCodeVerified && (
+                                    <span className="text-emerald-400 font-black text-[10px] uppercase tracking-wider flex items-center gap-1">
+                                        <CheckCircle2 size={12} /> Exklusiv verknüpft
+                                    </span>
+                                )}
+                            </label>
+                            
+                            <div className="relative">
+                                <Key className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${isCodeVerified ? 'text-emerald-400' : 'text-gray-500'}`} size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="z.B. DRV-7771-FM"
+                                    className={`w-full bg-white/5 border rounded-2xl py-4 pl-12 pr-4 font-mono font-black text-sm tracking-widest uppercase focus:outline-none transition-all ${
+                                        isCodeVerified 
+                                            ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.2)]'
+                                            : driverCodeError 
+                                                ? 'border-red-500/60 bg-red-500/10 text-red-300'
+                                                : 'border-white/10 text-[var(--text-primary)] focus:border-brand/40'
+                                    }`}
+                                    value={formData.driverCode}
+                                    onChange={(e) => handleDriverCodeChange(e.target.value)}
+                                    required
+                                />
                             </div>
-                            <p className="text-[9px] md:text-[11px] lg:text-xs text-[var(--text-muted)] font-medium leading-relaxed">
-                                After registering, you will receive a unique <strong className="text-white">Grien ID</strong>. Share it with your Manager — they will link you to your business from their dashboard.
-                            </p>
-                        </motion.div>
+
+                            {isCodeVerified ? (
+                                <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-[10px] md:text-xs font-bold flex items-center gap-2">
+                                    <ShieldCheck size={16} className="shrink-0" />
+                                    <span>Verknüpft mit Flotten-Dashboard: <strong>{matchedDriver?.managerName || 'Grien Fleet Ops'}</strong></span>
+                                </div>
+                            ) : driverCodeError ? (
+                                <p className="text-[10px] md:text-xs text-red-400 font-bold flex items-center gap-1 pl-1">
+                                    <AlertTriangle size={12} /> {driverCodeError}
+                                </p>
+                            ) : (
+                                <p className="text-[9px] md:text-[11px] text-[var(--text-muted)] font-medium pl-1">
+                                    Diesen Code hat dein Flotten-Manager im Portal hinterlegt. Nur mit diesem Code wirst du exklusiv seinem Dashboard zugeteilt.
+                                </p>
+                            )}
+                        </div>
                     )}
 
                     {signupError && (
@@ -313,7 +564,7 @@ const Signup = () => {
                                 </div>
                                 <h2 className="text-3xl font-black italic tracking-tighter uppercase">Privacy <span className="text-brand">Protocol</span></h2>
                                 <p className="text-xs md:text-sm lg:text-base text-[var(--text-muted)] font-bold uppercase tracking-widest leading-relaxed">
-                                    To enter the GREEN network, you must acknowledge our data governance standards. We prioritize your digital autonomy.
+                                    To enter the GRIEN network, you must acknowledge our data governance standards. We prioritize your digital autonomy.
                                 </p>
                             </div>
 

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Support - Green Nightlife</title>
+    <style>
+        :root {
+            --bg-primary: #050b14;
+            --bg-secondary: #0d1625;
+            --brand: #34d399;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --border: rgba(52, 211, 153, 0.15);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 24px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            margin-bottom: 8px;
+        }
+
+        h1 span {
+            color: var(--brand);
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+        }
+
+        .support-card {
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+
+        .support-item {
+            margin-bottom: 16px;
+        }
+
+        .support-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .label {
+            font-size: 0.75rem;
+            font-weight: 950;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--brand);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        a {
+            color: var(--brand);
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        a:hover {
+            opacity: 0.8;
+        }
+
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Green <span>Support Center</span></h1>
+            <p>We are ready to assist your premium operation night and day.</p>
+        </header>
+
+        <section>
+            <p>If you have any questions regarding ride bookings, VIP event ticket verification, or partner onboardings, please reach out directly through the support details below:</p>
+            
+            <div class="support-card">
+                <div class="support-item">
+                    <span class="label">Support Email</span>
+                    <span class="value"><a href="mailto:support@green-2efb0.web.app">support@green-2efb0.web.app</a></span>
+                </div>
+                <div class="support-item">
+                    <span class="label">Response Time Threshold</span>
+                    <span class="value">Under 10 minutes</span>
+                </div>
+                <div class="support-item">
+                    <span class="label">Operation Hub Location</span>
+                    <span class="value">Frankfurt am Main, Germany</span>
+                </div>
+            </div>
+
+            <p>For urgent telemetry alerts or billing inquiries, managers can also reach out via the secure support terminal inside the administration app.</p>
+        </section>
+
+        <footer>
+            &copy; 2026 Green Nightlife. All rights reserved.
+        </footer>
+    </div>
+</body>
+</html>

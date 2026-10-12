@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, Fingerprint, ArrowLeft, ShieldAlert, CheckCircle2, ChevronRight, HelpCircle } from 'lucide-react';
@@ -18,6 +18,11 @@ const Login = () => {
     
     const [attempts, setAttempts] = useState(0);
     const [isBlocked, setIsBlocked] = useState(false);
+
+    useEffect(() => {
+        setEmail('');
+        setPassword('');
+    }, []);
 
 
     const handleLoginSubmit = (e) => {
@@ -144,7 +149,7 @@ const Login = () => {
                 </div>
 
                 {/* Form Content */}
-                <form onSubmit={handleLoginSubmit} className="space-y-5">
+                <form onSubmit={handleLoginSubmit} autoComplete="off" className="space-y-5">
                     
                     {/* User Feedbacks / Errors / Successes */}
                     <AnimatePresence mode="wait">
@@ -179,6 +184,8 @@ const Login = () => {
                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                             <input
                                 type="email"
+                                name="login_email"
+                                autoComplete="off"
                                 placeholder="Security Email Signature"
                                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:border-brand/40 text-sm font-bold text-[var(--text-primary)] placeholder:text-gray-400/60 transition-colors"
                                 required
@@ -193,6 +200,8 @@ const Login = () => {
                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
                             <input
                                 type="password"
+                                name="login_password"
+                                autoComplete="new-password"
                                 placeholder="Access Password"
                                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:border-brand/40 text-sm font-bold text-[var(--text-primary)] placeholder:text-gray-400/60 transition-colors"
                                 required
@@ -215,7 +224,7 @@ const Login = () => {
                     >
                         {isAuthenticating ? 'Decrypting Network...' : isBlocked ? 'quarantined' : (
                             <>
-                                Establish Connection <ChevronRight size={18} />
+                                Log In <ChevronRight size={18} />
                             </>
                         )}
                     </button>
@@ -225,7 +234,7 @@ const Login = () => {
 
 
                 <p className="mt-6 text-center text-[var(--text-muted)] text-[11px] md:text-sm lg:text-base font-black uppercase tracking-widest">
-                    New Signal Detected? <Link to="/signup" className="text-brand hover:underline">Create Account</Link>
+                    <Link to="/signup" className="text-brand hover:underline">Create Account</Link>
                 </p>
 
             </div>

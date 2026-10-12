@@ -38,7 +38,7 @@ const SuspensionPage = () => {
                     <div className="space-y-4">
                         <h1 className="text-5xl font-black italic uppercase tracking-tighter text-white">Access <span className="text-red-500">Revoked</span></h1>
                         <p className="text-gray-500 text-sm font-bold uppercase tracking-widest leading-relaxed max-w-md">
-                            Your account has been suspended due to repeated behavioral violations of the Green standards.
+                            Your account has been suspended due to repeated behavioral violations of the Grien standards.
                         </p>
                     </div>
 

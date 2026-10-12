@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     ArrowLeft, BedDouble, ShieldCheck, Sparkles, MapPin, Clock, Info, ChevronRight, 
-    Play, Heart, Share2, Menu, Box, ShoppingBag, LayoutGrid 
+    Play, Heart, Share2, Menu, Box, ShoppingBag, LayoutGrid, Ticket, Trophy, Music, Crown
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { db } from '../config/firebase';
@@ -22,10 +22,22 @@ const PartnerDetailsPage = () => {
         color: "text-violet-400"
     };
 
+    const venueCategory = (venue.category || '').toLowerCase();
+    const venueName = (venue.name || '').toLowerCase();
+    const isStadium = venueCategory === 'stadium' || venueName.includes('stadium') || venueName.includes('arena') || venueName.includes('stadion');
+
     const [isLiked, setIsLiked] = useState(false);
     const [mediaItems, setMediaItems] = useState([]);
     const [activeMedia, setActiveMedia] = useState(null);
     const [isLoadingFeed, setIsLoadingFeed] = useState(true);
+    const [selectedTicketCategory, setSelectedTicketCategory] = useState('all');
+
+    const ticketCategories = [
+        { id: 'all', label: 'Alle Eintrittskarten', sub: 'Gesamter Eventplan', icon: Ticket },
+        { id: 'football', label: 'Fußball & Sport', sub: 'Spiele & Turniere', icon: Trophy },
+        { id: 'concerts', label: 'Konzerte & Shows', sub: 'Live Performances', icon: Music },
+        { id: 'vvip', label: 'VVIP & Logen', sub: 'Exklusive Plätze', icon: Crown },
+    ];
 
     // Dynamic Live Feed sync
     useEffect(() => {
@@ -219,6 +231,64 @@ const PartnerDetailsPage = () => {
                         <ChevronRight size={24} className="text-secondary group-hover:text-brand transition-colors" />
                     </button>
                 </section>
+
+                {/* Ticket & Event Category Selector - STADIUMS ONLY */}
+                {isStadium && (
+                    <section className="space-y-4">
+                        <div className="flex items-center justify-between px-2">
+                            <h3 className="text-lg md:text-xl font-black italic uppercase tracking-tighter flex items-center gap-2 text-[var(--text-primary)]">
+                                <Ticket size={20} className="text-brand" /> Ticket Kategorien
+                            </h3>
+                            <span className="text-[9px] md:text-[11px] font-black text-brand uppercase tracking-widest bg-brand/10 px-3 py-1 rounded-full border border-brand/20">
+                                Wähle deine Eintrittskarte
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            {ticketCategories.map((cat) => {
+                                const IconComponent = cat.icon;
+                                const isSelected = selectedTicketCategory === cat.id;
+                                return (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => {
+                                            setSelectedTicketCategory(cat.id);
+                                            navigate('/venue/menu', { 
+                                                state: { 
+                                                    venueName: venue.name, 
+                                                    venueAddress: venue.address, 
+                                                    venueOffer: venue.offer, 
+                                                    emailKey: venue.emailKey, 
+                                                    email: venue.email, 
+                                                    category: venue.category, 
+                                                    ticketCategoryFilter: cat.id 
+                                                } 
+                                            });
+                                        }}
+                                        className={`p-4 rounded-[2rem] border transition-all text-left flex flex-col justify-between group cursor-pointer shadow-md bg-[var(--bg-secondary)] ${
+                                            isSelected 
+                                                ? 'border-2 border-brand ring-2 ring-brand/20 shadow-lg scale-[1.02]' 
+                                                : 'border-[var(--border-main)] hover:border-brand/50 hover:bg-brand/5'
+                                        }`}
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isSelected ? 'bg-brand/20 text-brand border border-brand/40 shadow-sm' : 'bg-brand/10 text-brand'}`}>
+                                                <IconComponent size={20} />
+                                            </div>
+                                            <ChevronRight size={16} className={isSelected ? 'text-brand' : 'text-gray-400 group-hover:text-brand'} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xs md:text-sm font-black uppercase tracking-wider italic leading-tight text-[var(--text-primary)]">{cat.label}</h4>
+                                            <p className="text-[8px] md:text-[10px] font-bold uppercase tracking-widest mt-0.5 text-[var(--text-secondary)] opacity-70">
+                                                {cat.sub}
+                                            </p>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </section>
+                )}
 
                 {/* Partner Feed */}
                 <section className="space-y-6">

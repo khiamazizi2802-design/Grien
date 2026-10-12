@@ -554,11 +554,19 @@ export const AuthProvider = ({ children }) => {
                 localStorage.removeItem(key);
             }
         }
+
+        localStorage.removeItem('green_user_email');
+        localStorage.removeItem('green_jwt_token');
+        localStorage.removeItem('green_role');
+        localStorage.removeItem('green_verified');
+        localStorage.removeItem('green_business_type');
+        sessionStorage.clear();
         
         try {
             const url = new URL(window.location.href);
             url.searchParams.delete('role');
             url.searchParams.delete('businessType');
+            url.searchParams.delete('autoLogin');
             window.history.replaceState({}, '', url.pathname + url.search);
         } catch (e) {
             console.error('Failed to strip URL parameters:', e);

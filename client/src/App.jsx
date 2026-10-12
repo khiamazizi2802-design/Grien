@@ -4,7 +4,7 @@ import Home from './pages/Home';
 import GreenSPage from './pages/GreenSPage';
 import GreenRidePage from './pages/GreenRidePage';
 import DriverDashboard from './pages/DriverDashboard';
-import AdminDashboard from './pages/AdminDashboard';
+import ShieldAlertNotice from './components/ShieldAlertNotice';
 import ManagerDashboard from './pages/ManagerDashboard';
 import NightCrew from './pages/NightCrew';
 import VenueMenuPage from './pages/VenueMenuPage';
@@ -120,9 +120,9 @@ function App() {
                                 <Route path="/manager/resolution/:incidentId" element={<ResolutionCenterPage />} />
                             </Route>
 
-                            {/* Super Admin Routes */}
+                            {/* Super Admin Routes (Web Portal Only) */}
                             <Route element={<ProtectedRoute roles={['super_admin']} />}>
-                                <Route path="/admin" element={<AdminDashboard />} />
+                                <Route path="/admin" element={<ShieldAlertNotice />} />
                             </Route>
 
                             <Route path="*" element={<Navigate to="/" replace />} />

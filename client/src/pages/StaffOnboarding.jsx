@@ -124,7 +124,7 @@ const StaffOnboarding = () => {
                                     <h3 className="text-2xl font-black italic uppercase text-primary tracking-tight leading-none">Locate Personnel</h3>
                                 </div>
                                 <p className="text-[11px] md:text-sm lg:text-base font-bold text-secondary uppercase tracking-widest leading-relaxed max-w-md opacity-70">
-                                    Input the Green ID number to add staff to your profile.
+                                    Input the Grien ID number to add staff to your profile.
                                 </p>
                             </div>
 
@@ -232,7 +232,7 @@ const StaffOnboarding = () => {
                         <div className="h-px flex-1 bg-gradient-to-l from-transparent to-main" />
                     </div>
                     <p className="text-[10px] md:text-xs lg:text-sm font-black text-secondary uppercase tracking-[0.5em] italic opacity-40">
-                        Personnel must possess an active Green ID for protocol compliance.
+                        Personnel must possess an active Grien ID for protocol compliance.
                     </p>
                 </div>
             </div>

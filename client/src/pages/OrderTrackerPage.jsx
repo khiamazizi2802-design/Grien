@@ -45,8 +45,29 @@ const OrderTrackerPage = () => {
     const orderId = location.state?.orderId;
     
     const isWashHub = venueName.toLowerCase().includes('wash') || cart.some(item => item.tags?.includes('Service'));
-    const isHotel = venueName.toLowerCase().includes('hotel') || venueName.toLowerCase().includes('luxe') || cart.some(item => item.name.toLowerCase().includes('room') || item.category === 'Rooms');
-    const isBooking = isHotel && cart.some(item => item.tags?.includes('Luxury') || item.tags?.includes('Elite') || item.name.toLowerCase().includes('room'));
+    const isHotel = location.state?.orderType === 'hotel' || 
+                    location.state?.bookingType === 'hotel' ||
+                    venueName.toLowerCase().includes('hotel') || 
+                    venueName.toLowerCase().includes('luxe') || 
+                    venueName.toLowerCase().includes('resort') ||
+                    venueName.toLowerCase().includes('palace') ||
+                    cart.some(item => 
+                        item.name.toLowerCase().includes('room') || 
+                        item.name.toLowerCase().includes('suite') || 
+                        item.name.toLowerCase().includes('bed') ||
+                        item.category === 'Rooms' ||
+                        item.category === 'Suites' ||
+                        item.tags?.includes('Hotel') ||
+                        item.tags?.includes('Suite') ||
+                        item.tags?.includes('Room')
+                    );
+    const isBooking = isHotel || cart.some(item => 
+        item.tags?.includes('Luxury') || 
+        item.tags?.includes('Elite') || 
+        item.name.toLowerCase().includes('room') ||
+        item.name.toLowerCase().includes('suite') ||
+        item.name.toLowerCase().includes('bed')
+    );
     const isStadium = venueName.toLowerCase().includes('stadium') || venueName.toLowerCase().includes('arena');
     const isParking = false;
     const guestName = location.state?.guestName;
@@ -55,7 +76,7 @@ const OrderTrackerPage = () => {
     const totalCost = location.state?.totalCost ?? cart.reduce((sum, item) => sum + item.price, 0);
 
     // Check if the order is a ticket order (e.g. Club entry, Event ticket, Stadium seat)
-    const hasTickets = !isBooking && cart.some(item => 
+    const hasTickets = !isBooking && !isHotel && cart.some(item => 
         item.tags?.includes('Ticket') || 
         item.tags?.includes('Fast-Lane') || 
         item.tags?.includes('VIP') ||
@@ -67,7 +88,7 @@ const OrderTrackerPage = () => {
         item.id?.startsWith('dynamic')
     );
 
-    const isStadiumTicket = isStadium || location.state?.isStadiumTicket || location.state?.orderType === 'stadium' || hasTickets || (!isBooking && !isHotel && !isWashHub);
+    const isStadiumTicket = !isHotel && !isBooking && !isWashHub && (isStadium || location.state?.isStadiumTicket || location.state?.orderType === 'stadium' || hasTickets);
 
     const tableId = location.state?.tableId || "Unknown";
     const orderIdValue = location.state?.orderId || Date.now();

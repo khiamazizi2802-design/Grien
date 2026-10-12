@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     Plus, Trash2, ArrowLeft, Loader2, ChevronRight,
-    Utensils, PlusCircle, Sparkles, Upload, BedDouble, Ticket
+    Utensils, PlusCircle, Sparkles, Upload, BedDouble, Ticket, Check, Bus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../config/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { getShuttleFareConfig } from '../utils/shuttleFareHelper';
 
 const getCategoryOptionsForContext = (ctx) => {
     if (ctx === 'HM') {
@@ -23,23 +24,17 @@ const getCategoryOptionsForContext = (ctx) => {
             { value: 'Shuttle Package', label: 'Zimmer + VIP Shuttle Package' }
         ];
     }
-    if (ctx === 'SM') {
+    if (ctx === 'SM' || ctx === 'VM') {
         return [
-            { value: 'VIP Box', label: 'VIP Box / Loge' },
-            { value: 'Main Stand', label: 'Pitch-Side / Main Stand' },
-            { value: 'Executive Lounge', label: 'Executive Lounge Pass' },
-            { value: 'Standard Pass', label: 'Standard E-Ticket' },
-            { value: 'Valet Package', label: 'Valet Parking + Ticket Package' }
-        ];
-    }
-    if (ctx === 'VM') {
-        return [
-            { value: 'Tickets', label: 'Entry Tickets / Passes' },
-            { value: 'VIP', label: 'VIP Table / Premium Booking' },
-            { value: 'Drinks', label: 'Drinks & Wine' },
-            { value: 'Food', label: 'Food / Catering' },
-            { value: 'Coffee', label: 'Coffee & Snacks' },
-            { value: 'Dessert', label: 'Dessert & Sweets' }
+            { value: 'Fußball & Sport', label: '⚽ Fußball & Sport' },
+            { value: 'Konzerte & Shows', label: '🎸 Konzerte & Shows' },
+            { value: 'VVIP & Logen', label: '👑 VVIP & Logen' },
+            { value: 'Events & Shows', label: '🎟️ Events & Shows' },
+            { value: 'Bundesliga', label: '🏆 Bundesliga' },
+            { value: 'Champions League', label: '⭐ Champions League' },
+            { value: 'DFB-Pokal', label: '🥇 DFB-Pokal' },
+            { value: 'Motorsport & Racing', label: '🏎️ Motorsport & Racing' },
+            { value: 'Festival & Open Air', label: '🎪 Festival & Open Air' }
         ];
     }
     if (ctx === 'WM') {
@@ -85,6 +80,26 @@ const getCategoryOptionsForContext = (ctx) => {
         { value: 'Coffee', label: 'Coffee & Hot Drinks' },
         { value: 'Breakfast', label: 'Breakfast / Frühstück' },
         { value: 'Dessert', label: 'Dessert & Sweets' }
+    ];
+};
+
+const getTicketTypeOptionsForContext = (ctx) => {
+    if (ctx === 'SM' || ctx === 'VM') {
+        return [
+            { value: 'Sitzplatz', label: '💺 Sitzplatz Ticket' },
+            { value: 'Stehplatz', label: '🧍 Stehplatz / Block' },
+            { value: 'VIP Box', label: '👑 VIP Box / Loge' },
+            { value: 'Haupttribüne', label: '🏟️ Haupttribüne' },
+            { value: 'Gegengerade', label: '🏟️ Gegengerade' },
+            { value: 'Nordkurve', label: '🚩 Nordkurve' },
+            { value: 'Südkurve', label: '🚩 Südkurve' },
+            { value: 'Executive Lounge', label: '🥂 Executive Lounge Pass' },
+            { value: 'Valet Package', label: '🅿️ Valet Package' }
+        ];
+    }
+    return [
+        { value: 'Standard', label: 'Standard Ticket' },
+        { value: 'VIP', label: 'VIP Ticket' }
     ];
 };
 
@@ -178,12 +193,26 @@ const MenuManagement = () => {
     const { user, loading } = useAuth();
     const [manualItems, setManualItems] = useState([]);
     const [hotelReservationEmail, setHotelReservationEmail] = useState('');
+    const [stadiumApiLink, setStadiumApiLink] = useState('');
+    const [stadiumSeatMapLink, setStadiumSeatMapLink] = useState('');
+    const [shuttleBasePrice, setShuttleBasePrice] = useState(() => getShuttleFareConfig().basePrice);
     const [isPublishing, setIsPublishing] = useState(false);
+
+    useEffect(() => {
+        const updatePrice = () => setShuttleBasePrice(getShuttleFareConfig().basePrice);
+        window.addEventListener('shuttleFareConfigUpdated', updatePrice);
+        window.addEventListener('storage', updatePrice);
+        return () => {
+            window.removeEventListener('shuttleFareConfigUpdated', updatePrice);
+            window.removeEventListener('storage', updatePrice);
+        };
+    }, []);
     
     const userEmailKey = user?.email ? user.email.replace(/[^a-zA-Z0-9]/g, '_') : 'default';
     const [managerContext, setManagerContext] = useState(() => localStorage.getItem(`green_manager_context_${userEmailKey}`) || 'RM');
 
     const getCategoryOptions = () => getCategoryOptionsForContext(managerContext);
+    const getTicketTypeOptions = () => getTicketTypeOptionsForContext(managerContext);
 
     // Load existing menu from Firestore and localStorage
     useEffect(() => {
@@ -198,6 +227,8 @@ const MenuManagement = () => {
 
             let loadedItems = [];
             let savedEmail = localStorage.getItem(`green_hotel_reservation_email_${userEmailKey}`) || '';
+            let savedApiLink = localStorage.getItem(`green_stadium_api_link_${userEmailKey}`) || '';
+            let savedSeatMapLink = localStorage.getItem(`green_stadium_seatmap_link_${userEmailKey}`) || '';
 
             // 1. Fetch from Firestore
             try {
@@ -210,6 +241,12 @@ const MenuManagement = () => {
                     }
                     if (data?.hotelReservationEmail) {
                         savedEmail = data.hotelReservationEmail;
+                    }
+                    if (data?.stadiumApiLink) {
+                        savedApiLink = data.stadiumApiLink;
+                    }
+                    if (data?.stadiumSeatMapLink) {
+                        savedSeatMapLink = data.stadiumSeatMapLink;
                     }
                 }
             } catch (err) {
@@ -232,13 +269,16 @@ const MenuManagement = () => {
                 savedEmail = loadedItems.find(i => i.reservationEmail)?.reservationEmail || '';
             }
             setHotelReservationEmail(savedEmail);
+            setStadiumApiLink(savedApiLink);
+            setStadiumSeatMapLink(savedSeatMapLink);
 
             // Set state. If empty, push a default row to start editing instantly.
             if (loadedItems.length > 0) {
-                const validCatValues = categories.map(c => c.value);
                 const sanitizedItems = loadedItems.map(item => ({
                     ...item,
-                    category: validCatValues.includes(item.category) ? item.category : defaultCat
+                    category: (item.category && String(item.category).trim()) ? String(item.category).trim() : defaultCat,
+                    ticketType: (item.ticketType && String(item.ticketType).trim()) ? String(item.ticketType).trim() : 'Sitzplatz',
+                    hasShuttle: Boolean(item.hasShuttle)
                 }));
                 setManualItems(sanitizedItems);
             } else {
@@ -247,6 +287,8 @@ const MenuManagement = () => {
                     name: '',
                     price: '',
                     category: defaultCat,
+                    ticketType: 'Sitzplatz',
+                    hasShuttle: false,
                     description: '',
                     image: ''
                 }]);
@@ -279,16 +321,18 @@ const MenuManagement = () => {
         try {
             const categories = getCategoryOptionsForContext(managerContext);
             const defaultCat = categories.length > 0 ? categories[0].value : 'Standard Room';
-            const validCatValues = categories.map(c => c.value);
 
             const formattedItems = validItems.map((item, idx) => {
                 const galleryUrls = item.gallery && item.gallery.length > 0 ? item.gallery : (item.image ? [item.image] : []);
-                const finalCategory = validCatValues.includes(item.category) ? item.category : defaultCat;
+                const finalCategory = (item.category && String(item.category).trim()) ? String(item.category).trim() : defaultCat;
+                const finalTicketType = (item.ticketType && String(item.ticketType).trim()) ? String(item.ticketType).trim() : 'Sitzplatz';
                 return {
                     id: item.id || (Date.now() + idx),
                     name: item.name.trim(),
                     price: item.price.trim(),
                     category: finalCategory,
+                    ticketType: finalTicketType,
+                    hasShuttle: Boolean(item.hasShuttle),
                     description: (item.description || '').trim(),
                     image: (item.image || galleryUrls[0] || '').trim() || getAIAssignedImage(item.name, finalCategory, managerContext),
                     gallery: galleryUrls,
@@ -301,17 +345,23 @@ const MenuManagement = () => {
             await setDoc(doc(db, 'business_menus', user?.email?.toLowerCase() || userEmailKey), {
                 items: formattedItems,
                 hotelReservationEmail: hotelReservationEmail.trim(),
+                stadiumApiLink: stadiumApiLink.trim(),
+                stadiumSeatMapLink: stadiumSeatMapLink.trim(),
                 updatedAt: new Date().toISOString()
             });
 
             localStorage.setItem(`green_published_menu_${managerContext}_${userEmailKey}`, JSON.stringify(formattedItems));
             localStorage.setItem(`green_hotel_reservation_email_${userEmailKey}`, hotelReservationEmail.trim());
+            localStorage.setItem(`green_stadium_api_link_${userEmailKey}`, stadiumApiLink.trim());
+            localStorage.setItem(`green_stadium_seatmap_link_${userEmailKey}`, stadiumSeatMapLink.trim());
             alert(`Catalog finalized! ${formattedItems.length} items published live to the Green Grid.`);
             navigate(`/manager${window.location.search}`);
         } catch (err) {
             console.error('Failed to publish manual catalog:', err);
             localStorage.setItem(`green_published_menu_${managerContext}_${userEmailKey}`, JSON.stringify(validItems));
             localStorage.setItem(`green_hotel_reservation_email_${userEmailKey}`, hotelReservationEmail.trim());
+            localStorage.setItem(`green_stadium_api_link_${userEmailKey}`, stadiumApiLink.trim());
+            localStorage.setItem(`green_stadium_seatmap_link_${userEmailKey}`, stadiumSeatMapLink.trim());
             alert(`Catalog finalized locally (${validItems.length} items).`);
             navigate(`/manager${window.location.search}`);
         } finally {
@@ -349,6 +399,8 @@ const MenuManagement = () => {
             name: '',
             price: '',
             category: defaultCat,
+            ticketType: 'Sitzplatz',
+            hasShuttle: false,
             description: '',
             image: ''
         }]);
@@ -364,6 +416,8 @@ const MenuManagement = () => {
                 name: '',
                 price: '',
                 category: defaultCat,
+                ticketType: 'Sitzplatz',
+                hasShuttle: false,
                 description: '',
                 image: ''
             }]);
@@ -407,15 +461,30 @@ const MenuManagement = () => {
                             </div>
 
                             <div className="overflow-x-auto no-scrollbar rounded-2xl border border-[#ffffff1a]">
+                                <datalist id="category-presets-list">
+                                    {getCategoryOptions().map(option => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
+                                </datalist>
+                                <datalist id="tickettype-presets-list">
+                                    {getTicketTypeOptions().map(option => (
+                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                    ))}
+                                </datalist>
                                 <table className="w-full text-left border-collapse min-w-[850px]">
                                     <thead>
                                          <tr className="border-b border-[#ffffff1a] bg-[#ffffff14] text-[8px] md:text-[10px] lg:text-xs font-black text-white uppercase tracking-[0.2em]">
                                             <th className="p-3 pl-4 w-[20%] text-white font-black" style={{ color: '#ffffff' }}>{managerContext === 'HM' ? 'Zimmer / Suite Name' : managerContext === 'SM' ? 'Ticket / Sektor Name' : 'Bezeichnung'}</th>
-                                            <th className="p-3 w-[15%] text-white font-black" style={{ color: '#ffffff' }}>Kategorie</th>
+                                            <th className="p-3 w-[15%] text-white font-black" style={{ color: '#ffffff' }}>{managerContext === 'SM' ? 'Event Kategorie' : 'Kategorie'}</th>
+                                            {managerContext === 'SM' && (
+                                                <th className="p-3 w-[13%] text-white font-black" style={{ color: '#ffffff' }}>Art von Ticket</th>
+                                            )}
+                                            {managerContext === 'SM' && (
+                                                <th className="p-3 w-[14%] text-center text-white font-black" style={{ color: '#ffffff' }}>Shuttle-Service</th>
+                                            )}
                                             <th className="p-3 w-[10%] text-center text-white font-black" style={{ color: '#ffffff' }}>{managerContext === 'HM' ? 'Preis / Nacht (€)' : 'Preis (€)'}</th>
-                                            {managerContext === 'SM' && <th className="p-3 w-[18%] text-white font-black" style={{ color: '#ffffff' }}>Stadion QR-Code / Link</th>}
-                                            <th className="p-3 w-[22%] text-white font-black" style={{ color: '#ffffff' }}>Beschreibung & Ausstattung</th>
-                                            <th className="p-3 w-[12%] text-white font-black" style={{ color: '#ffffff' }}>Fotos (Galerie)</th>
+                                             <th className="p-3 w-[22%] text-white font-black" style={{ color: '#ffffff' }}>Beschreibung & Ausstattung</th>
+                                            <th className="p-3 w-[13%] text-white font-black" style={{ color: '#ffffff' }}>Fotos (Galerie)</th>
                                             <th className="p-3 pr-4 w-[3%] text-right text-white font-black" style={{ color: '#ffffff' }}></th>
                                         </tr>
                                     </thead>
@@ -435,24 +504,93 @@ const MenuManagement = () => {
                                                 </td>
                                                 {/* Category */}
                                                 <td className="p-2.5">
-                                                    <select 
-                                                        className="w-full bg-[#ffffff0d] border border-[#ffffff1a] rounded-xl p-2.5 text-xs md:text-sm lg:text-base font-black uppercase italic text-[#00e5ff] focus:border-[#00e5ff66] outline-none transition-all appearance-none"
-                                                        value={item.category}
-                                                        onChange={(e) => handleFieldChange(index, 'category', e.target.value)}
-                                                        style={{
-                                                            color: '#00e5ff',
-                                                            backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300ff88' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
-                                                            backgroundRepeat: 'no-repeat',
-                                                            backgroundPosition: 'right 12px center',
-                                                            backgroundSize: '8px',
-                                                            paddingRight: '24px'
-                                                        }}
-                                                    >
-                                                        {getCategoryOptions().map(option => (
-                                                            <option key={option.value} value={option.value} className="bg-[#0a0f1c] text-white font-bold" style={{ color: '#ffffff', backgroundColor: '#0a0f1c' }}>{option.label}</option>
-                                                        ))}
-                                                    </select>
+                                                    <div className="relative flex items-center">
+                                                        <input 
+                                                            type="text" 
+                                                            list="category-presets-list"
+                                                            placeholder={managerContext === 'SM' ? 'z.B. Fußball' : 'Kategorie eingeben'}
+                                                            className="w-full bg-[#ffffff0d] border border-[#ffffff26] rounded-xl p-2.5 pr-8 text-xs md:text-sm lg:text-base font-black uppercase italic text-[#00e5ff] focus:border-[#00e5ff] outline-none transition-all placeholder:text-gray-500 placeholder:normal-case placeholder:font-normal placeholder:not-italic"
+                                                            style={{ color: '#00e5ff' }}
+                                                            value={item.category || ''}
+                                                            onChange={(e) => handleFieldChange(index, 'category', e.target.value)}
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            tabIndex={-1}
+                                                            onClick={(e) => {
+                                                                const input = e.currentTarget.previousElementSibling;
+                                                                if (input) {
+                                                                    input.focus();
+                                                                    if (input.showPicker) {
+                                                                        try { input.showPicker(); } catch (_) {}
+                                                                    }
+                                                                }
+                                                            }}
+                                                            className="absolute right-2 text-[#00e5ff] opacity-60 hover:opacity-100 transition-opacity p-1 cursor-pointer"
+                                                            title="Vorschläge anzeigen / auswählen"
+                                                        >
+                                                            <ChevronRight size={13} className="rotate-90" />
+                                                        </button>
+                                                    </div>
                                                 </td>
+                                                {/* Ticket Type (Art von Ticket - Stadium Only) */}
+                                                {managerContext === 'SM' && (
+                                                    <td className="p-2.5">
+                                                        <div className="relative flex items-center">
+                                                            <input 
+                                                                type="text" 
+                                                                list="tickettype-presets-list"
+                                                                placeholder="z.B. Sitzplatz"
+                                                                className="w-full bg-[#ffffff0d] border border-[#ffffff26] rounded-xl p-2.5 pr-8 text-xs md:text-sm lg:text-base font-black uppercase italic text-[#00e5ff] focus:border-[#00e5ff] outline-none transition-all placeholder:text-gray-500 placeholder:normal-case placeholder:font-normal placeholder:not-italic"
+                                                                style={{ color: '#00e5ff' }}
+                                                                value={item.ticketType || ''}
+                                                                onChange={(e) => handleFieldChange(index, 'ticketType', e.target.value)}
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                tabIndex={-1}
+                                                                onClick={(e) => {
+                                                                    const input = e.currentTarget.previousElementSibling;
+                                                                    if (input) {
+                                                                        input.focus();
+                                                                        if (input.showPicker) {
+                                                                            try { input.showPicker(); } catch (_) {}
+                                                                        }
+                                                                    }
+                                                                }}
+                                                                className="absolute right-2 text-[#00e5ff] opacity-60 hover:opacity-100 transition-opacity p-1 cursor-pointer"
+                                                                title="Vorschläge anzeigen / auswählen"
+                                                            >
+                                                                <ChevronRight size={13} className="rotate-90" />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                )}
+                                                {/* Shuttle-Service Tickmark (Stadium Only) */}
+                                                {managerContext === 'SM' && (
+                                                    <td className="p-2.5 text-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleFieldChange(index, 'hasShuttle', !item.hasShuttle)}
+                                                            className={`w-full py-2.5 px-2 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all border shadow-sm ${
+                                                                item.hasShuttle
+                                                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 shadow-[0_0_14px_rgba(16,185,129,0.25)] hover:bg-emerald-500/30'
+                                                                    : 'bg-[#ffffff08] text-slate-400 border-white/10 hover:border-white/25 hover:text-white'
+                                                            }`}
+                                                            title={item.hasShuttle ? 'Ticket beinhaltet Shuttle-Transfer (Klicken zum Deaktivieren)' : 'Ticket ohne Shuttle (Klicken zum Aktivieren)'}
+                                                        >
+                                                            <div className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 transition-all ${
+                                                                item.hasShuttle ? 'bg-emerald-400 text-slate-950 font-black' : 'border border-slate-500 bg-white/5'
+                                                            }`}>
+                                                                {item.hasShuttle ? <Check size={12} strokeWidth={3.5} /> : null}
+                                                            </div>
+                                                            <span className="truncate flex items-center gap-1 font-bold">
+                                                                <Bus size={13} className={item.hasShuttle ? 'text-emerald-400' : 'text-slate-500'} />
+                                                                {item.hasShuttle ? 'Mit Shuttle' : 'Ohne Shuttle'}
+                                                            </span>
+                                                        </button>
+                                                    </td>
+                                                )}
                                                 {/* Price */}
                                                 <td className="p-2.5">
                                                     <input 
@@ -464,48 +602,6 @@ const MenuManagement = () => {
                                                         onChange={(e) => handleFieldChange(index, 'price', e.target.value)}
                                                     />
                                                 </td>
-                                                {/* Stadion QR-Code / Link Column */}
-                                                {managerContext === 'SM' && (
-                                                    <td className="p-2.5">
-                                                        <div className="flex flex-col gap-1.5">
-                                                            <div className="flex items-center gap-1.5">
-                                                                <label className="cursor-pointer px-2 py-1 bg-[#ffffff0d] border border-[#00e5ff4d] hover:bg-[#00e5ff1a] rounded-lg text-[8px] font-black uppercase text-[#00e5ff] tracking-widest flex items-center gap-1 shrink-0">
-                                                                    <span>🖼️ QR Upload</span>
-                                                                    <input 
-                                                                        type="file" 
-                                                                        accept="image/*" 
-                                                                        className="hidden" 
-                                                                        onChange={(e) => {
-                                                                            const file = e.target.files?.[0];
-                                                                            if (file) {
-                                                                                const reader = new FileReader();
-                                                                                reader.onloadend = () => {
-                                                                                    handleFieldChange(index, 'stadiumQrCode', reader.result);
-                                                                                    alert(`✅ Stadion QR-Code Bild für "${item.name || 'Ticket'}" hochgeladen!`);
-                                                                                };
-                                                                                reader.readAsDataURL(file);
-                                                                            }
-                                                                        }}
-                                                                    />
-                                                                </label>
-                                                                 {item.stadiumQrCode && (
-                                                                    <span className="text-[7px] text-green-400 font-bold bg-green-500/10 px-1 py-0.5 rounded border border-green-500/20">
-                                                                        QR Bild ✓
-                                                                    </span>
-                                                                )}
-                                                            </div>
-
-                                                            <input 
-                                                                type="text" 
-                                                                placeholder="🔗 Ticket-Link URL..."
-                                                                className="w-full bg-[#ffffff0d] border border-[#ffffff26] rounded-lg p-1.5 text-[8px] font-bold text-white focus:border-[#00e5ff] outline-none placeholder-gray-500"
-                                                                style={{ color: '#ffffff' }}
-                                                                value={item.stadiumTicketLink || ''}
-                                                                onChange={(e) => handleFieldChange(index, 'stadiumTicketLink', e.target.value)}
-                                                            />
-                                                        </div>
-                                                    </td>
-                                                )}
                                                 {/* Description */}
                                                 <td className="p-2.5">
                                                         <input 
@@ -604,6 +700,49 @@ const MenuManagement = () => {
                                             value={hotelReservationEmail}
                                             onChange={(e) => setHotelReservationEmail(e.target.value)}
                                         />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Stadion Hybrid Ticket-API & Sitzplatz-Wahl Gateway */}
+                            {managerContext === 'SM' && (
+                                <div className="mt-4 p-4 md:p-5 bg-[#ffffff05] border border-[#00e5ff33] rounded-2xl flex flex-col gap-4 shadow-lg">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2 text-[#00e5ff] font-black text-xs md:text-sm uppercase tracking-wider">
+                                            <span className="text-base">⚡</span>
+                                            <span>B2B Ticket-API & Live Sitzplatz-Wahl Gateway</span>
+                                        </div>
+                                        <p className="text-[10px] md:text-xs text-[#9ca3af]">
+                                            Hybrid-Schnittstelle: Verbindet das Ticket-System per API oder leitet den Kunden per 1-Klick-Browser-Link direkt zur Saalplan-Sitzplatzwahl.
+                                        </p>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-black uppercase text-cyan-300 tracking-wider flex items-center gap-1">
+                                                <span>⚡ B2B Ticket-API Endpoint:</span>
+                                            </label>
+                                            <input 
+                                                type="text"
+                                                placeholder="https://ticket-system.verein.de/api/v1/tickets..."
+                                                className="w-full bg-[#ffffff0d] border border-[#00e5ff66] rounded-xl p-2.5 text-xs font-mono font-bold text-cyan-200 focus:border-[#00e5ff] outline-none transition-all placeholder:text-gray-500 shadow-inner"
+                                                style={{ color: '#00e5ff' }}
+                                                value={stadiumApiLink}
+                                                onChange={(e) => setStadiumApiLink(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-black uppercase text-cyan-300 tracking-wider flex items-center gap-1">
+                                                <span>💺 Stadion Saalplan / Sitzplatz-Wahl Link (Browser):</span>
+                                            </label>
+                                            <input 
+                                                type="text"
+                                                placeholder="https://tickets.verein.de/saalplan-wahlen..."
+                                                className="w-full bg-[#ffffff0d] border border-[#00e5ff66] rounded-xl p-2.5 text-xs font-mono font-bold text-cyan-200 focus:border-[#00e5ff] outline-none transition-all placeholder:text-gray-500 shadow-inner"
+                                                style={{ color: '#00e5ff' }}
+                                                value={stadiumSeatMapLink}
+                                                onChange={(e) => setStadiumSeatMapLink(e.target.value)}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             )}

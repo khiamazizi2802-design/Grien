@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     ArrowLeft, Plus, Sparkles, BellRing, Info, ChevronRight, Search, 
     ShieldCheck, ShoppingBag, MapPin, X, QrCode, Ticket, CreditCard, Wallet, Check, Zap, BedDouble, Trash2,
-    Landmark
+    Landmark, ExternalLink
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useRide } from '../context/RideContext';
@@ -211,6 +211,7 @@ const VenueMenuPage = () => {
     const isStadium = passedCategory === 'stadium' || venueName.toLowerCase().includes('stadium') || venueName.toLowerCase().includes('arena');
     const isDining = passedCategory === 'restaurant' || venueName.toLowerCase().includes('dining') || venueName.toLowerCase().includes('restaurant') || venueName.toLowerCase().includes('bistro') || venueName.toLowerCase().includes('eat') || venueName.toLowerCase().includes('food') || venueName.toLowerCase().includes('cafe') || venueName.toLowerCase().includes('cafǸ') || venueName.toLowerCase().includes('diner') || venueName.toLowerCase().includes('steakhouse') || venueName.toLowerCase().includes('gastronomy') || venueName.toLowerCase().includes('sushi') || venueName.toLowerCase().includes('pizza') || venueName.toLowerCase().includes('kitchen');
     const isClub = passedCategory === 'club' || passedCategory === 'bar' || ((venueName.toLowerCase().includes('club') || venueName.toLowerCase().includes('disco') || venueName.toLowerCase().includes('lounge') || venueName.toLowerCase().includes('night') || venueName.toLowerCase().includes('bar') || venueName.toLowerCase().includes('festival') || venueName.toLowerCase().includes('event') || venueName.toLowerCase().includes('underground')) && !isDining && !isHotel && !isStadium);
+    const isFootballTicket = location.state?.ticketCategoryFilter === 'football' || (isStadium && location.state?.ticketCategoryFilter !== 'concerts' && location.state?.ticketCategoryFilter !== 'vvip');
 
     const isGroupActive = localStorage.getItem('green_group_state') === 'active';
     const [commerceMode, setCommerceMode] = useState(true);
@@ -467,7 +468,9 @@ const VenueMenuPage = () => {
                         desc: item.description || '',
                         image: item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop',
                         gallery: Array.isArray(item.gallery) && item.gallery.length > 0 ? item.gallery : [item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop'],
-                        tags: [item.category || 'General']
+                        tags: [item.category || 'General'],
+                        ticketType: item.ticketType || '',
+                        hasShuttle: Boolean(item.hasShuttle)
                     });
                 });
 
@@ -1182,7 +1185,17 @@ const VenueMenuPage = () => {
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             const itemGallery = Array.isArray(item.gallery) && item.gallery.length > 0 ? item.gallery : [item.image];
-                                            setSelectedImage({ gallery: itemGallery, activeIndex: 0, title: item.name });
+                                            setSelectedImage({ 
+                                                gallery: itemGallery, 
+                                                activeIndex: 0, 
+                                                title: item.name, 
+                                                description: item.desc || item.description, 
+                                                price: item.price, 
+                                                item: item,
+                                                ticketType: item.ticketType,
+                                                hasShuttle: item.hasShuttle,
+                                                category: item.category
+                                            });
                                         }} 
                                         className="relative h-28 w-full rounded-[2rem] overflow-hidden mb-3 cursor-zoom-in group/img"
                                     >
@@ -1191,6 +1204,11 @@ const VenueMenuPage = () => {
                                         {Array.isArray(item.gallery) && item.gallery.length > 1 && (
                                             <div className="absolute top-2 right-2 px-2.5 py-1 bg-black/70 backdrop-blur-md rounded-full text-[8px] md:text-[10px] font-black uppercase text-white tracking-widest border border-white/20">
                                                 📷 {item.gallery.length} Photos
+                                            </div>
+                                        )}
+                                        {item.hasShuttle && (
+                                            <div className="absolute top-2 left-2 px-2.5 py-1 bg-emerald-500/90 backdrop-blur-md rounded-full text-[8px] md:text-[9px] font-black uppercase text-white tracking-wider border border-emerald-400/40 flex items-center gap-1 shadow-lg">
+                                                <span>🚐</span> Inkl. Shuttle
                                             </div>
                                         )}
                                     </div>
@@ -1320,11 +1338,13 @@ const VenueMenuPage = () => {
                                             )}
 
                                             <h3 className="text-2xl font-black italic uppercase text-[var(--text-primary)] tracking-tighter">
-                                                {(isHotel || isBooking) ? 'Guest Registration' : (isStadium || isClub) ? 'Ticket Hub' : 'Guest Verification'}
+                                                {(isHotel || isBooking) ? 'Guest Registration' : (isStadium || isClub) ? 'YOUR TICKET' : 'Guest Verification'}
                                             </h3>
-                                            <p className="text-[10px] md:text-xs lg:text-sm text-brand font-black uppercase tracking-[0.3em]">
-                                                {(isHotel || isBooking) ? 'Full Check-in Protocol' : isStadium ? 'Stadium Mission Authorization' : isClub ? 'Club Event Admission Protocol' : `Room #${selectedTable} Security Check`}
-                                            </p>
+                                            {((isHotel || isBooking) || (!isStadium && !isClub)) && (
+                                                <p className="text-[10px] md:text-xs lg:text-sm text-brand font-black uppercase tracking-[0.3em]">
+                                                    {(isHotel || isBooking) ? 'Full Check-in Protocol' : `Room #${selectedTable} Security Check`}
+                                                </p>
+                                            )}
                                         </div>
                                         
                                         <div className={`space-y-4 ${ (isHotel || isBooking || isStadium || isClub) ? 'max-h-[50vh] overflow-y-auto pr-2 no-scrollbar px-1' : ''}`}>
@@ -1437,15 +1457,40 @@ const VenueMenuPage = () => {
                                                                 onChange={(e) => setGuestDetails({...guestDetails, idNumber: e.target.value})}
                                                             />
                                                         </div>
-                                                        <div className="space-y-1">
-                                                            <label className="text-[8px] md:text-[10px] lg:text-xs font-black uppercase tracking-widest text-gray-500">Geburtsdatum / DOB</label>
-                                                            <input 
-                                                                type="text" placeholder="DD.MM.YYYY"
-                                                                className="w-full py-4 px-6 bg-[var(--bg-secondary)] border border-[var(--border-main)] rounded-2xl text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-widest text-[var(--text-primary)] placeholder:text-gray-400/40 focus:border-brand/50 outline-none transition-all"
-                                                                value={guestDetails.dob}
-                                                                onChange={(e) => setGuestDetails({...guestDetails, dob: e.target.value})}
-                                                            />
-                                                        </div>
+                                                        {isFootballTicket && (
+                                                            <div className="space-y-1">
+                                                                <label className="text-[8px] md:text-[10px] lg:text-xs font-black uppercase tracking-widest text-gray-500 flex items-center justify-between">
+                                                                    <span>Stadion Platzwahl</span>
+                                                                    <span className="text-brand text-[8px] font-black uppercase">Optional</span>
+                                                                </label>
+                                                                <div className="grid grid-cols-2 gap-2">
+                                                                    <button 
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const seatMapUrl = localStorage.getItem('green_stadium_seatmap_link') || localStorage.getItem('green_stadium_api_link') || 'https://tickets.verein.de/saalplan-wahlen';
+                                                                            window.open(seatMapUrl, '_blank');
+                                                                            setGuestDetails(prev => ({ ...prev, seatSelected: true, placeType: 'sitzplatz' }));
+                                                                        }}
+                                                                        className="py-3 px-2 bg-brand/15 hover:bg-brand/25 border border-brand/40 hover:border-brand rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-brand flex items-center justify-center gap-1 transition-all cursor-pointer"
+                                                                    >
+                                                                        <span>💺 SITZPLATZ</span>
+                                                                        <ExternalLink className="w-3 h-3" />
+                                                                    </button>
+                                                                    <button 
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const standingMapUrl = localStorage.getItem('green_stadium_standing_link') || localStorage.getItem('green_stadium_seatmap_link') || localStorage.getItem('green_stadium_api_link') || 'https://tickets.verein.de/stehplatz-wahlen';
+                                                                            window.open(standingMapUrl, '_blank');
+                                                                            setGuestDetails(prev => ({ ...prev, seatSelected: true, placeType: 'stehplatz' }));
+                                                                        }}
+                                                                        className="py-3 px-2 bg-brand/15 hover:bg-brand/25 border border-brand/40 hover:border-brand rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-brand flex items-center justify-center gap-1 transition-all cursor-pointer"
+                                                                    >
+                                                                        <span>🧍 STEHPLATZ</span>
+                                                                        <ExternalLink className="w-3 h-3" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
 
                                                     <div className="grid grid-cols-2 gap-4">
@@ -1700,9 +1745,6 @@ const VenueMenuPage = () => {
                                             ) : (
                                                 <div className="text-left space-y-4">
                                                     <div className="px-2">
-                                                        <p className="text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-[0.3em] text-brand mb-4">
-                                                            Lead Ticket Holder
-                                                        </p>
                                                         <div>
                                                             <span className="text-[8px] md:text-[10px] lg:text-xs font-bold text-secondary uppercase tracking-wider mb-1 block pl-2 opacity-70">Full Name</span>
                                                             <input 
@@ -1744,22 +1786,50 @@ const VenueMenuPage = () => {
                                                                         />
                                                                     </div>
                                                                 </div>
-                                                                <div className="sm:col-span-2">
-                                                                    <span className="text-[8px] md:text-[10px] lg:text-xs font-bold text-secondary uppercase tracking-wider mb-1 block pl-2 opacity-70">Date of Birth</span>
-                                                                    <input 
-                                                                        type="text" placeholder="DD.MM.YYYY"
-                                                                        className="w-full py-4 px-6 bg-[var(--bg-secondary)] border border-[var(--border-main)] rounded-2xl text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-widest text-[var(--text-primary)] placeholder:text-gray-500"
-                                                                        value={guestDetails.dob}
-                                                                        onChange={(e) => setGuestDetails({...guestDetails, dob: e.target.value})}
-                                                                    />
-                                                                </div>
+                                                                {isFootballTicket && (
+                                                                    <div className="sm:col-span-2 space-y-2">
+                                                                        <div className="flex items-center justify-between pl-2">
+                                                                            <span className="text-[8px] md:text-[10px] lg:text-xs font-bold text-secondary uppercase tracking-wider opacity-70">
+                                                                                Stadion Platzwahl (Fußball • Optional)
+                                                                            </span>
+                                                                            <span className="text-[8px] text-brand font-black uppercase tracking-widest bg-brand/10 px-2.5 py-0.5 rounded-full border border-brand/20">
+                                                                                Optional
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                                            <button 
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    const seatMapUrl = localStorage.getItem('green_stadium_seatmap_link') || localStorage.getItem('green_stadium_api_link') || 'https://tickets.verein.de/saalplan-wahlen';
+                                                                                    window.open(seatMapUrl, '_blank');
+                                                                                    setGuestDetails(prev => ({ ...prev, seatSelected: true, placeType: 'sitzplatz' }));
+                                                                                }}
+                                                                                className="w-full py-4 px-4 bg-brand/15 hover:bg-brand/25 border-2 border-brand/40 hover:border-brand rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest text-brand flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
+                                                                            >
+                                                                                <span>💺 SITZPLATZ WÄHLEN</span>
+                                                                                <ExternalLink className="w-4 h-4" />
+                                                                            </button>
+                                                                            <button 
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    const standingMapUrl = localStorage.getItem('green_stadium_standing_link') || localStorage.getItem('green_stadium_seatmap_link') || localStorage.getItem('green_stadium_api_link') || 'https://tickets.verein.de/stehplatz-wahlen';
+                                                                                    window.open(standingMapUrl, '_blank');
+                                                                                    setGuestDetails(prev => ({ ...prev, seatSelected: true, placeType: 'stehplatz' }));
+                                                                                }}
+                                                                                className="w-full py-4 px-4 bg-brand/15 hover:bg-brand/25 border-2 border-brand/40 hover:border-brand rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest text-brand flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer"
+                                                                            >
+                                                                                <span>🧍 STEHPLATZ WÄHLEN</span>
+                                                                                <ExternalLink className="w-4 h-4" />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>
 
                                                     {(hasTicketsInCart || isStadium || isClub) && (
                                                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 gap-4 px-2">
-                                                            <p className="text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-[0.3em] text-brand mt-4">Communication Hub</p>
                                                             <div>
                                                                 <span className="text-[8px] md:text-[10px] lg:text-xs font-bold text-secondary uppercase tracking-wider mb-1 block pl-2 opacity-70">Email Address</span>
                                                                 <input 
@@ -2183,29 +2253,39 @@ const VenueMenuPage = () => {
                             initial={{ scale: 0.9, opacity: 0 }} 
                             animate={{ scale: 1, opacity: 1 }} 
                             exit={{ scale: 0.9, opacity: 0 }} 
-                            className="relative z-10 max-w-4xl w-full bg-[var(--bg-primary)] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl p-4 md:p-6 space-y-4"
+                            className="relative z-10 max-w-4xl w-full bg-[var(--bg-primary)] border border-white/10 rounded-[3rem] overflow-hidden shadow-2xl p-4 md:p-6 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar flex flex-col"
                         >
-                            <div className="flex justify-between items-center px-2">
+                            <div className="flex justify-between items-center px-2 shrink-0">
                                 <div>
                                     <h3 className="text-lg md:text-xl font-black italic uppercase text-[var(--text-primary)] tracking-tighter truncate">{selectedImage.title}</h3>
-                                    <p className="text-[10px] md:text-xs font-black uppercase text-brand tracking-widest mt-0.5">
-                                        Foto {(selectedImage.activeIndex || 0) + 1} von {(selectedImage.gallery || [selectedImage.url]).length}
+                                    <p className="text-[10px] md:text-xs font-black uppercase text-brand tracking-widest mt-0.5 flex items-center gap-2 flex-wrap">
+                                        <span>Foto {(selectedImage.activeIndex || 0) + 1} von {(selectedImage.gallery || [selectedImage.url]).length}</span>
+                                        {selectedImage.ticketType && (
+                                            <span className="px-2 py-0.5 rounded-full bg-brand/20 text-brand border border-brand/40 text-[9px]">
+                                                {selectedImage.ticketType}
+                                            </span>
+                                        )}
+                                        {(selectedImage.item?.hasShuttle || selectedImage.hasShuttle) && (
+                                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[9px] font-bold flex items-center gap-1">
+                                                <span>🚐</span> Inkl. Shuttle-Service
+                                            </span>
+                                        )}
                                     </p>
                                 </div>
                                 <button 
                                     onClick={() => setSelectedImage(null)}
-                                    className="px-5 py-2.5 bg-brand text-white rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest shadow-lg hover:scale-105 active:scale-95 transition-all"
+                                    className="px-5 py-2.5 bg-brand text-white rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest shadow-lg hover:scale-105 active:scale-95 transition-all shrink-0"
                                 >
-                                    Schließen / Close ✕
+                                    Schließen ✕
                                 </button>
                             </div>
 
                             {/* Main Active Photo Viewport with Controls */}
-                            <div className="relative h-[55vh] md:h-[60vh] rounded-[2.5rem] overflow-hidden border border-white/5 bg-black flex items-center justify-center group/carousel">
+                            <div className="relative h-[32vh] md:h-[38vh] rounded-[2.5rem] overflow-hidden border border-white/5 bg-black flex items-center justify-center group/carousel shrink-0">
                                 <img 
                                     src={(selectedImage.gallery || [selectedImage.url])[selectedImage.activeIndex || 0]} 
                                     alt={selectedImage.title} 
-                                    className="w-full h-full object-contain max-h-[60vh] transition-all duration-300" 
+                                    className="w-full h-full object-contain max-h-[38vh] transition-all duration-300" 
                                 />
 
                                 {/* Previous Arrow */}
@@ -2216,7 +2296,7 @@ const VenueMenuPage = () => {
                                             const prevIdx = (selectedImage.activeIndex - 1 + total) % total;
                                             setSelectedImage({ ...selectedImage, activeIndex: prevIdx });
                                         }}
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-2xl bg-black/60 border border-white/20 text-white flex items-center justify-center font-black text-xl hover:bg-brand transition-all active:scale-90 shadow-2xl backdrop-blur-md"
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl bg-black/60 border border-white/20 text-white flex items-center justify-center font-black text-xl hover:bg-brand transition-all active:scale-90 shadow-2xl backdrop-blur-md"
                                     >
                                         ‹
                                     </button>
@@ -2230,7 +2310,7 @@ const VenueMenuPage = () => {
                                             const nextIdx = (selectedImage.activeIndex + 1) % total;
                                             setSelectedImage({ ...selectedImage, activeIndex: nextIdx });
                                         }}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-2xl bg-black/60 border border-white/20 text-white flex items-center justify-center font-black text-xl hover:bg-brand transition-all active:scale-90 shadow-2xl backdrop-blur-md"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl bg-black/60 border border-white/20 text-white flex items-center justify-center font-black text-xl hover:bg-brand transition-all active:scale-90 shadow-2xl backdrop-blur-md"
                                     >
                                         ›
                                     </button>
@@ -2239,12 +2319,12 @@ const VenueMenuPage = () => {
 
                             {/* Bottom Thumbnail Gallery Strip */}
                             {(selectedImage.gallery || []).length > 1 && (
-                                <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-2 px-1">
+                                <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1 px-1 shrink-0">
                                     {selectedImage.gallery.map((thumbUrl, idx) => (
                                         <button
                                             key={idx}
                                             onClick={() => setSelectedImage({ ...selectedImage, activeIndex: idx })}
-                                            className={`relative w-16 h-16 rounded-2xl overflow-hidden border-2 transition-all shrink-0 ${
+                                            className={`relative w-14 h-14 rounded-2xl overflow-hidden border-2 transition-all shrink-0 ${
                                                 idx === (selectedImage.activeIndex || 0)
                                                     ? 'border-brand scale-105 shadow-[0_0_15px_var(--brand-glow)]'
                                                     : 'border-white/10 opacity-50 hover:opacity-100'
@@ -2255,6 +2335,39 @@ const VenueMenuPage = () => {
                                     ))}
                                 </div>
                             )}
+
+                            {/* Ticket / Item Description Box */}
+                            {(selectedImage.description || selectedImage.item?.desc || selectedImage.item?.description) && (
+                                <div className="bg-[var(--bg-secondary)]/70 border border-white/10 rounded-2xl p-4 text-left space-y-2 shrink-0">
+                                    <h4 className="text-xs font-black uppercase text-brand tracking-widest flex items-center gap-2">
+                                        <span>Beschreibung & Ausstattung</span>
+                                    </h4>
+                                    <p className="text-xs md:text-sm text-[var(--text-primary)] opacity-90 leading-relaxed font-medium whitespace-pre-line">
+                                        {selectedImage.description || selectedImage.item?.desc || selectedImage.item?.description}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Footer with Price and Add to Cart Action */}
+                            <div className="flex justify-between items-center pt-2 border-t border-white/10 shrink-0">
+                                <div>
+                                    <span className="text-[10px] uppercase font-black tracking-widest text-[var(--text-primary)] opacity-60 block">Preis</span>
+                                    <span className="text-lg md:text-2xl font-black italic text-brand">
+                                        €{(selectedImage.price || selectedImage.item?.price || 0).toFixed(2)}
+                                    </span>
+                                </div>
+                                {selectedImage.item && commerceMode && (
+                                    <button 
+                                        onClick={() => {
+                                            handleOrder(selectedImage.item);
+                                            setSelectedImage(null);
+                                        }}
+                                        className="px-6 py-3 bg-brand text-white rounded-2xl text-xs md:text-sm font-black uppercase tracking-wider shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                                    >
+                                        <Plus size={18} /> Ticket Hinzufügen
+                                    </button>
+                                )}
+                            </div>
                         </motion.div>
                     </div>
                 )}

@@ -10,56 +10,55 @@ const Privacy = () => {
     const [showFullPolicy, setShowFullPolicy] = useState(false);
     const [activeTab, setActiveTab] = useState('privacy'); // 'privacy' | 'terms'
 
-    const defaultPrivacyProtocolText = `# GREEN ECOSYSTEM: GLOBAL PRIVACY PROTOCOL (v1.0-ALPHA)
+    const defaultPrivacyProtocolText = `# GRIEN ECOSYSTEM: GLOBAL PRIVACY PROTOCOL (v1.0)
 
-## 1. DATA COLLECTION & IDENTITY DOSSIERS
-The Green Application ("The Platform") collects high-clearance Personal Identifiable Information (PII) to facilitate the "Director Command" operational suite. This includes but is not limited to:
-* PRIME-ID Identification: Mandatory unique identifiers for all Partners, Drivers, and Customers.
-* Geospatial Telemetry: Real-time tracking of movement, sector density, and venue interaction.
-* Financial Data: Bank details (IBAN), Tax IDs, and settlement history for clearing house operations.
-* Communication Logs: All messaging, email, and "Invisible Phone" metadata are recorded for security and audit trails.
+## 1. DATA COLLECTION & IDENTITY PROTECTION
+The Grien Application ("The Platform") processes user data to provide seamless mobility and service solutions. This includes:
+* PRIME-ID Identification: Mandatory unique identifiers for all Partners, Drivers, and Passengers.
+* Geospatial Telemetry: Real-time tracking of movement, route optimization, and security coordination.
+* Financial Data: Bank details, Tax IDs, and settlement processing via PCI-DSS compliant global gateways.
+* Communication Logs: Encrypted messaging and contact masking to ensure total user privacy.
 
-## 2. DATA UTILIZATION & MONETIZATION (MARKET INTEL)
-As an operational director, you have authorized the "Advanced Detail Filtering" system. Data processed by the platform is utilized for:
-* Market Sentiment Analysis: Selling anonymized, high-level demographic trends to hospitality and nightlife partners.
-* Operational Optimization: Using AI Agents (Financial, Operations, Guardian) to adjust surge pricing and fleet density.
-* PII Protection: While high-level trends are monetized, raw PII (Bank details, addresses) is gated behind AES-256 encryption and NEVER shared externally without Alpha-Prime clearance.
+## 2. DATA PROTECTION & PRIVACY STANDARDS
+* Market Sentiment Analysis: Aggregated, non-personally identifiable demographic trends are analyzed for service optimization.
+* Operational Analytics: AI-driven routing and fleet density optimization to minimize wait times and environmental impact.
+* PII Protection: All raw PII (Bank details, addresses) is protected behind AES-256 encryption and NEVER shared externally.
 
 ## 3. GDPR & INTERNATIONAL COMPLIANCE
-Operating primarily in Frankfurt, Germany, the platform adheres to the "Neural-GDPR" standard. 
-* Right to Erasure: Users can request "Identity Scrubbing" which clears their PRIME-ID from the active grid (subject to a 30-day legal hold).
-* Data Portability: Partners can export their "Fleet Performance Dossiers" in encrypted formats.
+The platform complies with the EU General Data Protection Regulation (GDPR) and international privacy standards.
+* Right to Erasure: Users can request complete account and data deletion at any time ("Right to be Forgotten").
+* Data Portability: Partners and users can export their account data in an encrypted electronic format.
 
-## 4. SECURITY & THE VAULT
-All sensitive data is stored in the "MFA Secure Vault." Unauthorized attempts to access the vault trigger a "Global Lockdown" protocol.`;
+## 4. SECURITY & DATA VAULT
+All sensitive data is stored in secure, encrypted cloud data centers with strict access authorization protocols.`;
 
-    const defaultTermsOfServiceText = `# ALLGEMEINE GESCHÄFTSBEDINGUNGEN (AGB) – GREEN ECOSYSTEM
+    const defaultTermsOfServiceText = `# ALLGEMEINE GESCHÄFTSBEDINGUNGEN (AGB) – GRIEN ECOSYSTEM
 
 ## Präambel
-Die Green GmbH (im Folgenden „Plattformbetreiber“) betreibt eine digitale Vermittlungsplattform für Mobilitäts- und Servicedienstleistungen. Diese AGB regeln die vertraglichen Beziehungen zwischen dem Plattformbetreiber und den Nutzern. Die Nutzerstruktur unterteilt sich in Endkunden (Fahrgäste), Transportpartner (Flotten-Manager) und deren Fahrpersonal (Fahrer), sowie B2B-Partner (Venues/Hotels) und deren autorisiertes Personal (Staff).
+Die Grien GmbH (im Folgenden „Plattformbetreiber“) betreibt eine digitale Vermittlungsplattform für Mobilitäts- und Servicedienstleistungen. Diese AGB regeln die vertraglichen Beziehungen zwischen dem Plattformbetreiber und den Nutzern. Die Nutzerstruktur unterteilt sich in Endkunden (Fahrgäste), Transportpartner (Flotten-Manager) und deren Fahrpersonal (Fahrer), sowie B2B-Partner (Unternehmen/Hotels) und deren autorisiertes Personal (Staff).
 
 ## 1. Nutzungsbedingungen für Endkunden (Passengers)
-* **Vermittlungsleistung:** Die App vermittelt Beförderungsverträge zwischen dem Endkunden und lizenzierten Transportpartnern (Flotten-Managern). Der Plattformbetreiber wird selbst nicht Vertragspartner der Beförderungsleistung.
+* **Vermittlungsleistung:** Die App vermittelt Beförderungs- und Servicedienstleistungen zwischen dem Endkunden und lizenzierten Partnern. Der Plattformbetreiber wird selbst nicht Vertragspartner der eigentlichen Beförderungsleistung.
 * **Zahlungsabwicklung:** Zahlungen erfolgen bargeldlos über integrierte Zahlungsdienstleister. Der Endkunde autorisiert die Abbuchung des Fahrpreises und etwaiger Stornierungsgebühren.
 * **Privatsphäre:** Die Kommunikation mit dem Fahrpersonal erfolgt ausschließlich anonymisiert über die App-interne Maskierung.
 
 ## 2. Pflichten der Transportpartner (Flotten-Manager) & Fahrpersonal
-* **Verantwortlichkeit des Flotten-Managers:** Der Flotten-Manager ist der direkte B2B-Vertragspartner der Green GmbH. Er ist vollumfänglich dafür verantwortlich, dass sein eingesetztes Fahrpersonal über alle gesetzlichen Qualifikationen (z.B. nach dem PBefG) verfügt. Die Auszahlung der Fahrtumsätze erfolgt ausschließlich an den Flotten-Manager.
+* **Verantwortlichkeit des Flotten-Managers:** Der Flotten-Manager ist der direkte B2B-Vertragspartner der Grien GmbH. Er ist vollumfänglich dafür verantwortlich, dass sein eingesetztes Fahrpersonal über alle gesetzlichen Qualifikationen verfügt. Die Auszahlung der Fahrtumsätze erfolgt ausschließlich an den Flotten-Manager.
 * **Status des Fahrpersonals (Drivers):** Das Fahrpersonal handelt im Auftrag des Flotten-Managers. Die Fahrer-Accounts (Driver Dashboard) sind streng an die jeweilige Flotte gebunden.
 * **Telemetrie und Disposition:** Zur Gewährleistung der Sicherheit ist die kontinuierliche Übermittlung von Standortdaten (GPS-Telemetrie) der eingesetzten Fahrzeuge durch das Fahrpersonal zwingend erforderlich.
 
-## 3. Bedingungen für B2B-Partner (Venues / Hotels / Clubs)
-* **Provisionsmodell (Kickbacks):** B2B-Partner, die über ihr Dashboard Fahrten für Gäste vermitteln, erhalten eine vertraglich vereinbarte Umsatzbeteiligung. Die Abrechnung erfolgt automatisiert über das Settlement-Hub.
+## 3. Bedingungen für B2B-Partner (Unternehmen & Hotels)
+* **Vermittlung & Abrechnung:** B2B-Partner, die über ihr Dashboard Fahrten oder Services für Gäste vermitteln, erhalten eine vertraglich vereinbarte Umsatzbeteiligung. Die Abrechnung erfolgt automatisiert über das Settlement-Hub.
 * **Account-Administration:** Manager sind für die Verwaltung ihrer Profile sowie die Zuweisung von Rechten für ihr Personal (Staff) verantwortlich.
 * **Haftung:** Der B2B-Partner haftet für missbräuchliche Buchungen, die über seine autorisierten Unternehmenszugänge getätigt werden.
 
-## 4. Richtlinien für berechtigtes Venue-Personal (Staff / Night Crew)
+## 4. Richtlinien für berechtigtes Partner-Personal (Staff)
 * **Nutzungsbindung:** Staff-Accounts sind streng an das Partner-Unternehmen gebunden und dürfen ausschließlich zur betrieblichen Vermittlung von Fahrten für Gäste genutzt werden.
 * **Vertraulichkeit:** Das Personal verpflichtet sich, Gastdaten strikt vertraulich zu behandeln und nicht für private Zwecke zu nutzen.
 
 ## 5. Haftungsbeschränkung und Verlust von Gegenständen
-* Die Green GmbH haftet nur für Schäden, die auf vorsätzlicher oder grob fahrlässiger Pflichtverletzung beruhen.
-* Für im Fahrzeug vergessene Gegenstände wird ein digitaler Koordinationsprozess bereitgestellt; eine Haftung der Green GmbH ist jedoch ausgeschlossen.`;
+* Die Grien GmbH haftet nur für Schäden, die auf vorsätzlicher oder grob fahrlässiger Pflichtverletzung beruhen.
+* Für im Fahrzeug vergessene Gegenstände wird ein digitaler Koordinationsprozess bereitgestellt; eine Haftung der Grien GmbH ist jedoch ausgeschlossen.`;
 
     const [privacyPolicyText, setPrivacyPolicyText] = useState(defaultPrivacyProtocolText);
     const [termsOfServiceText, setTermsOfServiceText] = useState(defaultTermsOfServiceText);
@@ -107,17 +106,17 @@ Die Green GmbH (im Folgenden „Plattformbetreiber“) betreibt eine digitale Ve
         {
             icon: ShieldCheck,
             title: "1. Verantwortlicher & Jugendschutz",
-            content: "Grien Nightlife & Logistics GmbH ist der Hauptverantwortliche im Sinne der DSGVO. Um den Schutz von Minderjährigen zu gewährleisten, ist die Registrierung für Personen unter 16 Jahren strengstens untersagt. Minderjährige im Alter von 16-17 Jahren können die App nur nutzen, wenn sie eine verifizierte Einladung durch einen Erwachsenen erhalten."
+            content: "Grien Logistics GmbH ist der Hauptverantwortliche im Sinne der DSGVO. Um den Schutz von Minderjährigen zu gewährleisten, ist die Registrierung für Personen unter 16 Jahren strengstens untersagt. Minderjährige im Alter von 16-17 Jahren können die App nur nutzen, wenn sie eine verifizierte Einladung durch einen Erwachsenen erhalten."
         },
         {
             icon: MapPin,
             title: "2. Telemetrie & Lokale Angebote",
-            content: "Wir verarbeiten hochpräzise GPS-Telemetriedaten, um Ride-Hailing zu ermöglichen (Vertragserfüllung, Art. 6.1.b DSGVO). Zusätzlich nutzen wir mit deiner freiwilligen Zustimmung (Art. 6.1.a DSGVO) Standortdaten, um dir exklusive lokale Rabatte, VIP-Gutscheine und Aktionen in deiner Nähe anzuzeigen. Du kannst dies jederzeit in den Einstellungen deaktivieren."
+            content: "Wir verarbeiten hochpräzise GPS-Telemetriedaten, um Ride-Hailing zu ermöglichen (Vertragserfüllung, Art. 6.1.b DSGVO). Zusätzlich nutzen wir mit deiner freiwilligen Zustimmung (Art. 6.1.a DSGVO) Standortdaten, um dir exklusive lokale Angebote und Service-Aktionen in deiner Nähe anzuzeigen. Du kannst dies jederzeit in den Einstellungen deaktivieren."
         },
         {
             icon: UserCheck,
             title: "3. Social Media Wall & 15s Clips",
-            content: "Unsere App enthält eine integrierte Social Media Wall, auf der Kunden und Partner freiwillig Fotos und kurze Videos (bis zu 15 Sekunden) hochladen können, um Nightlife-Erlebnisse zu teilen. Uploads basieren auf freiwilliger Zustimmung (Art. 6.1.a DSGVO), werden auf sicheren Servern gespeichert und können von dir jederzeit dauerhaft gelöscht werden."
+            content: "Unsere App enthält eine integrierte Social Media Wall, auf der Kunden und Partner freiwillig Fotos und kurze Videos (bis zu 15 Sekunden) hochladen können, um Mobilitäts- und Service-Erlebnisse zu teilen. Uploads basieren auf freiwilliger Zustimmung (Art. 6.1.a DSGVO), werden auf sicheren Servern gespeichert und können von dir jederzeit dauerhaft gelöscht werden."
         },
         {
             icon: CreditCard,
@@ -127,7 +126,7 @@ Die Green GmbH (im Folgenden „Plattformbetreiber“) betreibt eine digitale Ve
         {
             icon: Globe,
             title: "5. Feedback, Support & Anonyme Daten",
-            content: "Beschwerden und Support-Tickets werden zur Lösung von Servicefällen verarbeitet. Feedback dient der App-Optimierung. Bevor wir Erkenntnisse mit unseren 3 ausgewählten Marktforschungspartnern teilen, entfernen wir alle personenbezogenen Daten (Namen, E-Mails, GPS), um die Daten vollständig und unwiderruflich zu anonymisieren."
+            content: "Beschwerden und Support-Tickets werden zur Lösung von Servicefällen verarbeitet. Feedback dient der App-Optimierung. Bevor wir Erkenntnisse mit unseren Marktforschungspartnern teilen, entfernen wir alle personenbezogenen Daten (Namen, E-Mails, GPS), um die Daten vollständig und unwiderruflich zu anonymisieren."
         },
         {
             icon: Smartphone,
@@ -156,7 +155,7 @@ Die Green GmbH (im Folgenden „Plattformbetreiber“) betreibt eine digitale Ve
                 <div className="flex justify-end mb-8">
                     <div className="text-right">
                         <p className="text-[10px] md:text-xs lg:text-sm font-black text-brand uppercase tracking-[0.4em] italic mb-1">
-                            {activeTab === 'privacy' ? 'Neural Privacy Protocol' : 'Neural Terms of Service'}
+                            {activeTab === 'privacy' ? 'Privacy Protocol' : 'Terms of Service'}
                         </p>
                         <p className="text-[8px] md:text-[10px] lg:text-xs font-bold text-gray-500 uppercase tracking-widest">Version 2.5.0 • Live Synchronized</p>
                     </div>
@@ -174,7 +173,7 @@ Die Green GmbH (im Folgenden „Plattformbetreiber“) betreibt eine digitale Ve
                         )}
                     </h1>
                     <p className="text-gray-500 font-bold uppercase tracking-[0.5em] text-xs md:text-sm lg:text-base">
-                        {activeTab === 'privacy' ? 'Protecting the Pulse of Nightlife & Mobility' : 'Operational Mandate & Legal Terms'}
+                        {activeTab === 'privacy' ? 'Protecting Global Mobility & Service Operations' : 'Operational Mandate & Legal Terms'}
                     </p>
                 </motion.div>
 
@@ -241,7 +240,7 @@ Die Green GmbH (im Folgenden „Plattformbetreiber“) betreibt eine digitale Ve
                         </div>
                     </div>
                     <p className="text-[10px] md:text-xs lg:text-sm font-black text-gray-600 uppercase tracking-[0.3em]">
-                        &copy; 2026 GREEN OPERATIONS GMBH • ALL RIGHTS RESERVED
+                        &copy; 2026 GRIEN OPERATIONS GMBH • ALL RIGHTS RESERVED
                     </p>
                 </footer>
             </div>
@@ -276,15 +275,15 @@ Die Green GmbH (im Folgenden „Plattformbetreiber“) betreibt eine digitale Ve
 
                             {/* Scrollable Content */}
                             <div className="p-8 overflow-y-auto space-y-6 text-gray-300 text-sm leading-relaxed font-medium max-h-[60vh] pr-4">
-                                <p className="text-gray-400 italic">Der Schutz Ihrer persönlichen Daten ist uns ein wichtiges Anliegen. Nachfolgend informieren wir Sie detailliert und gesetzeskonform über den Umgang mit Ihren Daten im Rahmen des Green-Ecosystems gemäß den Anforderungen der EU-Datenschutz-Grundverordnung (DSGVO) und des TDDDG.</p>
+                                <p className="text-gray-400 italic">Der Schutz Ihrer persönlichen Daten ist uns ein wichtiges Anliegen. Nachfolgend informieren wir Sie detailliert und gesetzeskonform über den Umgang mit Ihren Daten im Rahmen des Grien-Ecosystems gemäß den Anforderungen der EU-Datenschutz-Grundverordnung (DSGVO) und des TDDDG.</p>
                                 
                                 <div className="space-y-4">
                                     <h3 className="text-lg font-black text-white uppercase tracking-wider">1. Name und Anschrift des Verantwortlichen (Art. 13 Abs. 1 lit. a DSGVO)</h3>
-                                    <p>Verantwortlich für die Datenverarbeitung im Green-Ecosystem ist:<br/>
-                                    <strong>Grien Nightlife & Logistics GmbH</strong><br/>
+                                    <p>Verantwortlich für die Datenverarbeitung im Grien-Ecosystem ist:<br/>
+                                    <strong>Grien Logistics GmbH</strong><br/>
                                     Zeil 106, 60313 Frankfurt am Main, Deutschland<br/>
-                                    E-Mail: ops@green-nightlife.com • Telefon: +49 69 1234567<br/>
-                                    Geschäftsführung: Khiam Green</p>
+                                    E-Mail: ops@grien.app • Telefon: +49 69 1234567<br/>
+                                    Geschäftsführung: Khiam Grien</p>
                                 </div>
 
                                 <div className="space-y-4">
@@ -292,7 +291,7 @@ Die Green GmbH (im Folgenden „Plattformbetreiber“) betreibt eine digitale Ve
                                     <p>Wir haben einen externen Datenschutzbeauftragten bestellt. Sie erreichen diesen unter:<br/>
                                     <strong>PROLIANCE IT GmbH</strong><br/>
                                     Leopoldstraße 244, 80807 München, Deutschland<br/>
-                                    E-Mail: dsb@green-nightlife.com • Website: www.datenschutzexperte.de</p>
+                                    E-Mail: dsb@grien.app • Website: www.datenschutzexperte.de</p>
                                 </div>
 
                                 <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl space-y-2">
@@ -305,15 +304,12 @@ Die Green GmbH (im Folgenden „Plattformbetreiber“) betreibt eine digitale Ve
                                     <h3 className="text-lg font-black text-white uppercase tracking-wider">2. Datenkategorien, Zwecke und Rechtsgrundlagen</h3>
                                     
                                     <div className="space-y-3 pl-2">
-                                        <h4 className="font-extrabold text-white">2.1 Daten von Kunden (Fahrgäste & Social-Media-Nutzer)</h4>
-                                        <p><strong>• 2.1.1 Echtzeit-Standortdaten (GPS):</strong> Erfassung des Standorts zur Fahrtenvermittlung (Art. 6.1.b DSGVO - Vertragserfüllung) und optional mit Ihrer ausdrücklichen Einwilligung zur Anzeige regionaler Angebote/Gutscheine in der Nähe (Art. 6.1.a DSGVO - Einwilligung, jederzeit in den Einstellungen widerrufbar).</p>
+                                        <h4 className="font-extrabold text-white">2.1 Daten von Kunden (Fahrgäste & App-Nutzer)</h4>
+                                        <p><strong>• 2.1.1 Echtzeit-Standortdaten (GPS):</strong> Erfassung des Standorts zur Vermittlung (Art. 6.1.b DSGVO - Vertragserfüllung) und optional mit Ihrer ausdrücklichen Einwilligung zur Anzeige regionaler Angebote in der Nähe (Art. 6.1.a DSGVO - Einwilligung, jederzeit in den Einstellungen widerrufbar).</p>
                                         <p><strong>• 2.1.2 Stammdaten:</strong> Vorname, Nachname, E-Mail, Telefonnummer, Geburtsdatum und Adresse zur Bereitstellung des Kundenkontos und Support (Art. 6.1.b DSGVO - Vertragserfüllung).</p>
                                         <p><strong>• 2.1.3 Zahlungsdaten:</strong> Bankverbindungen, Transaktions-IDs, Stripe/PayPal-Daten zur Zahlungsabwicklung (Art. 6.1.b DSGVO - Vertragserfüllung).</p>
                                         <p><strong>• 2.1.4 Social-Media-Inhalte (Bilder & 15s Videos):</strong> Freiwilliger Upload von Profilbildern, Fotos und Kurzvideos (max. 15s) auf der Social-Wall. Basiert auf Ihrer Einwilligung (Art. 6.1.a DSGVO) und kann von Ihnen jederzeit eigenständig in der App gelöscht werden.</p>
-                                        <p><strong>• 2.1.5 Support-Daten & Feedback:</strong> Analyse von Feedback zur App-Verbesserung. Alle Feedback-Texte werden vor der Auswertung vollständig und unumkehrbar anonymisiert (ohne jeglichen Personenbezug, Art. 6.1.f DSGVO - Berechtigtes Interesse). Diese anonymen Statistik-Daten verkaufen wir an genau 3 ausgewählte Kooperationspartner zur Marktforschung:<br/>
-                                        1. <strong>Green-City Analytics GmbH</strong> (Zeil 106, Frankfurt am Main) – Urbane Mobilitäts- und Verkehrsanalysen.<br/>
-                                        2. <strong>NextGen Nightlife Marketing KG</strong> (Leopoldstraße 244, München) – Erforschung von Freizeit- und Konsumverhalten.<br/>
-                                        3. <strong>EcoTransit Research Ltd.</strong> (Dublin, Irland) – Untersuchung von CO2-Reduzierungspotenzialen.</p>
+                                        <p><strong>• 2.1.5 Support-Daten & Feedback:</strong> Analyse von Feedback zur App-Verbesserung. Alle Feedback-Texte werden vor der Auswertung vollständig und unumkehrbar anonymisiert (ohne jeglichen Personenbezug, Art. 6.1.f DSGVO - Berechtigtes Interesse). Diese anonymen Statistik-Daten teilen wir mit Marktforschungspartnern für Mobilitäts- und Verkehrsanalysen (z.B. Grien-City Analytics GmbH, NextGen Mobility Marketing KG, EcoTransit Research Ltd.).</p>
                                     </div>
 
                                     <div className="space-y-3 pl-2">
@@ -336,7 +332,7 @@ Die Green GmbH (im Folgenden „Plattformbetreiber“) betreibt eine digitale Ve
 
                                 <div className="space-y-4">
                                     <h3 className="text-lg font-black text-white uppercase tracking-wider">3. Empfänger von personenbezogenen Daten (Art. 13 Abs. 1 lit. e DSGVO)</h3>
-                                    <p>Ihre Daten werden sicher an Zahlungsdienstleister (Stripe/PayPal), Cloud-Provider für Medienspeicherung und Partnerbetriebe (Hotel/Restaurant) weitergegeben, sofern dies zur Serviceerbringung nötig ist. Ansonsten erfolgt keine Weitergabe an unbefugte Dritte.</p>
+                                    <p>Ihre Daten werden sicher an Zahlungsdienstleister (Stripe/PayPal), Cloud-Provider für Medienspeicherung und B2B-Partnerbetriebe (Hotels/Unternehmen) weitergegeben, sofern dies zur Serviceerbringung nötig ist. Ansonsten erfolgt keine Weitergabe an unbefugte Dritte.</p>
                                 </div>
 
                                 <div className="space-y-4">
@@ -346,20 +342,15 @@ Die Green GmbH (im Folgenden „Plattformbetreiber“) betreibt eine digitale Ve
                                 </div>
 
                                 <div className="space-y-4">
-                                    <h3 className="text-lg font-black text-white uppercase tracking-wider">5. Lokaler Speicher auf Ihrem Endgerät (§ 25 TDDDG)</h3>
-                                    <p>Wir verwenden technisch notwendige Einträge im lokalen Speicher Ihres Browsers (`localStorage`), um die offline-simulierte Funktionalität des Ecosystems sicherzustellen (§ 25 Abs. 2 Nr. 2 TDDDG):<br/>
-                                    • <strong>green_users:</strong> Verschlüsselte Benutzerdatenbank (Passwort-Hashes) zur Authentifizierung.<br/>
-                                    • <strong>green_user_email, green_role, green_verified:</strong> Sitzungssteuerung und Berechtigungsabgleiche (erlöschen beim Logout).<br/>
-                                    • <strong>green_active_orders, green_hotel_rooms, green_stadium_events:</strong> Lokale Bestelldaten und Anwendungszustände zur Simulationsabwicklung.<br/>
-                                    • <strong>green_parent_invitations:</strong> Freigabe-Datenbank für jugendliche Konten (Eltern-Einladungen).</p>
+                                    <h3 className="text-lg font-black text-white uppercase tracking-wider">5. Reine Vermittlungsplattform & Haftungsausschluss</h3>
+                                    <p>Die Grien GmbH betreibt ausschließlich eine digitale Vermittlungssoftware. Sämtliche Beförderungen und Dienstleistungen werden eigenverantwortlich durch unabhängige, lizenzierte Partnerunternehmen erbracht. Die Grien GmbH haftet nicht für Schäden, Verspätungen, Unfälle, Verhalten Dritter oder im Fahrzeug verbliebene Gegenstände.</p>
                                 </div>
 
                                 <div className="space-y-4">
                                     <h3 className="text-lg font-black text-white uppercase tracking-wider">6. Automatisierte Entscheidungsfindung & Profiling (Art. 13 Abs. 2 lit. f, Art. 22 DSGVO)</h3>
-                                    <p>Zur Erhaltung der Plattformintegrität und zum Schutz unserer Fahrer/Fahrgäste nutzen wir ein automatisiertes Verwarnungssystem:<br/>
-                                    • <strong>Das Red-Flag-System:</strong> Systemregistrierte Verstöße (z.B. chronische böswillige Stornierungen vor Ankunft des Fahrers, unberechtigte Reklamationsversuche oder Verstöße gegen Nutzungsbedingungen) führen zur Vergabe von Verwarnungen („Red Flags“).<br/>
-                                    • <strong>Die Logik:</strong> Das Sammeln von <strong>3 Red Flags innerhalb von 2 Monaten</strong> führt zu einer <strong>automatischen Sperrung des Kontos für genau 1 Jahr</strong>. Ein wiederholter Verstoß nach der Sperrzeit führt zum dauerhaften Ausschluss.<br/>
-                                    • <strong>Ihre Rechte:</strong> Sie haben das Recht, <strong>Ihren Standpunkt darzulegen</strong>, ein **menschliches Eingreifen** seitens unseres Support-Teams zu verlangen und die Entscheidung anzufechten. Kontaktieren Sie uns hierzu unter `ops@green-nightlife.com` für eine persönliche Prüfung.</p>
+                                    <p>Zur Erhaltung der Plattformintegrität nutzen wir ein automatisiertes Verwarnungssystem („Red-Flag-System“):<br/>
+                                    • Das Sammeln von <strong>3 Red Flags innerhalb von 2 Monaten</strong> führt zu einer <strong>automatischen Sperrung des Kontos für genau 1 Jahr</strong>.<br/>
+                                    • Sie haben das Recht, menschliches Eingreifen seitens unseres Support-Teams unter `ops@grien.app` zu verlangen.</p>
                                 </div>
 
                                 <div className="space-y-4">

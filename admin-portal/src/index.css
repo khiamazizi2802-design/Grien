@@ -1,0 +1,1272 @@
+@import "tailwindcss";
+
+/* ── Google Font: Outfit ─────────────────────────────────────── */
+
+:root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+
+    font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+
+    /* ── Common Brand Identity ── */
+    --brand: #FFFFFF;
+    --brand-mid: #A0A0A0;
+    --brand-end: #404040;
+    --brand-glow: rgba(255, 255, 255, 0.15);
+    --danger: #FF3B30;
+    --success: #FFFFFF;
+    --warning: #FFCC00;
+
+    /* ── Dark Theme (Default) ── */
+    --bg-primary: #080A09;
+    --bg-secondary: #121613;
+    --bg-surface: #1E2520;
+    --bg-surface-light: #2C352E;
+    --bg-btn-sec: rgba(255, 255, 255, 0.05);
+    --sheet-bg: linear-gradient(135deg, #071F11, #080D0A);
+    
+    --text-primary: #FFFFFF;
+    --text-secondary: #F3F4F6;
+    --text-muted: #E5E7EB;
+    
+    --border-main: rgba(255, 255, 255, 0.2);
+    --glass-bg: rgba(0, 0, 0, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --shadow-main: rgba(0, 0, 0, 0.5);
+    
+    --bubble-color: rgba(255, 255, 255, 0.1);
+    --radar-opacity: 0.6;
+    --radar-grid-opacity: 0.08;
+    --radar-line: rgba(255, 255, 255, 0.4);
+    --accent-primary: var(--brand);
+    --accent-primary-rgb: 255, 255, 255;
+}
+
+[data-theme='light'] {
+    --bg-primary: #FFFFFF;    /* Pure White Base */
+    --bg-secondary: #F8FAF8;  /* Slightly off-white for secondary surfaces */
+    --bg-surface: #F0F4F0;    
+    --bg-surface-light: #F9FBF9;
+    
+    --bg-btn-sec: rgba(0, 40, 20, 0.05);
+    --sheet-bg: linear-gradient(135deg, #FFFFFF, #F1F5F9);
+    
+    --text-primary: #000000;    /* Absolute Black for maximum contrast */
+    --text-secondary: #0A0A0A;  /* Deep Black */
+    --text-muted: #1A1A1A;      /* Dark Black */
+    
+    --border-main: rgba(0, 0, 0, 0.45); 
+    --glass-bg: rgba(255, 255, 255, 0.98); 
+    --glass-border: rgba(0, 0, 0, 0.25);
+    --shadow-main: rgba(0, 0, 0, 0.15); 
+    
+    --bubble-color: rgba(0, 0, 0, 0.05); 
+    --radar-opacity: 0.1;
+    --radar-grid-opacity: 0.15;
+    --radar-line: #000000;
+    --accent-primary: #000000;
+    --accent-primary-rgb: 0, 0, 0;
+    --brand: #000000;
+    --brand-mid: #0A0A0A;
+    --brand-end: #1A1A1A;
+}
+html, body, #root {
+    width: 100%;
+    height: 100% !important;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+}
+
+/* ── Global Resets for Mobile WebView & WebKit ─────── */
+* {
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+}
+
+/* ── Premium button tap feedback globally ── */
+button, 
+[role="button"], 
+.interactive-btn {
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, opacity 0.2s, border-color 0.2s !important;
+    will-change: transform;
+}
+button:active, 
+[role="button"]:active, 
+.interactive-btn:active {
+    transform: scale(0.95) !important;
+}
+
+/* ── Global Layering ───────────────────────────────── */
+.app-content-wrapper {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    will-change: scroll-position;
+}
+
+/* ── Iframe-friendly height overrides ──────────────── */
+.h-screen,
+.h-\[100dvh\],
+.h-dvh {
+    height: 100% !important;
+}
+
+.min-h-screen,
+.min-h-\[100dvh\],
+.min-h-dvh {
+    min-height: 100% !important;
+}
+
+/* Safe Area Utility Overlays */
+.safe-top-padding {
+    padding-top: calc(var(--safe-top) + 0.5rem) !important;
+}
+.safe-bottom-padding {
+    padding-bottom: calc(var(--safe-bottom) + 0.5rem) !important;
+}
+.safe-bottom-margin {
+    margin-bottom: var(--safe-bottom) !important;
+}
+.safe-bottom-inset {
+    bottom: calc(var(--safe-bottom) + 1.25rem) !important;
+}
+
+@keyframes cyber-grid {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 40px; }
+}
+
+@keyframes scan-line {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes moving-frost {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.3; filter: blur(20px); }
+  50% { opacity: 0.4; filter: blur(25px); }
+}
+
+.cyber-grid-bg {
+  background-image: 
+    linear-gradient(var(--accent-primary) 1px, transparent 1px),
+    linear-gradient(90deg, var(--accent-primary) 1px, transparent 1px);
+  background-size: 50px 50px;
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+.radar-ping {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 1.5px solid var(--brand);
+  border-radius: 50%;
+  opacity: 0;
+  animation: radar-pulse 6s cubic-bezier(0.21, 0.53, 0.56, 0.8) infinite;
+}
+
+.logo-ping {
+  animation: logo-pulse 8s ease-in-out infinite;
+}
+
+@keyframes logo-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.8; }
+}
+
+@keyframes radar-pulse {
+  0% { transform: scale(0.1); opacity: 0.6; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+.leaflet-marker-icon {
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease !important;
+}
+
+.leaflet-zoom-animated {
+  transition-duration: 0.8s !important;
+}
+
+.leaflet-container {
+  background: #080A09 !important;
+}
+
+.moving-frost {
+  background: linear-gradient(-45deg, rgba(255,255,255,0.02), rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  background-size: 400% 400%;
+  animation: moving-frost 15s ease infinite;
+}
+
+.scan-overlay {
+  display: none;
+}
+
+.neon-border {
+  box-shadow: 0 0 15px var(--brand-glow), inset 0 0 5px var(--brand-glow);
+}
+
+.reputation-green {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.reputation-red {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px var(--shadow-main);
+}
+
+.shadow-brand-glow {
+  box-shadow: 0 0 30px var(--brand-glow);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--brand);
+  border-radius: 10px;
+}
+
+@layer base {
+    /* ── Glassmorphism panel ───────────────────────────── */
+    .glass {
+        background: var(--glass-bg);
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 8px 32px var(--shadow-main);
+    }
+
+    /* ── Neon border & text ────────────────────────────── */
+    .neon-border {
+        border: 3px solid var(--brand);
+        box-shadow: inset 0 0 14px var(--brand-glow), 0 0 20px var(--brand-glow);
+    }
+
+    [data-theme='light'] .neon-border {
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        border-color: #000000;
+    }
+
+    .neon-text {
+        color: var(--brand);
+        text-shadow: 0 0 8px var(--brand-glow);
+    }
+
+    /* ── Primary action button ── */
+    .neon-button {
+        background: linear-gradient(135deg, var(--brand) 0%, var(--brand-mid) 100%);
+        color: #000000; 
+        font-weight: 900;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 3px solid var(--brand);
+        will-change: transform, box-shadow;
+    }
+
+    [data-theme='light'] .neon-button {
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        color: #FFF;
+        background: #000;
+        border-color: #000;
+    }
+
+    /* ── Secondary action button ───────────────────────── */
+    .secondary-button {
+        background: var(--bg-secondary);
+        border: 2px solid var(--border-main);
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: transform, background-color, border-color;
+    }
+
+    [data-theme='light'] .secondary-button {
+        border-color: var(--border-main);
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* ── Icon button ───────────────────────────────────── */
+    .icon-button {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-main);
+        color: var(--brand);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: transform, box-shadow;
+    }
+
+    [data-theme='light'] .icon-button {
+        background: #FFFFFF;
+        border: 2px solid #000000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* ── Surface aliases ───────────────────────────────── */
+    .bg-dark-950 { background-color: var(--bg-primary) !important; }
+    .bg-dark-900 { background-color: var(--bg-secondary) !important; }
+    .bg-dark-800 { background-color: var(--bg-surface) !important; }
+    .bg-dark-700 { background-color: var(--bg-surface-light) !important; }
+
+    /* ── Text aliases ── */
+    .text-primary { color: var(--text-primary) !important; }
+    .text-secondary { color: var(--text-secondary) !important; }
+    .text-muted { color: var(--text-muted) !important; }
+
+    /* ── Border & Surface aliases ── */
+    .border-main { border-color: var(--border-main) !important; }
+    .bg-glass { background-color: var(--glass-bg) !important; }
+    .border-glass { border-color: var(--glass-border) !important; }
+    .bg-surface { background-color: var(--bg-surface) !important; }
+    .bg-surface-light { background-color: var(--bg-surface-light) !important; }
+    .bg-btn-sec { background-color: var(--bg-btn-sec) !important; }
+}
+
+/* ── Desktop container ──────────────────────────────────────── */
+@media (min-width: 1024px) {
+    .app-container {
+        max-width: 450px;
+        margin: 2rem auto;
+        height: calc(100vh - 4rem);
+        border-radius: 3rem;
+        box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6);
+        border: 8px solid var(--bg-secondary);
+        overflow: hidden;
+        position: relative;
+        background-color: transparent; /* Allow bubbles to show through */
+    }
+}
+
+/* ── Helpers ────────────────────────────────────────────────── */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Premium Floating Bubbles Background ────────────────────── */
+.bubbles-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0; /* Base atmospheric layer */
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bubble {
+  position: absolute;
+  bottom: -100px;
+  background: var(--bubble-color);
+  border-radius: 50%;
+  animation: float-bubble var(--duration) ease-in infinite;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.03);
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+[data-theme='light'] .bubble {
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.01);
+}
+
+@keyframes float-bubble {
+  0% { transform: translateY(0) translateX(0) scale(0.5); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(-120vh) translateX(var(--drift)) scale(1.2); opacity: 0; }
+}
+
+.bubble:nth-child(1) { left: 10%; width: 40px; height: 40px; --duration: 15s; --drift: 100px; animation-delay: 0s; }
+.bubble:nth-child(2) { left: 25%; width: 25px; height: 25px; --duration: 18s; --drift: -50px; animation-delay: 2s; }
+.bubble:nth-child(3) { left: 40%; width: 15px; height: 15px; --duration: 12s; --drift: 150px; animation-delay: 4s; }
+.bubble:nth-child(4) { left: 55%; width: 35px; height: 35px; --duration: 20s; --drift: -80px; animation-delay: 1s; }
+.bubble:nth-child(5) { left: 70%; width: 20px; height: 20px; --duration: 14s; --drift: 40px; animation-delay: 6s; }
+.bubble:nth-child(6) { left: 85%; width: 30px; height: 30px; --duration: 22s; --drift: -120px; animation-delay: 3s; }
+.bubble:nth-child(7) { left: 15%; width: 12px; height: 12px; --duration: 10s; --drift: 60px; animation-delay: 8s; }
+.bubble:nth-child(8) { left: 50%; width: 45px; height: 45px; --duration: 25s; --drift: -30px; animation-delay: 5s; }
+.bubble:nth-child(9) { left: 80%; width: 18px; height: 18px; --duration: 16s; --drift: 90px; animation-delay: 7s; }
+.bubble:nth-child(10) { left: 35%; width: 22px; height: 22px; --duration: 19s; --drift: -110px; animation-delay: 9s; }
+.bubble:nth-child(11) { left: 5%; width: 18px; height: 18px; --duration: 21s; --drift: 30px; animation-delay: 1.5s; }
+.bubble:nth-child(12) { left: 45%; width: 32px; height: 32px; --duration: 16s; --drift: -40px; animation-delay: 3.5s; }
+.bubble:nth-child(13) { left: 65%; width: 10px; height: 10px; --duration: 11s; --drift: 80px; animation-delay: 5.5s; }
+.bubble:nth-child(14) { left: 90%; width: 28px; height: 28px; --duration: 24s; --drift: -90px; animation-delay: 0.5s; }
+.bubble:nth-child(15) { left: 20%; width: 38px; height: 38px; --duration: 17s; --drift: 120px; animation-delay: 4.5s; }
+.bubble:nth-child(16) { left: 75%; width: 22px; height: 22px; --duration: 13s; --drift: -20px; animation-delay: 2.5s; }
+.bubble:nth-child(17) { left: 30%; width: 14px; height: 14px; --duration: 19s; --drift: 100px; animation-delay: 6.5s; }
+.bubble:nth-child(18) { left: 60%; width: 42px; height: 42px; --duration: 26s; --drift: -60px; animation-delay: 8.5s; }
+.bubble:nth-child(19) { left: 95%; width: 16px; height: 16px; --duration: 14s; --drift: 50px; animation-delay: 1.2s; }
+.bubble:nth-child(20) { left: 38%; width: 26px; height: 26px; --duration: 18s; --drift: -30px; animation-delay: 3.2s; }
+
+/* Tactical Interface Hardening: Remove Map Metadata */
+.leaflet-control-attribution {
+    display: none !important;
+}
+
+/* Smooth Map Glide */
+.map-glide-overlay {
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* ── Tactical High Contrast Visibility Hardening ── */
+:root {
+    --text-gray-high: #F3F4F6;
+    --text-gray-medium: #E5E7EB;
+}
+
+[data-theme='light'] {
+    --text-gray-high: #0A0A0A;
+    --text-gray-medium: #1A1A1A;
+}
+
+/* Force gray, slate and black text classes to be white in dark mode and black in light mode */
+.text-black, .text-gray-300, .text-slate-300, .text-zinc-300, .text-slate-900, .text-zinc-900, .text-gray-900, .text-dark-950, .text-dark-900, .text-dark-800, .text-slate-950, .text-zinc-950, .text-neutral-900, .text-neutral-950 {
+    color: var(--text-primary) !important;
+}
+.text-gray-400, .text-slate-400, .text-zinc-400, .text-muted, .text-secondary {
+    color: var(--text-gray-medium) !important;
+}
+.text-gray-500, .text-slate-500, .text-zinc-500 {
+    color: var(--text-primary) !important;
+    opacity: 0.8 !important;
+}
+
+/* Handle opacity-based classes to ensure they are white in dark and black in light */
+.text-black\/90, .text-black\/80, .text-black\/70, .text-black\/60 {
+    color: var(--text-primary) !important;
+    opacity: 0.85 !important;
+}
+
+.text-black\/50, .text-black\/40, .text-black\/30 {
+    color: var(--text-primary) !important;
+    opacity: 0.70 !important;
+}
+
+/* Ensure absolute contrast for headings and strong texts */
+h1, h2, h3, h4, h5, h6, strong, b {
+    color: var(--text-primary) !important;
+}
+
+/* Ensure that any elements with white backgrounds always render dark text/icons in BOTH Dark and Light modes */
+.bg-white,
+.bg-white * {
+    color: #111827 !important;
+}
+
+/* Preserve white text in black/dark elements and buttons nested inside explicitly white containers */
+.bg-white button.bg-black,
+.bg-white button.bg-black *,
+.bg-white .bg-black,
+.bg-white .bg-black * {
+    color: #FFFFFF !important;
+}
+
+
+/* Force high contrast white and emerald text on explicitly dark cards inside sheets in Light Mode only */
+[data-theme='light'] .bg-neutral-900, [data-theme='light'] .bg-neutral-900 *, 
+[data-theme='light'] .bg-neutral-950, [data-theme='light'] .bg-neutral-950 *, 
+[data-theme='light'] .bg-black, [data-theme='light'] .bg-black *,
+[data-theme='light'] .bg-\[\#0a0f1c\], [data-theme='light'] .bg-\[\#0a0f1c\] *,
+[data-theme='light'] .bg-\[\#0a0f1c80\], [data-theme='light'] .bg-\[\#0a0f1c80\] *,
+[data-theme='light'] .dark-catalog-card, [data-theme='light'] .dark-catalog-card * {
+    color: #FFFFFF !important;
+}
+[data-theme='light'] .bg-neutral-900 .text-\[\#00e5ff\], [data-theme='light'] .bg-neutral-900 .text-\[\#00e5ff\] *,
+[data-theme='light'] .bg-neutral-950 .text-\[\#00e5ff\], [data-theme='light'] .bg-neutral-950 .text-\[\#00e5ff\] *,
+[data-theme='light'] .bg-black .text-\[\#00e5ff\], [data-theme='light'] .bg-black .text-\[\#00e5ff\] *,
+[data-theme='light'] .bg-\[\#0a0f1c\] .text-\[\#00e5ff\], [data-theme='light'] .bg-\[\#0a0f1c\] .text-\[\#00e5ff\] *,
+[data-theme='light'] .bg-\[\#0a0f1c80\] .text-\[\#00e5ff\], [data-theme='light'] .bg-\[\#0a0f1c80\] .text-\[\#00e5ff\] *,
+[data-theme='light'] .dark-catalog-card .text-\[\#00e5ff\], [data-theme='light'] .dark-catalog-card .text-\[\#00e5ff\] * {
+    color: #00e5ff !important;
+}
+[data-theme='light'] .bg-neutral-900 .text-brand, [data-theme='light'] .bg-neutral-900 .text-brand *, [data-theme='light'] .bg-neutral-950 .text-brand, [data-theme='light'] .bg-neutral-950 .text-brand *, [data-theme='light'] .bg-black .text-brand, [data-theme='light'] .bg-black .text-brand * {
+    color: #10B981 !important; /* Emerald green */
+}
+[data-theme='light'] .bg-neutral-900 .text-neutral-400, [data-theme='light'] .bg-neutral-900 .text-neutral-400 *, [data-theme='light'] .bg-neutral-950 .text-neutral-400, [data-theme='light'] .bg-neutral-950 .text-neutral-400 *, [data-theme='light'] .bg-black .text-neutral-400, [data-theme='light'] .bg-black .text-neutral-400 *, [data-theme='light'] .bg-black .text-gray-400, [data-theme='light'] .bg-black .text-gray-400 * {
+    color: #A3A3A3 !important; /* Muted gray */
+}
+[data-theme='light'] .bg-neutral-900 .text-neutral-500, [data-theme='light'] .bg-neutral-900 .text-neutral-500 *, [data-theme='light'] .bg-neutral-950 .text-neutral-500, [data-theme='light'] .bg-neutral-950 .text-neutral-500 * {
+    color: #737373 !important; /* Secondary muted gray */
+}
+
+/* Shuttle Dark Card Contrast Fix for Light & Dark Mode */
+.shuttle-dark-card,
+.shuttle-dark-card *,
+.shuttle-dark-card h4,
+.shuttle-dark-card p,
+.shuttle-dark-card label,
+.shuttle-dark-card span,
+.shuttle-dark-card div,
+[data-theme='light'] .shuttle-dark-card,
+[data-theme='light'] .shuttle-dark-card *,
+[data-theme='light'] .shuttle-dark-card h4,
+[data-theme='light'] .shuttle-dark-card p,
+[data-theme='light'] .shuttle-dark-card label,
+[data-theme='light'] .shuttle-dark-card span,
+[data-theme='light'] .shuttle-dark-card div {
+    color: #ffffff !important;
+}
+
+.shuttle-dark-card .shuttle-label-green,
+.shuttle-dark-card .shuttle-label-green *,
+.shuttle-dark-card label.shuttle-label-green,
+[data-theme='light'] .shuttle-dark-card .shuttle-label-green,
+[data-theme='light'] .shuttle-dark-card .shuttle-label-green *,
+[data-theme='light'] .shuttle-dark-card label.shuttle-label-green {
+    color: #21ffa5 !important;
+}
+
+.shuttle-dark-card .shuttle-text-sub,
+.shuttle-dark-card .shuttle-text-sub *,
+[data-theme='light'] .shuttle-dark-card .shuttle-text-sub,
+[data-theme='light'] .shuttle-dark-card .shuttle-text-sub * {
+    color: #cbd5e1 !important;
+}
+
+.shuttle-dark-card input,
+.shuttle-dark-card select,
+[data-theme='light'] .shuttle-dark-card input,
+[data-theme='light'] .shuttle-dark-card select {
+    color: #ffffff !important;
+    background-color: #1e293b !important;
+}
+
+.shuttle-dark-card select option,
+[data-theme='light'] .shuttle-dark-card select option {
+    color: #ffffff !important;
+    background-color: #1e293b !important;
+}
+
+/* Light mode styles for the Sidebar */
+[data-theme='light'] .app-sidebar {
+    background-color: #FFFFFF !important;
+    border-right-color: rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 10px 0 40px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme='light'] .app-sidebar * {
+    color: #000000 !important;
+}
+
+[data-theme='light'] .app-sidebar button.bg-brand * {
+    color: #FFFFFF !important;
+}
+
+[data-theme='light'] .app-sidebar .text-brand\/60,
+[data-theme='light'] .app-sidebar .text-brand {
+    color: #10B981 !important; /* Emerald accent */
+}
+
+[data-theme='light'] .app-sidebar .text-gray-400,
+[data-theme='light'] .app-sidebar .text-gray-500,
+[data-theme='light'] .app-sidebar .text-gray-600,
+[data-theme='light'] .app-sidebar .text-gray-700 {
+    color: #6B7280 !important; /* Muted slate gray */
+}
+
+[data-theme='light'] .app-sidebar button:hover {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme='light'] .app-sidebar button:hover * {
+    color: #10B981 !important; /* Emerald green on hover */
+}
+
+[data-theme='light'] .app-sidebar input {
+    background-color: rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    color: #000000 !important;
+}
+
+[data-theme='light'] .app-sidebar .bg-white\/5 {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme='light'] .app-sidebar .bg-dark-800 {
+    background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-theme='light'] .app-sidebar .bg-white\/5 button:hover {
+    background-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ── Light Mode High Contrast Hardening for Admin Dashboard ── */
+[data-theme='light'] {
+    /* Set a beautiful rich forest green/emerald brand accent under Light Mode instead of plain black */
+    --brand-accent: #000000;
+}
+
+/* Force high-contrast dark text color for all text-white elements in Light Mode,
+   EXCEPT inside explicitly dark panels (like floating assistant, modals, etc.) */
+[data-theme='light'] .text-white:not([data-theme='dark'] *):not(.fixed *):not(.bg-\[\#0D1421\] *):not(.accent-white):not(.bg-black):not(.bg-black *):not(.bg-\[\#1A1A1A\]):not(.bg-\[\#1A1A1A\] *):not(.bg-neutral-800):not(.bg-neutral-800 *):not(.bg-neutral-900):not(.bg-neutral-900 *):not(.bg-neutral-950):not(.bg-neutral-950 *):not(.greens-equal-share):not(.greens-equal-share *):not(.greens-friend-name):not(.greens-friend-name *):not(.bg-\[\#0a0f1c\]):not(.bg-\[\#0a0f1c\] *):not(.bg-\[\#0a0f1c80\]):not(.bg-\[\#0a0f1c80\] *):not(.dark-catalog-card):not(.dark-catalog-card *) {
+    color: var(--text-primary) !important;
+}
+
+/* Force gray and text-gray elements to be deep black/charcoal in Light Mode for high contrast */
+[data-theme='light'] .text-gray-300:not([data-theme='dark'] *):not(.fixed *):not(.bg-\[\#0D1421\] *):not(.bg-black):not(.bg-black *):not(.bg-\[\#1A1A1A\]):not(.bg-\[\#1A1A1A\] *):not(.bg-neutral-800):not(.bg-neutral-800 *):not(.bg-neutral-900):not(.bg-neutral-900 *):not(.bg-neutral-950):not(.bg-neutral-950 *):not(.bg-\[\#0a0f1c\] *):not(.bg-\[\#0a0f1c80\] *):not(.dark-catalog-card *),
+[data-theme='light'] .text-gray-400:not([data-theme='dark'] *):not(.fixed *):not(.bg-\[\#0D1421\] *):not(.bg-black):not(.bg-black *):not(.bg-\[\#1A1A1A\]):not(.bg-\[\#1A1A1A\] *):not(.bg-neutral-800):not(.bg-neutral-800 *):not(.bg-neutral-900):not(.bg-neutral-900 *):not(.bg-neutral-950):not(.bg-neutral-950 *):not(.bg-\[\#0a0f1c\] *):not(.bg-\[\#0a0f1c80\] *):not(.dark-catalog-card *),
+[data-theme='light'] .text-slate-300:not(.fixed *):not(.bg-\[\#0D1421\] *):not(.bg-black):not(.bg-black *):not(.bg-\[\#1A1A1A\]):not(.bg-\[\#1A1A1A\] *):not(.bg-neutral-800):not(.bg-neutral-800 *):not(.bg-neutral-900):not(.bg-neutral-900 *):not(.bg-neutral-950):not(.bg-neutral-950 *):not(.bg-\[\#0a0f1c\] *):not(.bg-\[\#0a0f1c80\] *):not(.dark-catalog-card *),
+[data-theme='light'] .text-slate-400:not(.fixed *):not(.bg-\[\#0D1421\] *):not(.bg-black):not(.bg-black *):not(.bg-\[\#1A1A1A\]):not(.bg-\[\#1A1A1A\] *):not(.bg-neutral-800):not(.bg-neutral-800 *):not(.bg-neutral-900):not(.bg-neutral-900 *):not(.bg-neutral-950):not(.bg-neutral-950 *):not(.bg-\[\#0a0f1c\] *):not(.bg-\[\#0a0f1c80\] *):not(.dark-catalog-card *) {
+    color: #111827 !important; /* Deep black-gray */
+}
+
+[data-theme='light'] .text-gray-500:not(.fixed *):not(.bg-\[\#0D1421\] *),
+[data-theme='light'] .text-slate-500:not(.fixed *):not(.bg-\[\#0D1421\] *) {
+    color: #374151 !important; /* Dark charcoal */
+}
+
+/* Ensure text-brand displays as a beautiful emerald green under Light Mode */
+[data-theme='light'] .text-brand {
+    color: var(--brand-accent) !important;
+}
+
+/* Hardened borders for all cards under Light Mode (borders were border-white/5 or border-white/10, making them completely invisible in Light Mode) */
+[data-theme='light'] .border-white\/5,
+[data-theme='light'] .border-white\/10 {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Harden slider range track in Light Mode */
+[data-theme='light'] input[type="range"] {
+    background-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ── Live Status Footer Hardening under Light Mode ── */
+[data-theme='light'] .admin-footer {
+    background-color: #FFFFFF !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+    color: #4B5563 !important; /* Cool gray 600 */
+}
+
+[data-theme='light'] .admin-footer * {
+    color: #1F2937 !important; /* Cool gray 800 */
+}
+
+[data-theme='light'] .admin-footer .text-brand,
+[data-theme='light'] .admin-footer .text-brand\/50 {
+    color: #059669 !important; /* High contrast Emerald */
+}
+
+[data-theme='light'] .admin-footer .bg-emerald-500 {
+    background-color: #10B981 !important;
+}
+
+/* ── Hospitality & Telemetry Card Overrides ── */
+[data-theme='light'] .bg-white\/5 {
+    background-color: #F3F4F6 !important; /* Clean light gray background instead of transparent dark white/5 */
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme='light'] .bg-white\/10 {
+    background-color: #E5E7EB !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Force dark text inside lightened white/5 and white/10 blocks in Light Mode */
+[data-theme='light'] .bg-white\/5,
+[data-theme='light'] .bg-white\/5 .text-white,
+[data-theme='light'] .bg-white\/5 .text-white\/90,
+[data-theme='light'] .bg-white\/10,
+[data-theme='light'] .bg-white\/10 .text-white,
+[data-theme='light'] .bg-white\/10 .text-white\/90 {
+    color: #111827 !important;
+}
+
+/* ── Nightlife Heatmap Progress Bars ── */
+[data-theme='light'] .bg-brand {
+    background-color: #000000 !important; /* Black for fills */
+    color: #ffffff !important; /* White text for contrast */
+}
+
+/* ── Chief Director Profile Card in Header ── */
+[data-theme='light'] .bg-brand\/20 {
+    background-color: rgba(0, 0, 0, 0.08) !important;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* ── Light Mode Brand Backgrounds & Borders ── */
+[data-theme='light'] .bg-brand\/5 {
+    background-color: rgba(0, 0, 0, 0.03) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+[data-theme='light'] .border-brand\/20 {
+    border-color: rgba(0, 0, 0, 0.15) !important;
+}
+[data-theme='light'] .border-brand\/30 {
+    border-color: rgba(0, 0, 0, 0.25) !important;
+}
+
+/* ── Light Mode Dark Card & Dark Button Text Preservation ── */
+[data-theme='light'] .bg-black *,
+[data-theme='light'] .bg-black,
+[data-theme='light'] .bg-black.text-white,
+[data-theme='light'] button.bg-black,
+[data-theme='light'] button.bg-black *,
+[data-theme='light'] .bg-\[\#1A1A1A\],
+[data-theme='light'] .bg-\[\#1A1A1A\] *,
+[data-theme='light'] .bg-\[\#1A1A1A\].text-white,
+[data-theme='light'] button.bg-\[\#1A1A1A\],
+[data-theme='light'] button.bg-\[\#1A1A1A\] *,
+[data-theme='light'] .bg-neutral-800 *,
+[data-theme='light'] .bg-neutral-800,
+[data-theme='light'] .bg-neutral-900 *,
+[data-theme='light'] .bg-neutral-900,
+[data-theme='light'] .bg-neutral-950 *,
+[data-theme='light'] .bg-neutral-950,
+[data-theme='light'] .bg-neutral-950\/20 *,
+[data-theme='light'] .bg-red-950\/20 *,
+[data-theme='light'] .bg-black .text-white,
+[data-theme='light'] .bg-black .text-brand,
+[data-theme='light'] .bg-black .text-white\/60,
+[data-theme='light'] .bg-black .text-white\/90,
+[data-theme='light'] .bg-black .text-gray-500,
+[data-theme='light'] .bg-black .text-neutral-400,
+[data-theme='light'] .bg-black .text-slate-400,
+[data-theme='light'] .bg-\[\#1A1A1A\] .text-white,
+[data-theme='light'] .bg-\[\#1A1A1A\] .text-brand,
+[data-theme='light'] .bg-\[\#1A1A1A\] .text-white\/60,
+[data-theme='light'] .bg-\[\#1A1A1A\] .text-white\/90,
+[data-theme='light'] .bg-neutral-800 .text-white,
+[data-theme='light'] .bg-neutral-850 .text-white,
+[data-theme='light'] .bg-neutral-900 .text-white,
+[data-theme='light'] .bg-neutral-950 .text-white,
+[data-theme='light'] .bg-neutral-900 .text-brand,
+[data-theme='light'] .bg-neutral-950 .text-brand,
+[data-theme='light'] button.bg-black .text-white {
+    color: #FFFFFF !important;
+}
+
+/* ── Settle Group Modal Rows High Contrast Overrides (Light Mode) ── */
+[data-theme='light'] .bg-neutral-900 .bg-white\/5,
+[data-theme='light'] .bg-neutral-900 .bg-white\/5 *,
+[data-theme='light'] .bg-neutral-900 .bg-white\/5 .text-white,
+[data-theme='light'] .bg-neutral-900 .bg-white\/5 .text-white\/90,
+[data-theme='light'] .bg-neutral-900 .bg-white\/10,
+[data-theme='light'] .bg-neutral-900 .bg-white\/10 *,
+[data-theme='light'] .bg-neutral-900 .bg-white\/10 .text-white,
+[data-theme='light'] .bg-neutral-900 .bg-white\/10 .text-white\/90 {
+    color: #111827 !important;
+}
+
+[data-theme='light'] .bg-neutral-900 .bg-white\/5 .text-brand,
+[data-theme='light'] .bg-neutral-900 .bg-white\/10 .text-brand {
+    color: #059669 !important;
+}
+
+/* ── QR Scanner Laser Animation ── */
+@keyframes laser {
+    0% { top: 0%; }
+    50% { top: 100%; }
+    100% { top: 0%; }
+}
+.animate-laser {
+    position: absolute;
+    animation: laser 2.5s infinite linear;
+}
+.animate-spin-slow {
+    animation: spin 8s infinite linear;
+}
+
+/* Blinking red animation for unreceived orders */
+@keyframes blink-red {
+    0%, 100% {
+        border-color: rgba(239, 68, 68, 0.35);
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+    }
+    50% {
+        border-color: rgba(239, 68, 68, 1);
+        box-shadow: 0 0 25px rgba(239, 68, 68, 0.55);
+    }
+}
+.animate-blink-red {
+    animation: blink-red 1.5s infinite ease-in-out !important;
+}
+
+/* Custom sleek horizontal scrollbar utility for scrollable flex containers - Hidden completely */
+.no-scrollbar::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+.no-scrollbar {
+    -ms-overflow-style: none !important;  /* IE and Edge */
+    scrollbar-width: none !important;  /* Firefox */
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+/* ── Tactical High Contrast Visibility Hardening for GreenS Ledger Cards ── */
+/* Explicit Custom High Contrast Visibility Overrides for GreenS Ledger Screen */
+.greens-ledger-card,
+[data-theme='light'] .greens-ledger-card {
+    background-color: #111111 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.greens-friend-card,
+[data-theme='light'] .greens-friend-card {
+    background-color: #161616 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.greens-equal-share,
+.greens-friend-name,
+[data-theme='light'] .greens-equal-share,
+[data-theme='light'] .greens-friend-name {
+    color: #FFFFFF !important;
+}
+
+
+
+/* ── Intro Overlay ── */
+.intro {
+  position: fixed;
+  inset: 0;
+  background: #ffffff;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  gap: 20px;
+  opacity: 1;
+  transition: opacity 0.6s ease, pointer-events 0.6s ease;
+}
+.intro.exit-fade {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Brand - Black Text */
+.intro .brand {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 56px;
+  color: #000000;
+  letter-spacing: -1.5px;
+  opacity: 0;
+  transform: scale(0.9) translateY(20px);
+  animation: brandReveal .8s cubic-bezier(.175,.885,.32,1.275) forwards;
+}
+
+/* Loading Bar Wrapper */
+.intro .bar-wrap {
+  width: 180px;
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: barReveal .6s ease-out .4s forwards;
+}
+
+.intro .bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #555555, #000000, #000000);
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  animation: fillBar 2.5s cubic-bezier(.1, .8, .25, 1) .6s forwards;
+}
+
+.intro .bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 80%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent);
+  animation: shine 1.4s infinite;
+}
+
+@keyframes brandReveal {
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes barReveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fillBar {
+  to {
+    width: 100%;
+  }
+}
+@keyframes shine {
+  0% { left: -80%; }
+  100% { left: 120%; }
+}
+
+/* Smooth Leaflet Marker Animations for debounced GPS */
+.leaflet-marker-icon {
+  transition: transform 10s linear, opacity 0.3s ease-in-out;
+}
+
+
+/* Fix Chrome Autofill in Dark Theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #171717 inset !important;
+    -webkit-text-fill-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* --- PREMIUM GLASSMORPHISM UI --- */
+.glass-panel {
+    background-color: rgba(10, 10, 10, 0.45);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+.glass-panel-subtle {
+    background-color: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme='light'] .glass-panel {
+    background-color: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
+
+[data-theme='light'] .glass-panel-subtle {
+    background-color: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glass-bg-wrapper {
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 100vh;
+    transition: background-image 0.5s ease-in-out;
+}
+
+/* Scoped Overrides to auto-convert existing cards to glass */
+.glass-bg-wrapper .bg-dark-950 {
+    background-color: transparent !important;
+}
+
+.glass-bg-wrapper .bg-dark-900,
+.glass-bg-wrapper .bg-glass,
+.glass-bg-wrapper .bg-dark-800,
+.glass-bg-wrapper .bg-black,
+.glass-bg-wrapper .bg-btn-sec,
+.glass-bg-wrapper .bg-white\/5,
+.glass-bg-wrapper .bg-white\/10 {
+    background-color: rgba(10, 10, 10, 0.45) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme='light'] .glass-bg-wrapper .bg-dark-900,
+[data-theme='light'] .glass-bg-wrapper .bg-glass,
+[data-theme='light'] .glass-bg-wrapper .bg-dark-800,
+[data-theme='light'] .glass-bg-wrapper .bg-black,
+[data-theme='light'] .glass-bg-wrapper .bg-btn-sec,
+[data-theme='light'] .glass-bg-wrapper .bg-white\/5,
+[data-theme='light'] .glass-bg-wrapper .bg-white\/10 {
+    background-color: rgba(255, 255, 255, 0.65) !important;
+    backdrop-filter: blur(24px) !important;
+}
+
+/* ── Tactical High Contrast Visibility Hardening for GreenS Ledger Cards ── */
+/* Explicit Custom High Contrast Visibility Overrides for GreenS Ledger Screen */
+.greens-ledger-card,
+[data-theme='light'] .greens-ledger-card {
+    background-color: #111111 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.greens-friend-card,
+[data-theme='light'] .greens-friend-card {
+    background-color: #161616 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.greens-equal-share,
+.greens-friend-name,
+[data-theme='light'] .greens-equal-share,
+[data-theme='light'] .greens-friend-name {
+    color: #FFFFFF !important;
+}
+
+
+
+/* ── Intro Overlay ── */
+.intro {
+  position: fixed;
+  inset: 0;
+  background: #ffffff;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  gap: 20px;
+  opacity: 1;
+  transition: opacity 0.6s ease, pointer-events 0.6s ease;
+}
+.intro.exit-fade {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Brand - Black Text */
+.intro .brand {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 56px;
+  color: #000000;
+  letter-spacing: -1.5px;
+  opacity: 0;
+  transform: scale(0.9) translateY(20px);
+  animation: brandReveal .8s cubic-bezier(.175,.885,.32,1.275) forwards;
+}
+
+/* Loading Bar Wrapper */
+.intro .bar-wrap {
+  width: 180px;
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: barReveal .6s ease-out .4s forwards;
+}
+
+.intro .bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #555555, #000000, #000000);
+  border-radius: 10px;
+  position: relative;
+  overflow: hidden;
+  animation: fillBar 2.5s cubic-bezier(.1, .8, .25, 1) .6s forwards;
+}
+
+.intro .bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -80%;
+  width: 80%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent);
+  animation: shine 1.4s infinite;
+}
+
+@keyframes brandReveal {
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes barReveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fillBar {
+  to {
+    width: 100%;
+  }
+}
+@keyframes shine {
+  0% { left: -80%; }
+  100% { left: 120%; }
+}
+
+/* Smooth Leaflet Marker Animations for debounced GPS */
+.leaflet-marker-icon {
+  transition: transform 10s linear, opacity 0.3s ease-in-out;
+}
+
+
+/* Fix Chrome Autofill in Dark Theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #171717 inset !important;
+    -webkit-text-fill-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* --- PREMIUM GLASSMORPHISM UI --- */
+.glass-panel {
+    background-color: rgba(10, 10, 10, 0.45);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+.glass-panel-subtle {
+    background-color: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme='light'] .glass-panel {
+    background-color: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
+
+[data-theme='light'] .glass-panel-subtle {
+    background-color: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glass-bg-wrapper {
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 100vh;
+    transition: background-image 0.5s ease-in-out;
+}
+
+/* Scoped Overrides to auto-convert existing cards to glass */
+.glass-bg-wrapper .bg-dark-950 {
+    background-color: transparent !important;
+}
+
+.glass-bg-wrapper .bg-dark-900,
+.glass-bg-wrapper .bg-glass,
+.glass-bg-wrapper .bg-dark-800,
+.glass-bg-wrapper .bg-black,
+.glass-bg-wrapper .bg-btn-sec,
+.glass-bg-wrapper .bg-white\/5,
+.glass-bg-wrapper .bg-white\/10 {
+    background-color: rgba(10, 10, 10, 0.45) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme='light'] .glass-bg-wrapper .bg-dark-900,
+[data-theme='light'] .glass-bg-wrapper .bg-glass,
+[data-theme='light'] .glass-bg-wrapper .bg-dark-800,
+[data-theme='light'] .glass-bg-wrapper .bg-black,
+[data-theme='light'] .glass-bg-wrapper .bg-btn-sec,
+[data-theme='light'] .glass-bg-wrapper .bg-white\/5,
+[data-theme='light'] .glass-bg-wrapper .bg-white\/10 {
+    background-color: rgba(255, 255, 255, 0.65) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07) !important;
+}
+
+/* Ensure text is readable in light mode, EXCEPT inside dark catalog cards */
+[data-theme='light'] .glass-bg-wrapper .text-white:not(.dark-catalog-card *):not(.bg-\[\#0a0f1c\] *):not(.bg-\[\#0a0f1c80\] *),
+[data-theme='light'] .glass-bg-wrapper .text-gray-300:not(.dark-catalog-card *):not(.bg-\[\#0a0f1c\] *):not(.bg-\[\#0a0f1c80\] *),
+[data-theme='light'] .glass-bg-wrapper .text-gray-400:not(.dark-catalog-card *):not(.bg-\[\#0a0f1c\] *):not(.bg-\[\#0a0f1c80\] *) {
+    color: #1a1a1a !important;
+}
+
+[data-theme='light'] .glass-bg-wrapper .border-white\/10,
+[data-theme='light'] .glass-bg-wrapper .border-white\/5 {
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Force dark catalog cards in Manager Dashboard to always render pure white and cyan text in ALL themes */
+.dark-catalog-card,
+.dark-catalog-card *,
+.dark-catalog-card h1, .dark-catalog-card h2, .dark-catalog-card h3, .dark-catalog-card h4, .dark-catalog-card h5, .dark-catalog-card h6,
+.dark-catalog-card th, .dark-catalog-card td, .dark-catalog-card input, .dark-catalog-card p, .dark-catalog-card label, .dark-catalog-card span {
+    color: #FFFFFF !important;
+}
+
+.dark-catalog-card .text-\[\#00e5ff\],
+.dark-catalog-card .text-\[\#00e5ff\] *,
+.dark-catalog-card select {
+    color: #00e5ff !important;
+}
+
+.dark-catalog-card input::placeholder {
+    color: #9CA3AF !important;
+}
+
+[data-theme='dark'] {
+    --text-primary: #FFFFFF;
+    --text-secondary: #F3F4F6;
+    --text-muted: #E5E7EB;
+    --border-main: rgba(255, 255, 255, 0.2);
+}

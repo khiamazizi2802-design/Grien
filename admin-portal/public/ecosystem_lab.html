@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Ecosystem - Master Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;600;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand: #34d399;
+            --brand-glow: rgba(52, 211, 153, 0.4);
+            --dark-950: #0b101a;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--dark-950);
+            color: white;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+        }
+        .lab-container {
+            display: grid;
+            grid-template-columns: repeat(6, auto);
+            gap: 2rem;
+            padding: 3rem;
+            min-width: max-content;
+        }
+        .device-frame {
+            background: #1a1f2e;
+            border: 8px solid #2d3343;
+            border-radius: 3rem;
+            position: relative;
+            box-shadow: 0 50px 100px -20px rgba(0,0,0,0.5), 0 30px 60px -30px rgba(0,0,0,0.3);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        .device-frame:hover {
+            transform: translateY(-5px);
+            border-color: #3d4455;
+        }
+        .device-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(to bottom, rgba(11,16,26,0.9), transparent);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .notch {
+            width: 120px;
+            height: 25px;
+            background: #000;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+        }
+        .label-tag {
+            background: var(--brand);
+            color: #0b101a;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 10px;
+            box-shadow: 0 0 15px var(--brand-glow);
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--brand);
+            border-radius: full;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <header class="h-24 border-b border-white/5 flex items-center justify-between px-12 sticky top-0 bg-dark-950/80 backdrop-blur-xl z-50">
+        <div class="flex items-center gap-6">
+            <div class="w-12 h-12 bg-brand rounded-2xl flex items-center justify-center shadow-[0_0_20px_var(--brand-glow)]">
+                <span class="text-dark-950 font-black text-2xl">G</span>
+            </div>
+            <div>
+                <h1 class="text-2xl font-black italic uppercase tracking-tighter">Unified Ecosystem Lab</h1>
+                <p class="text-white/40 text-xs font-bold uppercase tracking-widest">Real-Time Multi-Portal Stress Test</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+                <div class="status-dot"></div>
+                <span class="text-[10px] font-black uppercase tracking-widest">Global Sync Active</span>
+            </div>
+            <button onclick="refreshAll()" class="bg-brand/10 border border-brand/20 text-brand text-[10px] font-black uppercase tracking-widest px-6 py-2 rounded-xl hover:bg-brand/20 transition-all">
+                Reset Sync
+            </button>
+        </div>
+    </header>
+
+    <main class="lab-container">
+        <!-- 1. CUSTOMER (Phone) -->
+        <div class="flex flex-col gap-6">
+            <div class="flex items-center justify-between px-2">
+                <span class="label-tag">Customer</span>
+                <span class="text-white/40 text-[10px] font-black uppercase">iPhone 14 Pro</span>
+            </div>
+            <div class="device-frame" style="width: 390px; height: 844px;">
+                <div class="device-header"><div class="notch"></div></div>
+                <iframe src="http://localhost:5173/green-ride?role=passenger" id="frame-customer"></iframe>
+            </div>
+        </div>
+
+        <!-- 2. DRIVER (Phone) -->
+        <div class="flex flex-col gap-6">
+            <div class="flex items-center justify-between px-2">
+                <span class="label-tag" style="background: #fbbf24;">Driver</span>
+                <span class="text-white/40 text-[10px] font-black uppercase">Pixel 7 Pro</span>
+            </div>
+            <div class="device-frame" style="width: 412px; height: 892px;">
+                <iframe src="http://localhost:5173/driver?role=driver" id="frame-driver"></iframe>
+            </div>
+        </div>
+
+        <!-- 3. FLEET MANAGER (Tablet) -->
+        <div class="flex flex-col gap-6">
+            <div class="flex items-center justify-between px-2">
+                <span class="label-tag" style="background: #a855f7;">Fleet Manager</span>
+                <span class="text-white/40 text-[10px] font-black uppercase">iPad Air</span>
+            </div>
+            <div class="device-frame" style="width: 820px; height: 1180px;">
+                <iframe src="http://localhost:5173/manager?role=manager&businessType=FLEET" id="frame-manager"></iframe>
+            </div>
+        </div>
+
+        <!-- 4. HOTEL PARTNER (Tablet) -->
+        <div class="flex flex-col gap-6">
+            <div class="flex items-center justify-between px-2">
+                <span class="label-tag" style="background: #3b82f6;">Hotel Partner</span>
+                <span class="text-white/40 text-[10px] font-black uppercase">iPad Mini</span>
+            </div>
+            <div class="device-frame" style="width: 768px; height: 1024px;">
+                <iframe src="http://localhost:5173/manager?role=manager&businessType=HOTEL" id="frame-hotel"></iframe>
+            </div>
+        </div>
+
+        <!-- 5. STAFF / NIGHT CREW (Phone) -->
+        <div class="flex flex-col gap-6">
+            <div class="flex items-center justify-between px-2">
+                <span class="label-tag" style="background: #ec4899;">Venue Staff</span>
+                <span class="text-white/40 text-[10px] font-black uppercase">iPhone 13</span>
+            </div>
+            <div class="device-frame" style="width: 390px; height: 844px;">
+                <iframe src="http://localhost:5173/night-crew?role=staff" id="frame-staff"></iframe>
+            </div>
+        </div>
+
+        <!-- 6. FULL DESKTOP (Ecosystem Overview) -->
+        <div class="flex flex-col gap-6">
+            <div class="flex items-center justify-between px-2">
+                <span class="label-tag" style="background: #f43f5e;">Admin Control</span>
+                <span class="text-white/40 text-[10px] font-black uppercase">Desktop 1080p</span>
+            </div>
+            <div class="device-frame" style="width: 1280px; height: 800px; border-radius: 1.5rem;">
+                <iframe src="http://localhost:5173/admin?role=super_admin" id="frame-desktop"></iframe>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function refreshAll() {
+            const iframes = document.querySelectorAll('iframe');
+            iframes.forEach(iframe => iframe.src = iframe.src);
+        }
+    </script>
+</body>
+</html>

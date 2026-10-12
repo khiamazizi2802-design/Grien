@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Green — Full UX Lab · All Roles · All Devices</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:          #060a12;
+      --surface:     #0d1220;
+      --surface2:    #131929;
+      --border:      rgba(255,255,255,0.07);
+      --green:       #34d399;
+      --green-dim:   rgba(52,211,153,0.15);
+      --green-glow:  rgba(52,211,153,0.35);
+
+      --role-passenger: #34d399;
+      --role-driver:    #fbbf24;
+      --role-manager:   #a78bfa;
+      --role-admin:     #f43f5e;
+
+      --phone-w: 390px;
+      --phone-h: 844px;
+
+      --tablet-w: 820px;
+      --tablet-h: 1024px;
+      --tablet-scale: 0.72;
+
+      --desktop-w: 1440px;
+      --desktop-h: 860px;
+      --desktop-scale: 0.52;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: #f0f6fc;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── ANIMATED BACKGROUND ─── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 15% 5%,  rgba(52,211,153,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 85% 90%, rgba(167,139,250,0.05) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 50% 50%, rgba(244,63,94,0.03)  0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem;
+      height: 72px;
+      background: rgba(6,10,18,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+
+    .logo {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, #34d399, #10b981);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 900; color: #030a06;
+      box-shadow: 0 0 24px var(--green-glow);
+      flex-shrink: 0;
+    }
+
+    .header-title h1 {
+      font-size: 1.25rem; font-weight: 900;
+      letter-spacing: -0.03em;
+      background: linear-gradient(90deg, #fff 40%, #34d399);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .header-title p {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em;
+      text-transform: uppercase; color: rgba(255,255,255,0.35);
+      margin-top: 1px;
+    }
+
+    .header-right { display: flex; align-items: center; gap: 0.75rem; }
+
+    .live-badge {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: rgba(52,211,153,0.08);
+      border: 1px solid rgba(52,211,153,0.2);
+      padding: 6px 14px; border-radius: 100px;
+      font-size: 0.65rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.12em; color: #34d399;
+    }
+
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 8px #34d399;
+      animation: blink 1.4s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    .btn-refresh {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: rgba(255,255,255,0.6);
+      padding: 8px 18px; border-radius: 10px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.75rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+      letter-spacing: 0.05em;
+    }
+    .btn-refresh:hover {
+      border-color: var(--green);
+      color: var(--green);
+      box-shadow: 0 0 12px var(--green-dim);
+    }
+
+    /* ─── ROLE TABS ─── */
+    .role-tabs {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 1.25rem 2.5rem 0;
+    }
+
+    .tab {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 8px 20px; border-radius: 10px;
+      font-size: 0.75rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      cursor: pointer; transition: all 0.25s;
+      border: 1px solid transparent;
+      background: transparent; color: rgba(255,255,255,0.35);
+    }
+
+    .tab .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    .tab.active-passenger, .tab:hover[data-role="passenger"] {
+      background: rgba(52,211,153,0.12);
+      border-color: rgba(52,211,153,0.3);
+      color: #34d399;
+    }
+    .tab.active-driver, .tab:hover[data-role="driver"] {
+      background: rgba(251,191,36,0.12);
+      border-color: rgba(251,191,36,0.3);
+      color: #fbbf24;
+    }
+    .tab.active-manager, .tab:hover[data-role="manager"] {
+      background: rgba(167,139,250,0.12);
+      border-color: rgba(167,139,250,0.3);
+      color: #a78bfa;
+    }
+    .tab.active-admin, .tab:hover[data-role="admin"] {
+      background: rgba(244,63,94,0.12);
+      border-color: rgba(244,63,94,0.3);
+      color: #f43f5e;
+    }
+
+    .tab-all {
+      padding: 8px 20px; border-radius: 10px;
+      font-size: 0.75rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      cursor: pointer; transition: all 0.25s;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7);
+    }
+    .tab-all:hover, .tab-all.active {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.25);
+      color: #fff;
+    }
+
+    /* ─── MAIN CANVAS ─── */
+    .canvas {
+      padding: 2rem 2.5rem 4rem;
+      position: relative; z-index: 1;
+    }
+
+    /* ─── ROLE SECTION ─── */
+    .role-section {
+      margin-bottom: 5rem;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    .role-section.hidden {
+      display: none;
+    }
+
+    .role-header {
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .role-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 6px 16px; border-radius: 8px;
+      font-size: 0.7rem; font-weight: 900;
+      text-transform: uppercase; letter-spacing: 0.15em;
+    }
+
+    .role-badge.passenger { background: rgba(52,211,153,0.15);  color: #34d399;  border: 1px solid rgba(52,211,153,0.3); }
+    .role-badge.driver    { background: rgba(251,191,36,0.15);  color: #fbbf24;  border: 1px solid rgba(251,191,36,0.3); }
+    .role-badge.manager   { background: rgba(167,139,250,0.15); color: #a78bfa;  border: 1px solid rgba(167,139,250,0.3); }
+    .role-badge.admin     { background: rgba(244,63,94,0.15);   color: #f43f5e;  border: 1px solid rgba(244,63,94,0.3); }
+
+    .role-divider {
+      flex: 1; height: 1px;
+      background: linear-gradient(to right, var(--border), transparent);
+    }
+
+    .role-label {
+      font-size: 1.6rem; font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    /* ─── DEVICES ROW ─── */
+    .devices-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 2.5rem;
+      overflow-x: auto;
+      padding-bottom: 1rem;
+    }
+
+    .devices-row::-webkit-scrollbar { height: 4px; }
+    .devices-row::-webkit-scrollbar-track { background: transparent; }
+    .devices-row::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ─── DEVICE CARD ─── */
+    .device-card {
+      flex-shrink: 0;
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+
+    .device-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 4px;
+    }
+
+    .device-name {
+      font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.8);
+    }
+
+    .device-size-tag {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 3px 10px; border-radius: 6px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: rgba(255,255,255,0.45);
+      font-family: monospace;
+    }
+
+    /* ─── PHONE FRAME ─── */
+    .phone-shell {
+      width: 410px;
+      background: #0d1117;
+      border: 2px solid #2a3040;
+      border-radius: 52px;
+      padding: 14px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04),
+        0 40px 80px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      position: relative;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .phone-shell:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 60px 100px rgba(0,0,0,0.7);
+    }
+
+    .phone-notch-bar {
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px;
+    }
+    .dynamic-island {
+      width: 120px; height: 34px;
+      background: #000; border-radius: 20px;
+    }
+
+    .phone-screen {
+      border-radius: 40px; overflow: hidden;
+      background: #000;
+      width: 382px; height: 828px;
+    }
+
+    .phone-home-bar {
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 10px;
+    }
+    .home-indicator {
+      width: 130px; height: 5px; border-radius: 3px;
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* ─── TABLET FRAME ─── */
+    .tablet-shell {
+      width: calc(var(--tablet-w) * var(--tablet-scale) + 28px);
+      background: #0d1117;
+      border: 2px solid #2a3040;
+      border-radius: 28px;
+      padding: 14px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04),
+        0 40px 80px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      position: relative;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .tablet-shell:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 60px 100px rgba(0,0,0,0.7);
+    }
+
+    .tablet-camera-bar {
+      display: flex; align-items: center; justify-content: flex-end;
+      padding-right: 12px; margin-bottom: 8px;
+    }
+    .tablet-camera {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #1e2535; border: 1px solid #2a3040;
+    }
+
+    .tablet-screen {
+      width: calc(var(--tablet-w) * var(--tablet-scale));
+      height: calc(var(--tablet-h) * var(--tablet-scale));
+      border-radius: 14px; overflow: hidden; background: #000;
+      position: relative;
+    }
+    .tablet-screen iframe {
+      width: var(--tablet-w);
+      height: var(--tablet-h);
+      border: none;
+      transform: scale(var(--tablet-scale));
+      transform-origin: 0 0;
+    }
+
+    /* ─── DESKTOP FRAME ─── */
+    .desktop-shell {
+      display: flex; flex-direction: column;
+      width: calc(var(--desktop-w) * var(--desktop-scale) + 28px);
+    }
+
+    .monitor-body {
+      background: #0d1117;
+      border: 2px solid #2a3040;
+      border-radius: 16px;
+      padding: 10px 10px 8px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04),
+        0 40px 80px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .monitor-body:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 60px 100px rgba(0,0,0,0.7);
+    }
+
+    .monitor-top-bar {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 8px 8px;
+    }
+    .traffic-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .traffic-dot.red    { background: #ff5f57; }
+    .traffic-dot.yellow { background: #febc2e; }
+    .traffic-dot.green  { background: #28c840; }
+
+    .desktop-screen {
+      width: calc(var(--desktop-w) * var(--desktop-scale));
+      height: calc(var(--desktop-h) * var(--desktop-scale));
+      border-radius: 8px; overflow: hidden; background: #000;
+      position: relative;
+    }
+    .desktop-screen iframe {
+      width: var(--desktop-w);
+      height: var(--desktop-h);
+      border: none;
+      transform: scale(var(--desktop-scale));
+      transform-origin: 0 0;
+    }
+
+    .monitor-stand {
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .stand-neck {
+      width: 80px; height: 28px;
+      background: linear-gradient(to bottom, #1a2030, #131929);
+      clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+    }
+    .stand-base {
+      width: 200px; height: 12px; border-radius: 6px;
+      background: linear-gradient(to bottom, #1a2030, #0d1117);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    /* Phone iframe direct */
+    .phone-screen iframe {
+      width: 100%; height: 100%; border: none;
+    }
+
+    /* ─── LEGEND ─── */
+    .legend {
+      display: flex; align-items: center; gap: 2rem;
+      padding: 1.5rem 2.5rem;
+      border-top: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+    }
+    .legend-title {
+      font-size: 0.65rem; font-weight: 800; letter-spacing: 0.15em;
+      text-transform: uppercase; color: rgba(255,255,255,0.25);
+    }
+    .legend-items { display: flex; gap: 1.5rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.7rem; font-weight: 600; color: rgba(255,255,255,0.5); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* ─── SCROLL TO TOP ─── */
+    #scrollTop {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 999;
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--surface); border: 1px solid var(--border);
+      color: rgba(255,255,255,0.5); font-size: 1.2rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      opacity: 0; pointer-events: none;
+    }
+    #scrollTop.visible { opacity: 1; pointer-events: auto; }
+    #scrollTop:hover { border-color: var(--green); color: var(--green); box-shadow: 0 0 16px var(--green-dim); }
+
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="logo">G</div>
+      <div class="header-title">
+        <h1>Green — UX Lab</h1>
+        <p>All Roles · Phone · Tablet · Desktop · Live</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        Live on localhost:5173
+      </div>
+      <button class="btn-refresh" onclick="refreshAll()">↺ Refresh All</button>
+    </div>
+  </header>
+
+  <!-- ROLE FILTER TABS -->
+  <div class="role-tabs">
+    <button class="tab-all active" id="tab-all" onclick="showAll()">All Roles</button>
+    <button class="tab active-passenger" data-role="passenger" onclick="showRole('passenger')">
+      <span class="dot" style="background:#34d399;"></span> Passenger
+    </button>
+    <button class="tab active-driver" data-role="driver" onclick="showRole('driver')">
+      <span class="dot" style="background:#fbbf24;"></span> Driver
+    </button>
+    <button class="tab active-manager" data-role="manager" onclick="showRole('manager')">
+      <span class="dot" style="background:#a78bfa;"></span> Manager
+    </button>
+    <button class="tab active-admin" data-role="admin" onclick="showRole('admin')">
+      <span class="dot" style="background:#f43f5e;"></span> Super Admin
+    </button>
+  </div>
+
+  <!-- MAIN CANVAS -->
+  <div class="canvas">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ROLE 1: PASSENGER                           -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="role-section" id="section-passenger">
+      <div class="role-header">
+        <span class="role-badge passenger">● Passenger</span>
+        <span class="role-label" style="color:#34d399;">Customer</span>
+        <div class="role-divider"></div>
+      </div>
+      <div class="devices-row">
+
+        <!-- PHONE -->
+        <div class="device-card">
+          <div class="device-meta">
+            <span class="device-name">📱 iPhone 15 Pro</span>
+            <span class="device-size-tag">390 × 844</span>
+          </div>
+          <div class="phone-shell">
+            <div class="phone-notch-bar"><div class="dynamic-island"></div></div>
+            <div class="phone-screen">
+              <iframe src="http://localhost:5173/" id="iframe-passenger-phone" title="Passenger Phone"></iframe>
+            </div>
+            <div class="phone-home-bar"><div class="home-indicator"></div></div>
+          </div>
+        </div>
+
+        <!-- TABLET -->
+        <div class="device-card">
+          <div class="device-meta">
+            <span class="device-name">📲 iPad Air</span>
+            <span class="device-size-tag">820 × 1024</span>
+          </div>
+          <div class="tablet-shell">
+            <div class="tablet-camera-bar"><div class="tablet-camera"></div></div>
+            <div class="tablet-screen">
+              <iframe src="http://localhost:5173/" id="iframe-passenger-tablet" title="Passenger Tablet"></iframe>
+            </div>
+          </div>
+        </div>
+
+        <!-- DESKTOP -->
+        <div class="device-card">
+          <div class="device-meta">
+            <span class="device-name">🖥️ Desktop 1440p</span>
+            <span class="device-size-tag">1440 × 860</span>
+          </div>
+          <div class="desktop-shell">
+            <div class="monitor-body">
+              <div class="monitor-top-bar">
+                <div class="traffic-dot red"></div>
+                <div class="traffic-dot yellow"></div>
+                <div class="traffic-dot green"></div>
+              </div>
+              <div class="desktop-screen">
+                <iframe src="http://localhost:5173/" id="iframe-passenger-desktop" title="Passenger Desktop"></iframe>
+              </div>
+            </div>
+            <div class="monitor-stand">
+              <div class="stand-neck"></div>
+              <div class="stand-base"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ROLE 2: DRIVER                              -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="role-section" id="section-driver">
+      <div class="role-header">
+        <span class="role-badge driver">● Driver</span>
+        <span class="role-label" style="color:#fbbf24;">Driver</span>
+        <div class="role-divider"></div>
+      </div>
+      <div class="devices-row">
+
+        <!-- PHONE -->
+        <div class="device-card">
+          <div class="device-meta">
+            <span class="device-name">📱 Pixel 8 Pro</span>
+            <span class="device-size-tag">412 × 892</span>
+          </div>
+          <div class="phone-shell" style="border-color:#3a2e10;">
+            <div class="phone-notch-bar"><div class="dynamic-island"></div></div>
+            <div class="phone-screen">
+              <iframe src="http://localhost:5173/login" id="iframe-driver-phone" title="Driver Phone"></iframe>
+            </div>
+            <div class="phone-home-bar"><div class="home-indicator"></div></div>
+          </div>
+        </div>
+
+        <!-- TABLET -->
+        <div class="device-card">
+          <div class="device-meta">
+            <span class="device-name">📲 Samsung Tab S9</span>
+            <span class="device-size-tag">820 × 1024</span>
+          </div>
+          <div class="tablet-shell" style="border-color:#3a2e10;">
+            <div class="tablet-camera-bar"><div class="tablet-camera"></div></div>
+            <div class="tablet-screen">
+              <iframe src="http://localhost:5173/login" id="iframe-driver-tablet" title="Driver Tablet"></iframe>
+            </div>
+          </div>
+        </div>
+
+        <!-- DESKTOP -->
+        <div class="device-card">
+          <div class="device-meta">
+            <span class="device-name">🖥️ Desktop 1440p</span>
+            <span class="device-size-tag">1440 × 860</span>
+          </div>
+          <div class="desktop-shell">
+            <div class="monitor-body" style="border-color:#3a2e10;">
+              <div class="monitor-top-bar">
+                <div class="traffic-dot red"></div>
+                <div class="traffic-dot yellow"></div>
+                <div class="traffic-dot green"></div>
+              </div>
+              <div class="desktop-screen">
+                <iframe src="http://localhost:5173/login" id="iframe-driver-desktop" title="Driver Desktop"></iframe>
+              </div>
+            </div>
+            <div class="monitor-stand">
+              <div class="stand-neck"></div>
+              <div class="stand-base"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ROLE 3: MANAGER                             -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="role-section" id="section-manager">
+      <div class="role-header">
+        <span class="role-badge manager">● Manager</span>
+        <span class="role-label" style="color:#a78bfa;">Business Manager</span>
+        <div class="role-divider"></div>
+      </div>
+      <div class="devices-row">
+
+        <!-- PHONE -->
+        <div class="device-card">
+          <div class="device-meta">
+            <span class="device-name">📱 iPhone 14 Plus</span>
+            <span class="device-size-tag">390 × 844</span>
+          </div>
+          <div class="phone-shell" style="border-color:#2e1f4a;">
+            <div class="phone-notch-bar"><div class="dynamic-island"></div></div>
+            <div class="phone-screen">
+              <iframe src="http://localhost:5173/login" id="iframe-manager-phone" title="Manager Phone"></iframe>
+            </div>
+            <div class="phone-home-bar"><div class="home-indicator"></div></div>
+          </div>
+        </div>
+
+        <!-- TABLET -->
+        <div class="device-card">
+          <div class="device-meta">
+            <span class="device-name">📲 iPad Pro 12.9"</span>
+            <span class="device-size-tag">820 × 1024</span>
+          </div>
+          <div class="tablet-shell" style="border-color:#2e1f4a;">
+            <div class="tablet-camera-bar"><div class="tablet-camera"></div></div>
+            <div class="tablet-screen">
+              <iframe src="http://localhost:5173/login" id="iframe-manager-tablet" title="Manager Tablet"></iframe>
+            </div>
+          </div>
+        </div>
+
+        <!-- DESKTOP -->
+        <div class="device-card">
+          <div class="device-meta">
+            <span class="device-name">🖥️ Desktop 1440p</span>
+            <span class="device-size-tag">1440 × 860</span>
+          </div>
+          <div class="desktop-shell">
+            <div class="monitor-body" style="border-color:#2e1f4a;">
+              <div class="monitor-top-bar">
+                <div class="traffic-dot red"></div>
+                <div class="traffic-dot yellow"></div>
+                <div class="traffic-dot green"></div>
+              </div>
+              <div class="desktop-screen">
+                <iframe src="http://localhost:5173/login" id="iframe-manager-desktop" title="Manager Desktop"></iframe>
+              </div>
+            </div>
+            <div class="monitor-stand">
+              <div class="stand-neck"></div>
+              <div class="stand-base"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ROLE 4: SUPER ADMIN                         -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="role-section" id="section-admin">
+      <div class="role-header">
+        <span class="role-badge admin">● Super Admin</span>
+        <span class="role-label" style="color:#f43f5e;">Admin Control</span>
+        <div class="role-divider"></div>
+      </div>
+      <div class="devices-row">
+
+        <!-- PHONE -->
+        <div class="device-card">
+          <div class="device-meta">
+            <span class="device-name">📱 iPhone 15 Pro Max</span>
+            <span class="device-size-tag">430 × 932</span>
+          </div>
+          <div class="phone-shell" style="border-color:#3d1020;">
+            <div class="phone-notch-bar"><div class="dynamic-island"></div></div>
+            <div class="phone-screen">
+              <iframe src="http://localhost:5173/login" id="iframe-admin-phone" title="Admin Phone"></iframe>
+            </div>
+            <div class="phone-home-bar"><div class="home-indicator"></div></div>
+          </div>
+        </div>
+
+        <!-- TABLET -->
+        <div class="device-card">
+          <div class="device-meta">
+            <span class="device-name">📲 iPad Pro 11"</span>
+            <span class="device-size-tag">820 × 1024</span>
+          </div>
+          <div class="tablet-shell" style="border-color:#3d1020;">
+            <div class="tablet-camera-bar"><div class="tablet-camera"></div></div>
+            <div class="tablet-screen">
+              <iframe src="http://localhost:5173/login" id="iframe-admin-tablet" title="Admin Tablet"></iframe>
+            </div>
+          </div>
+        </div>
+
+        <!-- DESKTOP -->
+        <div class="device-card">
+          <div class="device-meta">
+            <span class="device-name">🖥️ Desktop 1440p</span>
+            <span class="device-size-tag">1440 × 860</span>
+          </div>
+          <div class="desktop-shell">
+            <div class="monitor-body" style="border-color:#3d1020;">
+              <div class="monitor-top-bar">
+                <div class="traffic-dot red"></div>
+                <div class="traffic-dot yellow"></div>
+                <div class="traffic-dot green"></div>
+              </div>
+              <div class="desktop-screen">
+                <iframe src="http://localhost:5173/login" id="iframe-admin-desktop" title="Admin Desktop"></iframe>
+              </div>
+            </div>
+            <div class="monitor-stand">
+              <div class="stand-neck"></div>
+              <div class="stand-base"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div><!-- /canvas -->
+
+  <!-- LEGEND -->
+  <footer class="legend">
+    <span class="legend-title">Roles</span>
+    <div class="legend-items">
+      <div class="legend-item"><div class="legend-dot" style="background:#34d399;"></div> Passenger</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fbbf24;"></div> Driver</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#a78bfa;"></div> Manager</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f43f5e;"></div> Super Admin</div>
+    </div>
+    <div style="flex:1;"></div>
+    <span class="legend-title">Devices</span>
+    <div class="legend-items">
+      <div class="legend-item">📱 Phone</div>
+      <div class="legend-item">📲 Tablet</div>
+      <div class="legend-item">🖥️ Desktop</div>
+    </div>
+    <div style="flex:1;"></div>
+    <span style="font-size:0.65rem;color:rgba(255,255,255,0.2);font-weight:700;">Green UX Lab v3.0 · 12 Live Frames</span>
+  </footer>
+
+  <!-- SCROLL TO TOP -->
+  <button id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+  <script>
+    // ── Refresh all iframes ──
+    function refreshAll() {
+      document.querySelectorAll('iframe').forEach(f => { f.src = f.src; });
+    }
+
+    // ── Role filter ──
+    function showAll() {
+      document.querySelectorAll('.role-section').forEach(s => s.classList.remove('hidden'));
+      document.getElementById('tab-all').classList.add('active');
+    }
+
+    function showRole(role) {
+      const all = ['passenger', 'driver', 'manager', 'admin'];
+      all.forEach(r => {
+        const s = document.getElementById('section-' + r);
+        if (r === role) s.classList.remove('hidden');
+        else s.classList.add('hidden');
+      });
+      document.getElementById('tab-all').classList.remove('active');
+    }
+
+    // ── Scroll to top button ──
+    window.addEventListener('scroll', () => {
+      const btn = document.getElementById('scrollTop');
+      if (window.scrollY > 400) btn.classList.add('visible');
+      else btn.classList.remove('visible');
+    });
+
+    // ── Role-color border glow on hover ──
+    const roleColors = {
+      passenger: '52,211,153',
+      driver:    '251,191,36',
+      manager:   '167,139,250',
+      admin:     '244,63,94',
+    };
+
+    document.querySelectorAll('.role-section').forEach(section => {
+      const role = section.id.replace('section-', '');
+      const color = roleColors[role];
+      if (!color) return;
+      section.querySelectorAll('.phone-shell, .tablet-shell, .monitor-body').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+          el.style.boxShadow = `0 0 0 1px rgba(${color},0.3), 0 40px 80px rgba(0,0,0,0.7), 0 0 40px rgba(${color},0.1)`;
+        });
+        el.addEventListener('mouseleave', () => {
+          el.style.boxShadow = '';
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>

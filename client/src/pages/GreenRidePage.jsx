@@ -312,9 +312,8 @@ const GreenRidePage = () => {
     };
 
     const sharedTypes = [
-
-        { id: 'green3', label: 'Green3', icon: Users, desc: '3 Seats Shared' },
-        { id: 'greenmax', label: 'Green Max', icon: Car, desc: '6+ Seats Van' }
+        { id: 'green3', label: 'Grien3', icon: Users, desc: '3 Seats Shared' },
+        { id: 'greenmax', label: 'Grien Max', icon: Car, desc: '6+ Seats Van' }
     ];
 
     const driverTags = [
@@ -585,7 +584,7 @@ const GreenRidePage = () => {
             if (data.passengerId === 'alex-passenger-id') {
                 console.log('Real-Time Ride Completed');
                 setRideStatus('completed');
-                triggerNotification('system', 'Trip Completed', 'Thank you for choosing Green Premium!');
+                triggerNotification('system', 'Trip Completed', 'Thank you for choosing Grien!');
             }
         };
 
@@ -645,10 +644,22 @@ const GreenRidePage = () => {
             console.log('Emitting ride-request via sockets for Alex Passenger');
             
             const activeDistance = destinationCoords ? liveDistance : 8.4;
-            const currentPricing = calculatePrice(activeDistance, serviceType === 'shared' ? poolPassengers : 1);
-            let finalBookingPrice = currentPricing.discountedPrice;
+            const isPremiumActive = showPremiumBrands || !!selectedBrand;
+            let finalBookingPrice;
             if (serviceType === 'max') {
-                finalBookingPrice = (parseFloat(finalBookingPrice) * 1.5).toFixed(2);
+                if (isPremiumActive) {
+                    finalBookingPrice = calculatePrice(activeDistance, 1, 'premium_max').discountedPrice;
+                } else {
+                    const stdPricing = calculatePrice(activeDistance, 1, 'standard');
+                    finalBookingPrice = (parseFloat(stdPricing.discountedPrice) * 1.5).toFixed(2);
+                }
+            } else if (serviceType === 'shared') {
+                const sharedPricing = calculatePrice(activeDistance, poolPassengers, 'shared');
+                finalBookingPrice = sharedPricing.discountedPrice;
+            } else {
+                const pricingType = isPremiumActive ? 'premium' : 'standard';
+                const currentPricing = calculatePrice(activeDistance, 1, pricingType);
+                finalBookingPrice = currentPricing.discountedPrice;
             }
             
             socket.emit('ride-request', {
@@ -657,13 +668,13 @@ const GreenRidePage = () => {
                 pickup: pickup,
                 destination: destination || 'Mainzer Landstraße 123',
                 coords: { lat: pickupCoords[0], lng: pickupCoords[1] },
-                rideType: serviceType,
+                rideType: (serviceType === 'max' && isPremiumActive) ? 'premium_max' : ((serviceType === 'standard' && isPremiumActive) ? 'premium' : serviceType),
                 capacity: serviceType === 'max' ? 6 : (serviceType === 'shared' ? poolPassengers : 3),
                 price: parseFloat(finalBookingPrice),
                 paymentType: selectedPayment.name
             });
         }
-    }, [rideStatus, socket, pickup, destination, pickupCoords, serviceType, selectedPayment, poolPassengers, liveDistance, destinationCoords]);
+    }, [rideStatus, socket, pickup, destination, pickupCoords, serviceType, selectedPayment, poolPassengers, liveDistance, destinationCoords, showPremiumBrands, selectedBrand]);
     
     // Ensure we always have drivers on the map even if socket is quiet
     const [demoDrivers] = useState([
@@ -684,10 +695,22 @@ const GreenRidePage = () => {
         setIsProcessing(true);
         
         const activeDistance = destinationCoords ? liveDistance : 8.4;
-        const currentPricing = calculatePrice(activeDistance, isPoolingEnabled ? poolPassengers : 1);
-        let finalBookingPrice = currentPricing.discountedPrice;
+        const isPremiumActive = showPremiumBrands || !!selectedBrand;
+        let finalBookingPrice;
         if (serviceType === 'max') {
-            finalBookingPrice = (parseFloat(finalBookingPrice) * 1.5).toFixed(2);
+            if (isPremiumActive) {
+                finalBookingPrice = calculatePrice(activeDistance, 1, 'premium_max').discountedPrice;
+            } else {
+                const stdPricing = calculatePrice(activeDistance, 1, 'standard');
+                finalBookingPrice = (parseFloat(stdPricing.discountedPrice) * 1.5).toFixed(2);
+            }
+        } else if (serviceType === 'shared') {
+            const sharedPricing = calculatePrice(activeDistance, poolPassengers, 'shared');
+            finalBookingPrice = sharedPricing.discountedPrice;
+        } else {
+            const pricingType = isPremiumActive ? 'premium' : 'standard';
+            const currentPricing = calculatePrice(activeDistance, isPoolingEnabled ? poolPassengers : 1, pricingType);
+            finalBookingPrice = currentPricing.discountedPrice;
         }
         
         // STAGE 1: Stripe Test Mode Integration
@@ -1063,7 +1086,15 @@ const GreenRidePage = () => {
                     </div>
 
                     <div
-                        onClick={() => setShowPremiumBrands(!showPremiumBrands)}
+                        onClick={() => {
+                            const next = !showPremiumBrands;
+                            setShowPremiumBrands(next);
+                            if (next) {
+                                setServiceType('standard');
+                            } else {
+                                setSelectedBrand(null);
+                            }
+                        }}
                         className={`h-14 rounded-2xl flex items-center justify-between px-4 cursor-pointer transition-all border mb-2 ${showPremiumBrands ? 'scale-[1.02]' : 'opacity-90 hover:opacity-100'}`}
                         style={{ 
                             background: '#1A1A1A', 
@@ -1103,7 +1134,13 @@ const GreenRidePage = () => {
                                         return (
                                             <button
                                                 key={`${brand.name}-${index}`}
-                                                onClick={() => setSelectedBrand(prev => prev === brand.name ? null : brand.name)}
+                                                onClick={() => {
+                                                    setSelectedBrand(prev => {
+                                                        const nextBrand = prev === brand.name ? null : brand.name;
+                                                        if (nextBrand) setServiceType('standard');
+                                                        return nextBrand;
+                                                    });
+                                                }}
                                                 className="relative flex flex-col items-center gap-2 shrink-0 transition-all duration-300"
                                                 style={{ transform: isSelected ? 'scale(1.15)' : 'scale(1)' }}
                                             >
@@ -1163,21 +1200,54 @@ const GreenRidePage = () => {
                     {/* Service Selection Hub */}
                     <div className="flex gap-2.5 mb-3">
                         {[
-                            { id: 'standard', label: 'Green', icon: Car, desc: 'Premium', activeColor: '#000000', textColor: '#FFFFFF', glow: 'rgba(255,255,255,0.1)' },
-                            { id: 'shared', label: 'Shared', icon: Users, desc: 'COMING SOON', activeColor: '#00A2FF', textColor: '#FFFFFF', glow: 'rgba(0,162,255,0.6)', 
-                              locked: true },
-                            { id: 'max', label: 'Max', icon: Car, desc: '6+ Seats', activeColor: '#1A1A1A', textColor: '#FFFFFF', glow: 'rgba(0,0,0,0.6)' }
+                            { 
+                                id: 'standard', 
+                                label: 'Grien', 
+                                icon: Car, 
+                                desc: (showPremiumBrands || selectedBrand) ? (selectedBrand ? `${selectedBrand} Premium` : 'Premium') : 'Standard', 
+                                activeColor: '#000000', 
+                                textColor: '#FFFFFF', 
+                                glow: 'rgba(255,255,255,0.1)' 
+                            },
+                            { 
+                                id: 'shared', 
+                                label: 'Shared', 
+                                icon: Users, 
+                                desc: 'COMING SOON', 
+                                activeColor: '#00A2FF', 
+                                textColor: '#FFFFFF', 
+                                glow: 'rgba(0,162,255,0.6)', 
+                                locked: true 
+                            },
+                            { 
+                                id: 'max', 
+                                label: 'Grien Max', 
+                                icon: Car, 
+                                desc: (showPremiumBrands || selectedBrand) ? (selectedBrand ? `${selectedBrand} Max` : 'Premium Max') : '6+ Seats', 
+                                activeColor: '#1A1A1A', 
+                                textColor: '#FFFFFF', 
+                                glow: 'rgba(0,0,0,0.6)' 
+                            }
                         ].map((type) => {
                             const isSelected = serviceType === type.id;
                             const isLocked = type.locked;
                             
                             const mockDistance = destinationCoords ? liveDistance : 8.4; 
-                            const pricing = calculatePrice(destination ? mockDistance : 0, type.id === 'shared' ? poolPassengers : 1);
+                            const activeDist = destination ? mockDistance : 0;
                             
-                            // Adjust price for Max
-                            let finalPrice = pricing.discountedPrice;
-                            if (type.id === 'max') {
-                                finalPrice = (parseFloat(finalPrice) * 1.5).toFixed(2);
+                            let finalPrice = '0.00';
+                            if (type.id === 'standard') {
+                                const pricingType = (showPremiumBrands || selectedBrand) ? 'premium' : 'standard';
+                                finalPrice = calculatePrice(activeDist, 1, pricingType).discountedPrice;
+                            } else if (type.id === 'max') {
+                                if (showPremiumBrands || selectedBrand) {
+                                    finalPrice = calculatePrice(activeDist, 1, 'premium_max').discountedPrice;
+                                } else {
+                                    const stdPricing = calculatePrice(activeDist, 1, 'standard');
+                                    finalPrice = (parseFloat(stdPricing.discountedPrice) * 1.5).toFixed(2);
+                                }
+                            } else if (type.id === 'shared') {
+                                finalPrice = calculatePrice(activeDist, poolPassengers, 'shared').discountedPrice;
                             }
                             
                             const displayPrice = type.id === 'shared' ? 'COMING SOON' : (destination ? `€${finalPrice}` : '');
@@ -1190,7 +1260,7 @@ const GreenRidePage = () => {
                                         if (isLocked) return;
                                         setServiceType(type.id);
                                         setIsPoolingEnabled(false);
-                                        if (type.id !== 'standard') {
+                                        if (type.id === 'shared') {
                                             setShowPremiumBrands(false);
                                             setSelectedBrand(null);
                                         }
@@ -1373,10 +1443,18 @@ const GreenRidePage = () => {
                                     <span className="text-[var(--text-secondary)] opacity-60 text-[7px] uppercase tracking-widest font-black">Est. Fare</span>
                                     <div className="flex items-center gap-2">
                                         {isPoolingEnabled && (
-                                            <span className="text-[var(--text-secondary)] opacity-30 text-[8px] md:text-[10px] lg:text-xs line-through font-black">€{(parseFloat(calculatePrice(liveDistance, 1).discountedPrice) * (serviceType === 'max' ? 1.5 : 1)).toFixed(2)}</span>
+                                            <span className="text-[var(--text-secondary)] opacity-30 text-[8px] md:text-[10px] lg:text-xs line-through font-black">€{((showPremiumBrands || selectedBrand) ? parseFloat(calculatePrice(liveDistance, 1, 'premium').discountedPrice) : parseFloat(calculatePrice(liveDistance, 1, 'standard').discountedPrice) * (serviceType === 'max' ? 1.5 : 1)).toFixed(2)}</span>
                                         )}
                                         <span className="text-[10px] md:text-xs lg:text-sm font-black" style={{ color: 'var(--accent-primary)' }}>
-                                            €{(parseFloat(calculatePrice(liveDistance, isPoolingEnabled ? poolPassengers : 1).discountedPrice) * (serviceType === 'max' ? 1.5 : 1)).toFixed(2)}
+                                            €{(serviceType === 'max'
+                                                ? ((showPremiumBrands || selectedBrand)
+                                                    ? calculatePrice(liveDistance, 1, 'premium_max').discountedPrice
+                                                    : (parseFloat(calculatePrice(liveDistance, 1, 'standard').discountedPrice) * 1.5).toFixed(2)
+                                                )
+                                                : (showPremiumBrands || selectedBrand)
+                                                    ? calculatePrice(liveDistance, 1, 'premium').discountedPrice
+                                                    : calculatePrice(liveDistance, isPoolingEnabled ? poolPassengers : 1, serviceType === 'shared' ? 'shared' : 'standard').discountedPrice
+                                            )}
                                         </span>
                                     </div>
                                 </div>
@@ -1594,13 +1672,26 @@ const GreenRidePage = () => {
                         onClick={async () => {
                             if (driverInfo) {
                                 try {
+                                    const ridePriceNum = parseFloat(finalBookingPrice) || (serviceType === 'shared' ? 19.60 : 24.50);
+                                    const isCashPayment = selectedPayment?.id === 'cash';
+                                    const rideProv = (3.00 + Math.floor(ridePriceNum / 30) * 2.00);
+
                                     const newRide = {
                                         passengerId: user?.email ? user.email.toLowerCase() : 'guest',
                                         driverId: driverInfo?.id || 'unknown',
-                                        service: serviceType === 'shared' ? 'GreenS (Shared)' : 'GreenRide (Private)',
+                                        service: serviceType === 'shared' ? 'Grien Shared' : ((showPremiumBrands || selectedBrand) ? 'Grien Premium' : (serviceType === 'max' ? 'Grien Max' : 'Grien Ride (Standard)')),
                                         date: 'Today, ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                                         timestamp: Date.now(),
-                                        price: serviceType === 'shared' ? '€ 19.60' : '€ 24.50',
+                                        price: `€ ${ridePriceNum.toFixed(2)}`,
+                                        priceAmount: ridePriceNum,
+                                        paymentMethod: isCashPayment ? 'cash' : 'card',
+                                        paymentLabel: selectedPayment?.label || (isCashPayment ? 'Cash' : 'Card (Stripe)'),
+                                        isCash: isCashPayment,
+                                        provision: rideProv,
+                                        cashOffset: isCashPayment ? rideProv : 0,
+                                        stripeFeeAbsorbedByPlatform: isCashPayment ? 0 : parseFloat((ridePriceNum * 0.015 + 0.25).toFixed(2)),
+                                        fleetId: driverInfo?.fleetId || 'acct_fleet_102',
+                                        fleetName: driverInfo?.fleet || 'Hessen EcoFleet',
                                         pickup: pickup || 'Current Location',
                                         destination: destination || 'Eco-Park Central',
                                         driverName: driverInfo?.name || 'MICK D.',
@@ -2247,7 +2338,7 @@ const GreenRidePage = () => {
                                 <button
                                     onClick={() => {
                                         if (feedbackText.trim()) {
-                                            triggerNotification('success', 'Feedback Sent', 'Thank you for helping us improve Green.');
+                                            triggerNotification('success', 'Feedback Sent', 'Thank you for helping us improve Grien.');
                                             setFeedbackText('');
                                             setShowFeedbackModal(false);
                                         }

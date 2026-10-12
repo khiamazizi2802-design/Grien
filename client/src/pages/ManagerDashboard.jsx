@@ -4,6 +4,7 @@ import { safeSetItem } from '../utils/storageHelper';
 import { db as fbDb, storage } from '../config/firebase';
 import { doc, getDoc, updateDoc, setDoc, deleteDoc, collection, query, where, getDocs, onSnapshot, orderBy } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { calculateShuttleFare } from '../utils/shuttleFareHelper';
 import {
     TrendingUp,
     History,
@@ -83,8 +84,9 @@ import Sidebar from '../components/Sidebar';
 import Radar from '../components/Radar';
 import { useLanguage } from '../context/LanguageContext';
 import { useSocket } from '../context/SocketContext';
-import { Banknote, Check, Moon, Sun, Loader2 } from 'lucide-react';
+import { Banknote, Check, Moon, Sun, Loader2, Eye, AlertCircle, ExternalLink, FileCheck2, XCircle, Ban, AlertTriangle, ArrowDown, ArrowUp, RefreshCw, BadgePercent, Printer, Download } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { triggerNotification } from '../components/NotificationToast';
 import PostsFeed from '../components/PostsFeed';
 import MenuManagement from './MenuManagement';
 
@@ -173,6 +175,7 @@ const getItemInfo = (itemName) => {
 const ManagerDashboard = () => {
     const { user, setUser, loading, logout } = useAuth();
     const { theme, setTheme } = useTheme();
+    const isLight = theme === 'light';
     const navigate = useNavigate();
     const { lang, setLang, t } = useLanguage();
     const [view, setView] = useState('overview');
@@ -207,6 +210,762 @@ const ManagerDashboard = () => {
     const [uploadStatus, setUploadStatus] = useState(null); // 'processing', 'complete'
     const [previewUrl, setPreviewUrl] = useState(null);
     const [broadcastCaption, setBroadcastCaption] = useState('');
+
+    const [shuttleRequests, setShuttleRequests] = useState([
+        { id: 1, title: 'Airport FRA T1 Group Transfer', guests: 8, bags: 14, time: '14:00 - 14:30 Arrival', vehicle: '2x VIP Sprinter Vans', status: 'ACCEPTED', distanceKm: 14.5, pricePerPax: 13.00, totalPrice: 104.00 },
+        { id: 2, title: 'Airport MUC T2 Group Transfer', guests: 2, bags: 3, time: '16:15 - 16:45 Arrival', vehicle: '1x Executive Van', status: 'PENDING', distanceKm: 9.8, pricePerPax: 11.50, totalPrice: 23.00 }
+    ]);
+
+    const handleAcceptShuttle = (id) => {
+        setShuttleRequests(prev => prev.map(req => req.id === id ? { ...req, status: 'ACCEPTED' } : req));
+    };
+
+    // B2B STADIUM TICKET & SHUTTLE BOTTOM SHEET STATES
+    const [isTicketRevenueModalOpen, setIsTicketRevenueModalOpen] = useState(false);
+    const [selectedTicketCategory, setSelectedTicketCategory] = useState(null);
+    const [ticketStatusFilter, setTicketStatusFilter] = useState('all');
+
+    const [isShuttleServiceModalOpen, setIsShuttleServiceModalOpen] = useState(false);
+    const [shuttleStatusFilter, setShuttleStatusFilter] = useState('all');
+
+    // Stadium Tickets Telemetry Data
+    const stadiumTicketData = useMemo(() => {
+        return [
+            // Category 1: Fußball & Sport
+            { id: 'TK-10821', name: 'VIP Loge Sektor A', category: 'Fußball & Sport', ticketType: 'VIP Box', buyerName: 'Maximilian Weber', buyerEmail: 'm.weber@corp.de', price: 250.00, date: '05.10.2026', status: 'sold', hasShuttle: true, shuttlePax: 2 },
+            { id: 'TK-10822', name: 'Haupttribüne Block 14', category: 'Fußball & Sport', ticketType: 'Sitzplatz', buyerName: 'Laura Becker', buyerEmail: 'l.becker@web.de', price: 85.00, date: '05.10.2026', status: 'sold', hasShuttle: true, shuttlePax: 1 },
+            { id: 'TK-10823', name: 'Haupttribüne Block 14', category: 'Fußball & Sport', ticketType: 'Sitzplatz', buyerName: 'Dennis Meyer', buyerEmail: 'd.meyer@outlook.com', price: 85.00, date: '05.10.2026', status: 'sold', hasShuttle: false },
+            { id: 'TK-10824', name: 'Stehplatz Südkurve', category: 'Fußball & Sport', ticketType: 'Stehplatz', buyerName: 'Felix Hoffmann', buyerEmail: 'f.hoffmann@gmx.de', price: 35.00, date: '05.10.2026', status: 'sold', hasShuttle: false },
+            { id: 'TK-10825', name: 'Haupttribüne Block 12', category: 'Fußball & Sport', ticketType: 'Sitzplatz', buyerName: 'Sarah Schmidt', buyerEmail: 's.schmidt@gmail.com', price: 85.00, date: '05.10.2026', status: 'reserved', hasShuttle: true, shuttlePax: 2 },
+            { id: 'TK-10826', name: 'Stehplatz Südkurve', category: 'Fußball & Sport', ticketType: 'Stehplatz', buyerName: 'Kevin Krause', buyerEmail: 'k.krause@web.de', price: 35.00, date: '05.10.2026', status: 'cancelled', hasShuttle: false },
+
+            // Category 2: Champions League
+            { id: 'TK-20411', name: 'Executive Lounge Pass', category: 'Champions League', ticketType: 'Executive Lounge', buyerName: 'Dr. Hans Müller', buyerEmail: 'h.mueller@med-clinic.de', price: 380.00, date: '12.10.2026', status: 'sold', hasShuttle: true, shuttlePax: 2 },
+            { id: 'TK-20412', name: 'Haupttribüne Center Block', category: 'Champions League', ticketType: 'Sitzplatz', buyerName: 'Christian Wolf', buyerEmail: 'c.wolf@wolf-logistics.com', price: 160.00, date: '12.10.2026', status: 'sold', hasShuttle: true, shuttlePax: 1 },
+            { id: 'TK-20413', name: 'Haupttribüne Center Block', category: 'Champions League', ticketType: 'Sitzplatz', buyerName: 'Thomas Fischer', buyerEmail: 't.fischer@fischer-bau.de', price: 160.00, date: '12.10.2026', status: 'sold', hasShuttle: true, shuttlePax: 1 },
+            { id: 'TK-20414', name: 'VIP Loge Sektor B', category: 'Champions League', ticketType: 'VIP Box', buyerName: 'Andreas Lang', buyerEmail: 'a.lang@finance-group.eu', price: 420.00, date: '12.10.2026', status: 'reserved', hasShuttle: true, shuttlePax: 4 },
+            { id: 'TK-20415', name: 'Gegengerade Block 8', category: 'Champions League', ticketType: 'Sitzplatz', buyerName: 'Tim Wagner', buyerEmail: 't.wagner@hotmail.de', price: 110.00, date: '12.10.2026', status: 'cancelled', hasShuttle: true, shuttlePax: 1 },
+
+            // Category 3: Konzerte & Shows
+            { id: 'TK-30191', name: 'Golden Circle Front Stage', category: 'Konzerte & Shows', ticketType: 'Stehplatz', buyerName: 'Julia Richter', buyerEmail: 'j.richter@gmail.com', price: 140.00, date: '18.10.2026', status: 'sold', hasShuttle: true, shuttlePax: 2 },
+            { id: 'TK-30192', name: 'VIP Loge Diamond', category: 'Konzerte & Shows', ticketType: 'VIP Box', buyerName: 'Alexander Berg', buyerEmail: 'a.berg@music-mgmt.de', price: 290.00, date: '18.10.2026', status: 'sold', hasShuttle: false },
+            { id: 'TK-30193', name: 'Tribüne Oberrang Block C', category: 'Konzerte & Shows', ticketType: 'Sitzplatz', buyerName: 'Melanie Koch', buyerEmail: 'm.koch@posteo.de', price: 75.00, date: '18.10.2026', status: 'reserved', hasShuttle: false },
+            { id: 'TK-30194', name: 'Golden Circle Front Stage', category: 'Konzerte & Shows', ticketType: 'Stehplatz', buyerName: 'Nico Schwarz', buyerEmail: 'n.schwarz@icloud.com', price: 140.00, date: '18.10.2026', status: 'cancelled', hasShuttle: false },
+
+            // Category 4: VVIP & Logen
+            { id: 'TK-40011', name: 'Presidential Sky Lounge', category: 'VVIP & Logen', ticketType: 'VIP Box', buyerName: 'Konsul E. Von Berg', buyerEmail: 'v.berg@holding.ch', price: 650.00, date: '25.10.2026', status: 'sold', hasShuttle: true, shuttlePax: 3 },
+            { id: 'TK-40012', name: 'Valet Package & Exclusive Box', category: 'VVIP & Logen', ticketType: 'Valet Package', buyerName: 'Marc Oster', buyerEmail: 'm.oster@capital-partners.de', price: 490.00, date: '25.10.2026', status: 'reserved', hasShuttle: true, shuttlePax: 2 }
+        ];
+    }, []);
+
+    const ticketCategorySummary = useMemo(() => {
+        const categoriesMap = {};
+        stadiumTicketData.forEach(t => {
+            const cat = t.category || 'Allgemein';
+            if (!categoriesMap[cat]) {
+                categoriesMap[cat] = {
+                    name: cat,
+                    total: 0,
+                    soldCount: 0,
+                    reservedCount: 0,
+                    cancelledCount: 0,
+                    soldRevenue: 0,
+                    reservedRevenue: 0,
+                    cancelledRevenue: 0,
+                    tickets: []
+                };
+            }
+            categoriesMap[cat].total += 1;
+            categoriesMap[cat].tickets.push(t);
+            if (t.status === 'sold') {
+                categoriesMap[cat].soldCount += 1;
+                categoriesMap[cat].soldRevenue += t.price;
+            } else if (t.status === 'reserved') {
+                categoriesMap[cat].reservedCount += 1;
+                categoriesMap[cat].reservedRevenue += t.price;
+            } else if (t.status === 'cancelled') {
+                categoriesMap[cat].cancelledCount += 1;
+                categoriesMap[cat].cancelledRevenue += t.price;
+            }
+        });
+        return Object.values(categoriesMap);
+    }, [stadiumTicketData]);
+
+    const totalTicketStats = useMemo(() => {
+        let sold = 0, reserved = 0, cancelled = 0, soldRev = 0, reservedRev = 0, cancelledRev = 0;
+        stadiumTicketData.forEach(t => {
+            if (t.status === 'sold') { sold++; soldRev += t.price; }
+            else if (t.status === 'reserved') { reserved++; reservedRev += t.price; }
+            else if (t.status === 'cancelled') { cancelled++; cancelledRev += t.price; }
+        });
+        return { sold, reserved, cancelled, total: stadiumTicketData.length, soldRev, reservedRev, cancelledRev };
+    }, [stadiumTicketData]);
+
+    // Stadium Shuttle Bookings Telemetry Data
+    const stadiumShuttleData = useMemo(() => {
+        return [
+            {
+                id: 'SH-88101',
+                guestName: 'Maximilian Weber',
+                guestPhone: '+49 171 4920192',
+                pax: 2,
+                bags: 2,
+                pickup: 'Frankfurt Hbf (Südausgang VIP Zone)',
+                destination: 'Green Stadium Arena (VIP Gate 2)',
+                date: '05.10.2026',
+                time: '16:30 Uhr',
+                vehicleType: 'Green VIP Shuttle Van',
+                pricePerPax: 16.00,
+                totalPrice: 32.00,
+                status: 'sold'
+            },
+            {
+                id: 'SH-88102',
+                guestName: 'Laura Becker',
+                guestPhone: '+49 152 8392011',
+                pax: 1,
+                bags: 1,
+                pickup: 'Flughafen FRA (Terminal 1 Ankunft B)',
+                destination: 'Green Stadium Arena (Haupteingang)',
+                date: '05.10.2026',
+                time: '17:00 Uhr',
+                vehicleType: 'Executive EV Sedan',
+                pricePerPax: 16.00,
+                totalPrice: 16.00,
+                status: 'sold'
+            },
+            {
+                id: 'SH-88103',
+                guestName: 'Dr. Hans Müller',
+                guestPhone: '+49 160 5549210',
+                pax: 2,
+                bags: 2,
+                pickup: 'Steigenberger Icon Frankfurter Hof',
+                destination: 'Green Stadium Arena (VIP Gate 1)',
+                date: '12.10.2026',
+                time: '18:15 Uhr',
+                vehicleType: 'Green VIP Shuttle Van',
+                pricePerPax: 16.00,
+                totalPrice: 32.00,
+                status: 'sold'
+            },
+            {
+                id: 'SH-88104',
+                guestName: 'Christian Wolf',
+                guestPhone: '+49 173 1198273',
+                pax: 1,
+                bags: 1,
+                pickup: 'Hauptbahnhof Frankfurt (Nordseite)',
+                destination: 'Green Stadium Arena (Südtor)',
+                date: '12.10.2026',
+                time: '18:30 Uhr',
+                vehicleType: 'Executive EV Sedan',
+                pricePerPax: 16.00,
+                totalPrice: 16.00,
+                status: 'sold'
+            },
+            {
+                id: 'SH-88105',
+                guestName: 'Thomas Fischer',
+                guestPhone: '+49 151 7739204',
+                pax: 1,
+                bags: 0,
+                pickup: 'Königsallee / Grand Hotel',
+                destination: 'Green Stadium Arena (VIP Gate 2)',
+                date: '12.10.2026',
+                time: '18:45 Uhr',
+                vehicleType: 'Executive EV Sedan',
+                pricePerPax: 16.00,
+                totalPrice: 16.00,
+                status: 'sold'
+            },
+            {
+                id: 'SH-88106',
+                guestName: 'Julia Richter',
+                guestPhone: '+49 176 9940129',
+                pax: 2,
+                bags: 2,
+                pickup: 'Flughafen FRA (Terminal 2)',
+                destination: 'Green Stadium Arena (Konzerteinlass)',
+                date: '18.10.2026',
+                time: '17:30 Uhr',
+                vehicleType: 'Green VIP Shuttle Van',
+                pricePerPax: 16.00,
+                totalPrice: 32.00,
+                status: 'sold'
+            },
+            {
+                id: 'SH-88107',
+                guestName: 'Konsul E. Von Berg',
+                guestPhone: '+41 79 3392019',
+                pax: 3,
+                bags: 4,
+                pickup: 'Privatjet Terminal FRA VIP Gate',
+                destination: 'Green Stadium Arena (Presidential Gate)',
+                date: '25.10.2026',
+                time: '19:00 Uhr',
+                vehicleType: 'VIP Sprinter Lounge Van',
+                pricePerPax: 16.00,
+                totalPrice: 48.00,
+                status: 'sold'
+            },
+            {
+                id: 'SH-88108',
+                guestName: 'Sarah Schmidt',
+                guestPhone: '+49 172 8820491',
+                pax: 2,
+                bags: 1,
+                pickup: 'Hotel Hilton Frankfurt City',
+                destination: 'Green Stadium Arena (Haupteingang)',
+                date: '05.10.2026',
+                time: '17:45 Uhr',
+                vehicleType: 'Green VIP Shuttle Van',
+                pricePerPax: 16.00,
+                totalPrice: 32.00,
+                status: 'reserved'
+            },
+            {
+                id: 'SH-88109',
+                guestName: 'Andreas Lang',
+                guestPhone: '+49 170 3381902',
+                pax: 4,
+                bags: 3,
+                pickup: 'Maritim Hotel Frankfurt',
+                destination: 'Green Stadium Arena (VIP Gate 2)',
+                date: '12.10.2026',
+                time: '18:00 Uhr',
+                vehicleType: 'VIP Sprinter Lounge Van',
+                pricePerPax: 16.00,
+                totalPrice: 64.00,
+                status: 'reserved'
+            },
+            {
+                id: 'SH-88110',
+                guestName: 'Marc Oster',
+                guestPhone: '+49 175 4482910',
+                pax: 2,
+                bags: 2,
+                pickup: 'InterContinental Frankfurt',
+                destination: 'Green Stadium Arena (VIP Gate 1)',
+                date: '25.10.2026',
+                time: '18:30 Uhr',
+                vehicleType: 'Executive EV Sedan',
+                pricePerPax: 16.00,
+                totalPrice: 32.00,
+                status: 'reserved'
+            },
+            {
+                id: 'SH-88111',
+                guestName: 'Tim Wagner',
+                guestPhone: '+49 152 7749201',
+                pax: 1,
+                bags: 1,
+                pickup: 'Frankfurt Hbf Vorplatz',
+                destination: 'Green Stadium Arena (Südtor)',
+                date: '12.10.2026',
+                time: '17:15 Uhr',
+                vehicleType: 'Executive EV Sedan',
+                pricePerPax: 16.00,
+                totalPrice: 16.00,
+                status: 'cancelled'
+            }
+        ];
+    }, []);
+
+    const totalShuttleStats = useMemo(() => {
+        let soldPax = 0, soldTotal = 0, reservedPax = 0, reservedTotal = 0, cancelledPax = 0, cancelledTotal = 0;
+        stadiumShuttleData.forEach(s => {
+            if (s.status === 'sold') {
+                soldPax += s.pax;
+                soldTotal += s.totalPrice;
+            } else if (s.status === 'reserved') {
+                reservedPax += s.pax;
+                reservedTotal += s.totalPrice;
+            } else if (s.status === 'cancelled') {
+                cancelledPax += s.pax;
+                cancelledTotal += s.totalPrice;
+            }
+        });
+        return {
+            soldCount: stadiumShuttleData.filter(s => s.status === 'sold').length,
+            soldPax,
+            soldTotal,
+            reservedCount: stadiumShuttleData.filter(s => s.status === 'reserved').length,
+            reservedPax,
+            reservedTotal,
+            cancelledCount: stadiumShuttleData.filter(s => s.status === 'cancelled').length,
+            cancelledPax,
+            cancelledTotal,
+            totalTrips: stadiumShuttleData.length
+        };
+    }, [stadiumShuttleData]);
+
+    const handleDownloadShuttlePdf = () => {
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert('Bitte Popups im Browser erlauben, um das PDF herunterzuladen.');
+            return;
+        }
+
+        const todayStr = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const bName = 'Green Stadium Arena';
+
+        const rowsHtml = stadiumShuttleData.map(s => `
+            <tr>
+                <td><strong>${s.id}</strong></td>
+                <td>
+                    <div><strong>${s.guestName}</strong></div>
+                    <div style="font-size: 10px; color: #64748b;">${s.guestPhone}</div>
+                </td>
+                <td>${s.pax} Person${s.pax > 1 ? 'en' : ''} (${s.bags} Koffer)</td>
+                <td>
+                    <div><strong>${s.pickup}</strong></div>
+                    <div style="font-size: 10px; color: #0284c7;">&rarr; ${s.destination}</div>
+                </td>
+                <td>${s.date} <br><span style="font-size: 10px; color: #64748b;">${s.time}</span></td>
+                <td>${s.vehicleType}</td>
+                <td><strong>€${s.totalPrice.toFixed(2)}</strong></td>
+                <td>
+                    <span class="badge ${s.status === 'sold' ? 'badge-sold' : s.status === 'reserved' ? 'badge-reserved' : 'badge-cancelled'}">
+                        ${s.status === 'sold' ? 'Verkauft' : s.status === 'reserved' ? 'Reserviert' : 'Storniert'}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>B2B Shuttle-Service Abrechnung - ${bName}</title>
+                <style>
+                    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+                    body { padding: 40px; color: #0f172a; background: #ffffff; line-height: 1.5; font-size: 13px; }
+                    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #00e5ff; padding-bottom: 20px; margin-bottom: 30px; }
+                    .logo-title { font-size: 24px; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.5px; color: #0284c7; }
+                    .logo-sub { font-size: 11px; text-transform: uppercase; font-weight: 800; color: #64748b; letter-spacing: 2px; }
+                    .meta-right { text-align: right; font-size: 12px; color: #475569; }
+                    .meta-right strong { color: #0f172a; }
+                    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
+                    .summary-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; background: #f8fafc; }
+                    .summary-card.sold { border-color: #10b981; background: #f0fdf4; }
+                    .summary-card.reserved { border-color: #f59e0b; background: #fffbeb; }
+                    .summary-card.cancelled { border-color: #ef4444; background: #fef2f2; }
+                    .summary-title { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 4px; }
+                    .summary-val { font-size: 20px; font-weight: 900; color: #0f172a; }
+                    .summary-sub { font-size: 11px; color: #64748b; font-weight: 600; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                    th { background: #0f172a; color: #ffffff; text-align: left; padding: 10px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
+                    td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; vertical-align: middle; }
+                    tr:nth-child(even) td { background: #f8fafc; }
+                    .badge { display: inline-block; padding: 3px 8px; border-radius: 9999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+                    .badge-sold { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+                    .badge-reserved { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+                    .badge-cancelled { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+                    .footer { border-top: 1px solid #e2e8f0; padding-top: 20px; display: flex; justify-content: space-between; font-size: 11px; color: #64748b; }
+                    .total-box { margin-left: auto; width: 280px; margin-bottom: 30px; border: 1px solid #0284c7; border-radius: 12px; padding: 16px; background: #f0f9ff; }
+                    .total-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; }
+                    .total-row.final { font-size: 16px; font-weight: 900; color: #0369a1; border-top: 1px solid #bae6fd; padding-top: 8px; margin-top: 8px; }
+                    @media print {
+                        body { padding: 15px; }
+                        button { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div>
+                        <div class="logo-title">KHIAM GREEN VIP FLEET</div>
+                        <div class="logo-sub">B2B Shuttle-Service Abrechnung & Kontingente</div>
+                    </div>
+                    <div class="meta-right">
+                        <div><strong>Partner:</strong> ${bName}</div>
+                        <div><strong>Datum:</strong> ${todayStr}</div>
+                        <div><strong>Dokumenten-Nr.:</strong> SHT-${Date.now().toString().slice(-6)}</div>
+                        <div><strong>Tarif-Modell:</strong> Green B2B Staffeltarif (€16,00 / Pax)</div>
+                    </div>
+                </div>
+
+                <div class="summary-grid">
+                    <div class="summary-card sold">
+                        <div class="summary-title">Ausgeführt / Verkauft</div>
+                        <div class="summary-val">${totalShuttleStats.soldPax} Passagiere</div>
+                        <div class="summary-sub">€${totalShuttleStats.soldTotal.toFixed(2)} (${totalShuttleStats.soldCount} Fahrten)</div>
+                    </div>
+                    <div class="summary-card reserved">
+                        <div class="summary-title">Reserviert / Geplant</div>
+                        <div class="summary-val">${totalShuttleStats.reservedPax} Passagiere</div>
+                        <div class="summary-sub">€${totalShuttleStats.reservedTotal.toFixed(2)} (${totalShuttleStats.reservedCount} Fahrten)</div>
+                    </div>
+                    <div class="summary-card cancelled">
+                        <div class="summary-title">Storniert</div>
+                        <div class="summary-val">${totalShuttleStats.cancelledPax} Passagiere</div>
+                        <div class="summary-sub">€${totalShuttleStats.cancelledTotal.toFixed(2)} (${totalShuttleStats.cancelledCount} Fahrten)</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-title">Gesamt Transfers</div>
+                        <div class="summary-val">${totalShuttleStats.totalTrips} Fahrten</div>
+                        <div class="summary-sub">${totalShuttleStats.soldPax + totalShuttleStats.reservedPax + totalShuttleStats.cancelledPax} Passagiere</div>
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Transfer-ID</th>
+                            <th>Gast / Fahrgast</th>
+                            <th>Passagiere</th>
+                            <th>Route (Abholung &rarr; Ziel)</th>
+                            <th>Datum & Uhrzeit</th>
+                            <th>Fahrzeug</th>
+                            <th>Betrag</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+
+                <div class="total-box">
+                    <div class="total-row">
+                        <span>Verkaufte Transfers:</span>
+                        <strong>€${totalShuttleStats.soldTotal.toFixed(2)}</strong>
+                    </div>
+                    <div class="total-row">
+                        <span>Reservierte Transfers (offen):</span>
+                        <strong>€${totalShuttleStats.reservedTotal.toFixed(2)}</strong>
+                    </div>
+                    <div class="total-row">
+                        <span>Stornierte Transfers:</span>
+                        <strong style="color: #ef4444;">€${totalShuttleStats.cancelledTotal.toFixed(2)}</strong>
+                    </div>
+                    <div class="total-row final">
+                        <span>Abrechnungsbetrag Green:</span>
+                        <span>€${totalShuttleStats.soldTotal.toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <div>Khiam Green Technologies GmbH &bull; B2B Fleet Clearing &bull; info@green.de</div>
+                    <div>Automatisch erstellter Abrechnungsbericht &bull; Gültig ohne Unterschrift</div>
+                </div>
+
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    };
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    };
+
+    // B2B HOTEL ROOM & SHUTTLE BOTTOM SHEET STATES
+    const [isHotelRevenueModalOpen, setIsHotelRevenueModalOpen] = useState(false);
+    const [selectedRoomCategory, setSelectedRoomCategory] = useState(null);
+    const [roomStatusFilter, setRoomStatusFilter] = useState('all');
+
+    const [isHotelShuttleModalOpen, setIsHotelShuttleModalOpen] = useState(false);
+    const [hotelShuttleStatusFilter, setHotelShuttleStatusFilter] = useState('all');
+
+    // Hotel Room Bookings Telemetry Data (14 sold = €3.500,00)
+    const hotelRoomData = useMemo(() => {
+        return [
+            // Category 1: Executive Suite Deluxe (€350,00) - 4 sold = €1.400,00
+            { id: 'ZM-40101', name: 'Executive Suite Deluxe #401', category: 'Executive Suite Deluxe', roomType: 'Suite', guestName: 'Dr. Martin Lindner', guestEmail: 'm.lindner@holding.ch', price: 350.00, checkIn: '05.10.2026', nights: 1, status: 'sold', hasShuttle: true, shuttlePax: 2 },
+            { id: 'ZM-40102', name: 'Executive Suite Deluxe #402', category: 'Executive Suite Deluxe', roomType: 'Suite', guestName: 'Beate Kaufmann', guestEmail: 'b.kaufmann@invest.com', price: 350.00, checkIn: '05.10.2026', nights: 1, status: 'sold', hasShuttle: true, shuttlePax: 1 },
+            { id: 'ZM-40103', name: 'Executive Suite Deluxe #403', category: 'Executive Suite Deluxe', roomType: 'Suite', guestName: 'Sebastian Kraft', guestEmail: 's.kraft@kraft-law.de', price: 350.00, checkIn: '05.10.2026', nights: 1, status: 'sold', hasShuttle: false },
+            { id: 'ZM-40104', name: 'Executive Suite Deluxe #404', category: 'Executive Suite Deluxe', roomType: 'Suite', guestName: 'Monika Wagner', guestEmail: 'm.wagner@global.at', price: 350.00, checkIn: '06.10.2026', nights: 1, status: 'sold', hasShuttle: true, shuttlePax: 2 },
+            { id: 'ZM-40105', name: 'Executive Suite Deluxe #405', category: 'Executive Suite Deluxe', roomType: 'Suite', guestName: 'Christian Wolf', guestEmail: 'c.wolf@wolf-logistics.com', price: 350.00, checkIn: '08.10.2026', nights: 1, status: 'reserved', hasShuttle: true, shuttlePax: 1 },
+            { id: 'ZM-40106', name: 'Executive Suite Deluxe #406', category: 'Executive Suite Deluxe', roomType: 'Suite', guestName: 'Jens Lehmann', guestEmail: 'j.lehmann@web.de', price: 350.00, checkIn: '05.10.2026', nights: 1, status: 'cancelled', hasShuttle: false },
+
+            // Category 2: Superior King Room (€180,00) - 6 sold = €1.080,00
+            { id: 'ZM-40201', name: 'Superior King Room #201', category: 'Superior King Room', roomType: 'King Room', guestName: 'Alexander Schulz', guestEmail: 'a.schulz@gmx.de', price: 180.00, checkIn: '05.10.2026', nights: 1, status: 'sold', hasShuttle: true, shuttlePax: 1 },
+            { id: 'ZM-40202', name: 'Superior King Room #202', category: 'Superior King Room', roomType: 'King Room', guestName: 'Kathrin Vogel', guestEmail: 'k.vogel@telekom.de', price: 180.00, checkIn: '05.10.2026', nights: 1, status: 'sold', hasShuttle: false },
+            { id: 'ZM-40203', name: 'Superior King Room #203', category: 'Superior King Room', roomType: 'King Room', guestName: 'Frank Zimmermann', guestEmail: 'f.zimmermann@outlook.com', price: 180.00, checkIn: '05.10.2026', nights: 1, status: 'sold', hasShuttle: true, shuttlePax: 2 },
+            { id: 'ZM-40204', name: 'Superior King Room #204', category: 'Superior King Room', roomType: 'King Room', guestName: 'Nadine Meier', guestEmail: 'n.meier@yahoo.de', price: 180.00, checkIn: '06.10.2026', nights: 1, status: 'sold', hasShuttle: true, shuttlePax: 1 },
+            { id: 'ZM-40205', name: 'Superior King Room #205', category: 'Superior King Room', roomType: 'King Room', guestName: 'Tobias Braun', guestEmail: 't.braun@braun-gmbh.de', price: 180.00, checkIn: '06.10.2026', nights: 1, status: 'sold', hasShuttle: false },
+            { id: 'ZM-40206', name: 'Superior King Room #206', category: 'Superior King Room', roomType: 'King Room', guestName: 'Elena Rostova', guestEmail: 'e.rostova@consulting.eu', price: 180.00, checkIn: '07.10.2026', nights: 1, status: 'sold', hasShuttle: true, shuttlePax: 1 },
+            { id: 'ZM-40207', name: 'Superior King Room #207', category: 'Superior King Room', roomType: 'King Room', guestName: 'Svenja Otto', guestEmail: 's.otto@web.de', price: 180.00, checkIn: '09.10.2026', nights: 1, status: 'reserved', hasShuttle: true, shuttlePax: 1 },
+            { id: 'ZM-40208', name: 'Superior King Room #208', category: 'Superior King Room', roomType: 'King Room', guestName: 'Dirk Hoffmann', guestEmail: 'd.hoffmann@live.de', price: 180.00, checkIn: '10.10.2026', nights: 1, status: 'reserved', hasShuttle: false },
+
+            // Category 3: Panorama Junior Suite (€260,00) - 3 sold = €780,00
+            { id: 'ZM-40301', name: 'Panorama Junior Suite #301', category: 'Panorama Junior Suite', roomType: 'Junior Suite', guestName: 'Dr. Hans Müller', guestEmail: 'h.mueller@med-clinic.de', price: 260.00, checkIn: '05.10.2026', nights: 1, status: 'sold', hasShuttle: true, shuttlePax: 1 },
+            { id: 'ZM-40302', name: 'Panorama Junior Suite #302', category: 'Panorama Junior Suite', roomType: 'Junior Suite', guestName: 'Claudia Richter', guestEmail: 'c.richter@art-gallery.de', price: 260.00, checkIn: '05.10.2026', nights: 1, status: 'sold', hasShuttle: false },
+            { id: 'ZM-40303', name: 'Panorama Junior Suite #303', category: 'Panorama Junior Suite', roomType: 'Junior Suite', guestName: 'Janina Beck', guestEmail: 'j.beck@live.de', price: 260.00, checkIn: '06.10.2026', nights: 1, status: 'sold', hasShuttle: true, shuttlePax: 2 },
+            { id: 'ZM-40304', name: 'Panorama Junior Suite #304', category: 'Panorama Junior Suite', roomType: 'Junior Suite', guestName: 'Marc Oster', guestEmail: 'm.oster@events.de', price: 260.00, checkIn: '08.10.2026', nights: 1, status: 'reserved', hasShuttle: true, shuttlePax: 2 },
+            { id: 'ZM-40305', name: 'Panorama Junior Suite #305', category: 'Panorama Junior Suite', roomType: 'Junior Suite', guestName: 'Lukas May', guestEmail: 'l.may@outlook.de', price: 260.00, checkIn: '05.10.2026', nights: 1, status: 'cancelled', hasShuttle: false },
+
+            // Category 4: Presidential Penthouse (€240,00 / €650,00) - 1 sold = €240,00
+            { id: 'ZM-40401', name: 'Presidential Penthouse Suite #501', category: 'Presidential Penthouse', roomType: 'Penthouse Suite', guestName: 'Konsul E. Von Berg', guestEmail: 'e.vonberg@holding.ch', price: 240.00, checkIn: '05.10.2026', nights: 1, status: 'sold', hasShuttle: true, shuttlePax: 2 },
+            { id: 'ZM-40402', name: 'Presidential Penthouse Suite #502', category: 'Presidential Penthouse', roomType: 'Penthouse Suite', guestName: 'Andreas Lang', guestEmail: 'a.lang@finance-group.eu', price: 650.00, checkIn: '12.10.2026', nights: 1, status: 'reserved', hasShuttle: true, shuttlePax: 4 }
+        ];
+    }, []);
+
+    // Summary per Room Category
+    const hotelCategorySummary = useMemo(() => {
+        const catMap = {};
+        hotelRoomData.forEach(r => {
+            if (!catMap[r.category]) {
+                catMap[r.category] = { name: r.category, total: 0, sold: 0, reserved: 0, cancelled: 0, soldRevenue: 0, reservedRevenue: 0, shuttlePax: 0 };
+            }
+            catMap[r.category].total += 1;
+            if (r.status === 'sold') {
+                catMap[r.category].sold += 1;
+                catMap[r.category].soldRevenue += r.price;
+            } else if (r.status === 'reserved') {
+                catMap[r.category].reserved += 1;
+                catMap[r.category].reservedRevenue += r.price;
+            } else if (r.status === 'cancelled') {
+                catMap[r.category].cancelled += 1;
+            }
+            if (r.hasShuttle && r.status !== 'cancelled') {
+                catMap[r.category].shuttlePax += (r.shuttlePax || 1);
+            }
+        });
+        return Object.values(catMap);
+    }, [hotelRoomData]);
+
+    const totalRoomStats = useMemo(() => {
+        let sold = 0, reserved = 0, cancelled = 0, soldRev = 0, reservedRev = 0, cancelledRev = 0;
+        hotelRoomData.forEach(r => {
+            if (r.status === 'sold') {
+                sold += 1;
+                soldRev += r.price;
+            } else if (r.status === 'reserved') {
+                reserved += 1;
+                reservedRev += r.price;
+            } else if (r.status === 'cancelled') {
+                cancelled += 1;
+                cancelledRev += r.price;
+            }
+        });
+        return { sold, reserved, cancelled, total: hotelRoomData.length, soldRev, reservedRev, cancelledRev };
+    }, [hotelRoomData]);
+
+    // Hotel Shuttle Bookings Telemetry Data (14 sold @ €16,00 = €224,00)
+    const hotelShuttleData = useMemo(() => {
+        return [
+            { id: 'SH-H01', guestName: 'Dr. Martin Lindner', guestPhone: '+49 171 2891029', pax: 2, bags: 2, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Green Hotel & Spa (VIP Eingang)', date: '05.10.2026', time: '13:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H02', guestName: 'Beate Kaufmann', guestPhone: '+49 152 7719203', pax: 1, bags: 1, pickup: 'Frankfurt Hbf (Südausgang)', destination: 'Green Hotel & Spa (Lobby)', date: '05.10.2026', time: '14:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H03', guestName: 'Monika Wagner', guestPhone: '+43 664 882910', pax: 2, bags: 2, pickup: 'Flughafen FRA (Terminal 2)', destination: 'Green Hotel & Spa (Lobby)', date: '05.10.2026', time: '14:45 Uhr', vehicleType: 'Green VIP Shuttle Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H04', guestName: 'Alexander Schulz', guestPhone: '+49 176 4492019', pax: 1, bags: 1, pickup: 'Messe Frankfurt (Tor Ost)', destination: 'Green Hotel & Spa (Haupteingang)', date: '05.10.2026', time: '15:15 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H05', guestName: 'Frank Zimmermann', guestPhone: '+49 160 3381920', pax: 2, bags: 2, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Green Hotel & Spa (VIP Eingang)', date: '05.10.2026', time: '16:00 Uhr', vehicleType: 'Green VIP Shuttle Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H06', guestName: 'Nadine Meier', guestPhone: '+49 173 9920182', pax: 1, bags: 1, pickup: 'Frankfurt Hbf (Vorplatz)', destination: 'Green Hotel & Spa (Lobby)', date: '06.10.2026', time: '11:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H07', guestName: 'Elena Rostova', guestPhone: '+33 6 12345678', pax: 1, bags: 1, pickup: 'Flughafen FRA (Terminal 2)', destination: 'Green Hotel & Spa (Lobby)', date: '06.10.2026', time: '12:15 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H08', guestName: 'Dr. Hans Müller', guestPhone: '+49 160 5549210', pax: 1, bags: 1, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Green Hotel & Spa (VIP Eingang)', date: '06.10.2026', time: '13:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H09', guestName: 'Janina Beck', guestPhone: '+49 175 8839201', pax: 2, bags: 2, pickup: 'Alte Oper Frankfurt', destination: 'Green Hotel & Spa (Lobby)', date: '06.10.2026', time: '17:30 Uhr', vehicleType: 'Green VIP Shuttle Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H10', guestName: 'Konsul E. Von Berg', guestPhone: '+41 79 3392019', pax: 2, bags: 3, pickup: 'Privatjet Terminal FRA Gate 1', destination: 'Green Hotel & Spa (Presidential Gate)', date: '06.10.2026', time: '18:45 Uhr', vehicleType: 'VIP Sprinter Lounge Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H11', guestName: 'Maximilian Weber', guestPhone: '+49 171 4920192', pax: 1, bags: 1, pickup: 'Green Hotel & Spa', destination: 'Flughafen FRA (Terminal 1)', date: '07.10.2026', time: '07:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H12', guestName: 'Laura Becker', guestPhone: '+49 152 8392011', pax: 1, bags: 1, pickup: 'Green Hotel & Spa', destination: 'Messe Frankfurt (Tor Süd)', date: '07.10.2026', time: '08:45 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H13', guestName: 'Thomas Fischer', guestPhone: '+49 151 7739204', pax: 1, bags: 0, pickup: 'Green Hotel & Spa', destination: 'Frankfurt Hbf (Gleis 1)', date: '07.10.2026', time: '10:15 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H14', guestName: 'Dennis Meyer', guestPhone: '+49 172 3391028', pax: 1, bags: 1, pickup: 'Green Hotel & Spa', destination: 'Flughafen FRA (Terminal 2)', date: '07.10.2026', time: '11:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+
+            // Reserved Shuttles (4 transfers)
+            { id: 'SH-H15', guestName: 'Christian Wolf', guestPhone: '+49 173 1198273', pax: 1, bags: 1, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Green Hotel & Spa (Lobby)', date: '08.10.2026', time: '14:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'reserved' },
+            { id: 'SH-H16', guestName: 'Svenja Otto', guestPhone: '+49 176 8839102', pax: 1, bags: 1, pickup: 'Frankfurt Hbf (Nordseite)', destination: 'Green Hotel & Spa (Lobby)', date: '09.10.2026', time: '15:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'reserved' },
+            { id: 'SH-H17', guestName: 'Marc Oster', guestPhone: '+49 175 4482910', pax: 2, bags: 2, pickup: 'Flughafen FRA (Terminal 2)', destination: 'Green Hotel & Spa (Lobby)', date: '08.10.2026', time: '16:15 Uhr', vehicleType: 'Green VIP Shuttle Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'reserved' },
+            { id: 'SH-H18', guestName: 'Andreas Lang', guestPhone: '+49 170 3381902', pax: 4, bags: 4, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Green Hotel & Spa (VIP Eingang)', date: '12.10.2026', time: '18:00 Uhr', vehicleType: 'VIP Sprinter Lounge Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'reserved' },
+
+            // Cancelled Shuttles (2 transfers)
+            { id: 'SH-H19', guestName: 'Jens Lehmann', guestPhone: '+49 171 5592019', pax: 1, bags: 1, pickup: 'Frankfurt Hbf (Südausgang)', destination: 'Green Hotel & Spa (Lobby)', date: '05.10.2026', time: '16:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'cancelled' },
+            { id: 'SH-H20', guestName: 'Lukas May', guestPhone: '+49 177 4482019', pax: 1, bags: 1, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Green Hotel & Spa (Lobby)', date: '05.10.2026', time: '17:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'cancelled' }
+        ];
+    }, []);
+
+    const totalHotelShuttleStats = useMemo(() => {
+        let soldPax = 0, soldTotal = 0, reservedPax = 0, reservedTotal = 0, cancelledPax = 0, cancelledTotal = 0;
+        hotelShuttleData.forEach(s => {
+            if (s.status === 'sold') {
+                soldPax += s.pax;
+                soldTotal += s.totalPrice;
+            } else if (s.status === 'reserved') {
+                reservedPax += s.pax;
+                reservedTotal += s.totalPrice;
+            } else if (s.status === 'cancelled') {
+                cancelledPax += s.pax;
+                cancelledTotal += s.totalPrice;
+            }
+        });
+        return {
+            soldCount: hotelShuttleData.filter(s => s.status === 'sold').length,
+            soldPax,
+            soldTotal,
+            reservedCount: hotelShuttleData.filter(s => s.status === 'reserved').length,
+            reservedPax,
+            reservedTotal,
+            cancelledCount: hotelShuttleData.filter(s => s.status === 'cancelled').length,
+            cancelledPax,
+            cancelledTotal,
+            totalTrips: hotelShuttleData.length
+        };
+    }, [hotelShuttleData]);
+
+    const handleDownloadHotelShuttlePdf = () => {
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert('Bitte Popups im Browser erlauben, um das PDF herunterzuladen.');
+            return;
+        }
+
+        const todayStr = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const hName = getBusinessName() || 'Grand Hotel & Spa';
+
+        const rowsHtml = hotelShuttleData.map(s => `
+            <tr>
+                <td><strong>${s.id}</strong></td>
+                <td>
+                    <div><strong>${s.guestName}</strong></div>
+                    <div style="font-size: 10px; color: #64748b;">${s.guestPhone}</div>
+                </td>
+                <td>${s.pax} Person${s.pax > 1 ? 'en' : ''} (${s.bags} Koffer)</td>
+                <td>
+                    <div><strong>${s.pickup}</strong></div>
+                    <div style="font-size: 10px; color: #0284c7;">&rarr; ${s.destination}</div>
+                </td>
+                <td>${s.date} <br><span style="font-size: 10px; color: #64748b;">${s.time}</span></td>
+                <td>${s.vehicleType}</td>
+                <td><strong>€${s.totalPrice.toFixed(2)}</strong></td>
+                <td>
+                    <span class="badge ${s.status === 'sold' ? 'badge-sold' : s.status === 'reserved' ? 'badge-reserved' : 'badge-cancelled'}">
+                        ${s.status === 'sold' ? 'Verkauft' : s.status === 'reserved' ? 'Reserviert' : 'Storniert'}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>B2B Hotel Shuttle-Abrechnung - ${hName}</title>
+                <style>
+                    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+                    body { padding: 40px; color: #0f172a; background: #ffffff; line-height: 1.5; font-size: 13px; }
+                    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #00e5ff; padding-bottom: 20px; margin-bottom: 30px; }
+                    .logo-title { font-size: 24px; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: -0.5px; color: #0284c7; }
+                    .logo-sub { font-size: 11px; text-transform: uppercase; font-weight: 800; color: #64748b; letter-spacing: 2px; }
+                    .meta-right { text-align: right; font-size: 12px; color: #475569; }
+                    .meta-right strong { color: #0f172a; }
+                    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
+                    .summary-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; background: #f8fafc; }
+                    .summary-card.sold { border-color: #10b981; background: #f0fdf4; }
+                    .summary-card.reserved { border-color: #f59e0b; background: #fffbeb; }
+                    .summary-card.cancelled { border-color: #ef4444; background: #fef2f2; }
+                    .summary-title { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 4px; }
+                    .summary-val { font-size: 20px; font-weight: 900; color: #0f172a; }
+                    .summary-sub { font-size: 11px; color: #64748b; font-weight: 600; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                    th { background: #0f172a; color: #ffffff; text-align: left; padding: 10px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
+                    td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-size: 12px; vertical-align: middle; }
+                    tr:nth-child(even) td { background: #f8fafc; }
+                    .badge { display: inline-block; padding: 3px 8px; border-radius: 9999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+                    .badge-sold { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+                    .badge-reserved { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+                    .badge-cancelled { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+                    .footer { border-top: 1px solid #e2e8f0; padding-top: 20px; display: flex; justify-content: space-between; font-size: 11px; color: #64748b; }
+                    .total-box { margin-left: auto; width: 280px; margin-bottom: 30px; border: 1px solid #0284c7; border-radius: 12px; padding: 16px; background: #f0f9ff; }
+                    .total-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; }
+                    .total-row.final { font-size: 16px; font-weight: 900; color: #0369a1; border-top: 1px solid #bae6fd; padding-top: 8px; margin-top: 8px; }
+                    @media print {
+                        body { padding: 15px; }
+                        button { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div>
+                        <div class="logo-title">KHIAM GREEN HOTEL CONCIERGE & FLEET</div>
+                        <div class="logo-sub">B2B Hotel Zimmer & Shuttle Abrechnung</div>
+                    </div>
+                    <div class="meta-right">
+                        <div><strong>Hotel Partner:</strong> ${hName}</div>
+                        <div><strong>Datum:</strong> ${todayStr}</div>
+                        <div><strong>Dokumenten-Nr.:</strong> HTL-SHT-${Date.now().toString().slice(-6)}</div>
+                        <div><strong>Tarif-Modell:</strong> Green B2B Hotel-Staffeltarif (€16,00 / Fahrt)</div>
+                    </div>
+                </div>
+
+                <div class="summary-grid">
+                    <div class="summary-card sold">
+                        <div class="summary-title">Ausgeführt / Verkauft</div>
+                        <div class="summary-val">${totalHotelShuttleStats.soldPax} Passagiere</div>
+                        <div class="summary-sub">€${totalHotelShuttleStats.soldTotal.toFixed(2)} (${totalHotelShuttleStats.soldCount} Fahrten)</div>
+                    </div>
+                    <div class="summary-card reserved">
+                        <div class="summary-title">Reserviert / Geplant</div>
+                        <div class="summary-val">${totalHotelShuttleStats.reservedPax} Passagiere</div>
+                        <div class="summary-sub">€${totalHotelShuttleStats.reservedTotal.toFixed(2)} (${totalHotelShuttleStats.reservedCount} Fahrten)</div>
+                    </div>
+                    <div class="summary-card cancelled">
+                        <div class="summary-title">Storniert</div>
+                        <div class="summary-val">${totalHotelShuttleStats.cancelledPax} Passagiere</div>
+                        <div class="summary-sub">€${totalHotelShuttleStats.cancelledTotal.toFixed(2)} (${totalHotelShuttleStats.cancelledCount} Fahrten)</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-title">Gesamt Transfers</div>
+                        <div class="summary-val">${totalHotelShuttleStats.totalTrips} Fahrten</div>
+                        <div class="summary-sub">${totalHotelShuttleStats.soldPax + totalHotelShuttleStats.reservedPax + totalHotelShuttleStats.cancelledPax} Passagiere</div>
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Transfer-ID</th>
+                            <th>Hotelgast</th>
+                            <th>Passagiere</th>
+                            <th>Route (Abholung &rarr; Ziel)</th>
+                            <th>Datum & Uhrzeit</th>
+                            <th>Fahrzeug</th>
+                            <th>Betrag</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+
+                <div class="total-box">
+                    <div class="total-row">
+                        <span>Verkaufte Transfers:</span>
+                        <strong>€${totalHotelShuttleStats.soldTotal.toFixed(2)}</strong>
+                    </div>
+                    <div class="total-row">
+                        <span>Reservierte Transfers (offen):</span>
+                        <strong>€${totalHotelShuttleStats.reservedTotal.toFixed(2)}</strong>
+                    </div>
+                    <div class="total-row">
+                        <span>Stornierte Transfers:</span>
+                        <strong style="color: #ef4444;">€${totalHotelShuttleStats.cancelledTotal.toFixed(2)}</strong>
+                    </div>
+                    <div class="total-row final">
+                        <span>Abrechnungsbetrag Green:</span>
+                        <span>€${totalHotelShuttleStats.soldTotal.toFixed(2)}</span>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <div>Khiam Green Technologies GmbH &bull; B2B Fleet Clearing &bull; info@green.de</div>
+                    <div>Automatisch erstellter Abrechnungsbericht Hotel &bull; Gültig ohne Unterschrift</div>
+                </div>
+
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    };
+                </script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    };
 
     const allLanguages = [
         { code: 'en', name: 'English', native: 'English' },
@@ -431,28 +1190,324 @@ const ManagerDashboard = () => {
     }, [vehiclesList, userEmailKey]);
 
 
+    const complianceDocDefinitions = [
+        {
+            key: 'gewerbe',
+            title: '1. Gewerbeanmeldung (GewA 1)',
+            subtitle: 'Amtlicher Nachweis des Gewerbeamts über den angemeldeten Betrieb gem. § 14 GewO.',
+            badge: 'Zwingend erforderlich (GewO)',
+            numberLabel: 'Gewerbe-Registernummer / Aktenzeichen',
+            numberPlaceholder: 'z.B. GewA-2026-98124',
+            dateLabel: 'Datum der Gewerbeanmeldung',
+            required: true
+        },
+        {
+            key: 'konzession',
+            title: '2. Genehmigungsurkunde / Konzession (§ 47 Taxi / § 49 PBefG)',
+            subtitle: 'Konzessionsurkunde der Verkehrsbehörde für den gewerblichen Gelegenheitsverkehr / Mietwagenverkehr.',
+            badge: 'Konzession nach PBefG',
+            numberLabel: 'Konzessionsnummer / Ordnungsnummer',
+            numberPlaceholder: 'z.B. FFM-PBefG-TX-402',
+            dateLabel: 'Gültig bis (Ablaufdatum)',
+            required: true
+        },
+        {
+            key: 'unternehmerschein',
+            title: '3. IHK-Fachkundenachweis / Unternehmerschein',
+            subtitle: 'Fachliche Eignung für den Taxi- & Mietwagenverkehr gem. PBefG (Prüfungszeugnis der IHK).',
+            badge: 'IHK-Fachkundenachweis',
+            numberLabel: 'IHK-Zertifikatsnummer / Aktenzeichen',
+            numberPlaceholder: 'z.B. IHK-FFM-FK-8819',
+            dateLabel: 'Zertifikats- / Prüfungsdatum',
+            required: true
+        },
+        {
+            key: 'versicherung',
+            title: '4. Kfz-Haftpflicht mit Personenbeförderung (Flottenpolice)',
+            subtitle: 'Deckungsbestätigung der Versicherung für Personenbeförderungsrisiken nach StVG.',
+            badge: 'Flotten-Deckungsschutz',
+            numberLabel: 'Versicherung & Policennummer',
+            numberPlaceholder: 'z.B. Allianz Fleet Pol-99382',
+            dateLabel: 'Gültig bis (Policenablauf)',
+            required: false
+        }
+    ];
+
     const [profileForm, setProfileForm] = useState(() => {
         const saved = localStorage.getItem(`green_manager_profile_${userEmailKey}`);
+        let parsed = null;
         if (saved) {
-            try { return JSON.parse(saved); } catch (e) {}
+            try { parsed = JSON.parse(saved); } catch (e) {}
         }
         return {
-            firstName: user?.firstName || user?.name?.split(' ')[0] || 'Khiam',
-            lastName: user?.lastName || user?.name?.split(' ').slice(1).join(' ') || 'Azizi',
-            email: user?.email || 'manager@hotel.de',
-            phone: user?.phone || '+49 176 12345678',
-            businessName: user?.businessName || (managerContext === 'HM' ? 'Green Palace & Spa Hotel' : 'Green Stadium Arena'),
-            address: user?.address || 'Königsallee 42',
-            zip: user?.zip || '40212',
-            city: user?.city || 'Düsseldorf',
-            country: user?.country || 'Deutschland',
-            avatarUrl: user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&fit=crop'
+            firstName: parsed?.firstName || user?.firstName || user?.name?.split(' ')[0] || 'Khiam',
+            lastName: parsed?.lastName || user?.lastName || user?.name?.split(' ').slice(1).join(' ') || 'Azizi',
+            email: parsed?.email || user?.email || 'manager@hotel.de',
+            phone: parsed?.phone || user?.phone || '+49 176 12345678',
+            businessName: parsed?.businessName || user?.businessName || (managerContext === 'HM' ? 'Green Palace & Spa Hotel' : 'Green Stadium Arena'),
+            address: parsed?.address || user?.address || 'Königsallee 42',
+            zip: parsed?.zip || user?.zip || '40212',
+            city: parsed?.city || user?.city || 'Düsseldorf',
+            country: parsed?.country || user?.country || 'Deutschland',
+            avatarUrl: parsed?.avatarUrl || user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&fit=crop',
+            documents: parsed?.documents || {
+                gewerbe: null,
+                konzession: null,
+                unternehmerschein: null,
+                versicherung: null
+            }
         };
     });
     const [profileSaveSuccess, setProfileSaveSuccess] = useState(false);
 
+    const handleManagerDocUpload = (docKey, file) => {
+        if (!file) return;
+        
+        if (file.size > 15 * 1024 * 1024) {
+            alert('Die Datei ist größer als 15 MB. Bitte komprimieren oder eine kleinere Datei wählen.');
+            return;
+        }
+
+        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            const newDoc = {
+                id: docKey,
+                name: file.name,
+                type: isPdf ? 'pdf' : 'image',
+                size: (file.size / 1024).toFixed(1) + ' KB',
+                dataUrl: dataUrl,
+                uploadedAt: new Date().toLocaleDateString('de-DE'),
+                status: 'pending',
+                docNumber: profileForm.documents?.[docKey]?.docNumber || '',
+                expiryDate: profileForm.documents?.[docKey]?.expiryDate || ''
+            };
+
+            setProfileForm(prev => {
+                const nextDocs = {
+                    ...(prev.documents || {}),
+                    [docKey]: newDoc
+                };
+                const nextState = { ...prev, documents: nextDocs };
+                localStorage.setItem(`green_manager_profile_${userEmailKey}`, JSON.stringify(nextState));
+                return nextState;
+            });
+
+            triggerNotification('success', 'Dokument hochgeladen 📄', `${file.name} erfolgreich erfasst (${isPdf ? 'PDF' : 'Foto'}).`);
+
+            if (user?.email && fbDb) {
+                try {
+                    const userRef = doc(fbDb, 'users', user.email.toLowerCase());
+                    updateDoc(userRef, {
+                        [`complianceDocs.${docKey}`]: {
+                            id: docKey,
+                            name: file.name,
+                            type: isPdf ? 'pdf' : 'image',
+                            size: (file.size / 1024).toFixed(1) + ' KB',
+                            status: 'pending',
+                            uploadedAt: new Date().toISOString(),
+                            docNumber: profileForm.documents?.[docKey]?.docNumber || '',
+                            expiryDate: profileForm.documents?.[docKey]?.expiryDate || '',
+                            fileData: dataUrl.length < 800000 ? dataUrl : null
+                        },
+                        [`complianceDocs._metadata`]: {
+                            email: user.email,
+                            name: user.name || `${profileForm.firstName} ${profileForm.lastName}`,
+                            businessName: profileForm.businessName,
+                            context: managerContext,
+                            updatedAt: new Date().toISOString()
+                        }
+                    }).catch(err => console.log('Firestore doc sync info:', err));
+                } catch(e) {}
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleManagerDocMetadataChange = (docKey, field, value) => {
+        setProfileForm(prev => {
+            const currentDoc = prev.documents?.[docKey] || {
+                id: docKey,
+                status: 'pending',
+                name: '',
+                dataUrl: null
+            };
+            const updatedDoc = { ...currentDoc, [field]: value };
+            const nextDocs = {
+                ...(prev.documents || {}),
+                [docKey]: updatedDoc
+            };
+            const nextState = { ...prev, documents: nextDocs };
+            localStorage.setItem(`green_manager_profile_${userEmailKey}`, JSON.stringify(nextState));
+            return nextState;
+        });
+    };
+
+    const handleRemoveManagerDoc = (docKey) => {
+        if (!window.confirm('Möchten Sie dieses Dokument wirklich entfernen?')) return;
+        setProfileForm(prev => {
+            const nextDocs = { ...(prev.documents || {}) };
+            delete nextDocs[docKey];
+            const nextState = { ...prev, documents: nextDocs };
+            localStorage.setItem(`green_manager_profile_${userEmailKey}`, JSON.stringify(nextState));
+            return nextState;
+        });
+        triggerNotification('info', 'Dokument entfernt 🗑️', 'Das Dokument wurde aus dem Profil gelöscht.');
+    };
+
+    const handleOpenDocumentPreview = (docObj) => {
+        if (!docObj || !docObj.dataUrl) return;
+        const newWindow = window.open();
+        if (newWindow) {
+            newWindow.document.title = `${docObj.name || 'Dokument'} - Khiam Green Compliance`;
+            if (docObj.type === 'pdf' || docObj.name?.toLowerCase().endsWith('.pdf')) {
+                newWindow.document.body.style.margin = '0';
+                newWindow.document.body.innerHTML = `
+                    <iframe src="${docObj.dataUrl}" style="position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;">
+                        Ihr Browser unterstützt keine eingebetteten PDFs. <a href="${docObj.dataUrl}" download="${docObj.name}">Hier herunterladen</a>
+                    </iframe>
+                `;
+            } else {
+                newWindow.document.body.style.margin = '0';
+                newWindow.document.body.style.background = '#0a0f1d';
+                newWindow.document.body.style.display = 'flex';
+                newWindow.document.body.style.flexDirection = 'column';
+                newWindow.document.body.style.justifyContent = 'center';
+                newWindow.document.body.style.alignItems = 'center';
+                newWindow.document.body.style.height = '100vh';
+                newWindow.document.body.style.fontFamily = 'system-ui, sans-serif';
+                newWindow.document.body.innerHTML = `
+                    <div style="padding:12px 24px; background:rgba(255,255,255,0.06); border-radius:12px; color:#10b981; font-weight:bold; margin-bottom:16px;">
+                        📄 ${docObj.name} (${docObj.size || ''}) - Khiam Green Verifikation
+                    </div>
+                    <img src="${docObj.dataUrl}" style="max-width:92vw; max-height:85vh; border-radius:16px; box-shadow:0 25px 60px rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.1);" alt="Dokumentenvorschau" />
+                `;
+            }
+        }
+    };
+
     // Compliance Document States
     const [complianceDocs, setComplianceDocs] = useState({});
+
+    // Fleet Weekly Ledger & Cancellation Analytics state
+    const [fleetFinanceSubTab, setFleetFinanceSubTab] = useState('ledger'); // 'ledger' | 'cancellations' | 'audit'
+    const [fleetPeriod, setFleetPeriod] = useState('KW41'); // 'KW41' | 'KW40' | any KW
+    const [kwSearchQuery, setKwSearchQuery] = useState('');
+
+    // Dynamic Helper to generate exact dates & realistic metrics for ANY Kalenderwoche (Past, Present & Future)
+    const getFleetWeekMetrics = useMemo(() => {
+        return (kwString) => {
+            const kwNum = Math.max(1, Math.min(52, parseInt(String(kwString).replace(/[^0-9]/g, '')) || 41));
+            const anchorKW = 41;
+            const anchorMon = new Date(2026, 8, 29); // 29.09.2026 (KW 41 Montag)
+            const diff = kwNum - anchorKW;
+            const mon = new Date(anchorMon.getTime() + diff * 7 * 86400000);
+            const sun = new Date(mon.getTime() + 6 * 86400000);
+            const pad = n => String(n).padStart(2, '0');
+            const f = d => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.`;
+            const fFull = d => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+
+            const seed = (kwNum * 9301 + 49297) % 233280;
+            const factor = 0.88 + (seed % 28) / 100;
+
+            let tripsTotal = 0;
+            let grossTotal = 0.00;
+            let tripsCard = 0;
+            let tripsCash = 0;
+            let grossCard = 0.00;
+            let grossCash = 0.00;
+            let stornos = 0;
+
+            if (kwNum > 41) {
+                // Zukunft: Es haben noch keine Fahrten stattgefunden - Werte sind komplett leer (0 € / 0 Fahrten)
+                tripsTotal = 0;
+                tripsCard = 0;
+                tripsCash = 0;
+                grossTotal = 0.00;
+                grossCard = 0.00;
+                grossCash = 0.00;
+                stornos = 0;
+            } else if (kwNum === 41) {
+                tripsTotal = 128;
+                tripsCard = 94;
+                tripsCash = 34;
+                grossTotal = 4860.00;
+                grossCard = 3620.00;
+                grossCash = 1240.00;
+                stornos = 14;
+            } else if (kwNum === 40) {
+                tripsTotal = 119;
+                tripsCard = 86;
+                tripsCash = 33;
+                grossTotal = 4410.00;
+                grossCard = 3240.00;
+                grossCash = 1170.00;
+                stornos = 12;
+            } else {
+                tripsTotal = Math.round(122 * factor);
+                tripsCash = Math.round(tripsTotal * 0.27);
+                tripsCard = tripsTotal - tripsCash;
+                grossTotal = Math.round(4650 * factor);
+                grossCash = Math.round(grossTotal * 0.26);
+                grossCard = grossTotal - grossCash;
+                stornos = Math.round(10 * factor);
+            }
+
+            const commRate = 0.15;
+            const commTotal = grossTotal * commRate;
+            const commCard = grossCard * commRate;
+            const commCashOffset = grossCash * commRate;
+            const stripeNetPayout = grossTotal === 0 ? 0.00 : Math.max(0, grossCard - commCard - commCashOffset + (stornos > 0 ? 19.50 : 0));
+            const fleetTotal = grossCash + stripeNetPayout;
+
+            const dayWeights = [0.13, 0.14, 0.12, 0.16, 0.20, 0.15, 0.10];
+            const days = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((d, i) => {
+                const curDate = new Date(mon.getTime() + i * 86400000);
+                const dayTot = grossTotal === 0 ? 0 : Math.round(grossTotal * dayWeights[i]);
+                const dayCash = grossTotal === 0 ? 0 : Math.round(dayTot * 0.26);
+                const dayCard = dayTot - dayCash;
+                return {
+                    d,
+                    date: f(curDate),
+                    card: dayCard,
+                    cash: dayCash,
+                    tot: dayTot,
+                    h: grossTotal === 0 ? 0 : Math.min(100, Math.round((dayTot / (grossTotal * 0.21)) * 100))
+                };
+            });
+
+            return {
+                kwNum,
+                kwKey: `KW${kwNum}`,
+                label: `KW ${pad(kwNum)}`,
+                rangeStr: `${f(mon)} – ${fFull(sun)}`,
+                fullLabel: `KW ${pad(kwNum)} (${f(mon)} – ${fFull(sun)})`,
+                isCurrent: kwNum === 41,
+                isPast: kwNum < 41,
+                isFuture: kwNum > 41,
+                tripsTotal,
+                tripsCard,
+                tripsCash,
+                grossTotal,
+                grossCard,
+                grossCash,
+                commTotal,
+                commCard,
+                commCashOffset,
+                stripeNetPayout,
+                fleetTotal,
+                stornos,
+                days
+            };
+        };
+    }, []);
+
+    const activeWeekMetrics = useMemo(() => {
+        return getFleetWeekMetrics(fleetPeriod);
+    }, [fleetPeriod, getFleetWeekMetrics]);
+    const [fleetAuditFilter, setFleetAuditFilter] = useState('all'); // 'all' | 'cash' | 'card' | 'storno_customer' | 'storno_driver'
+    const [isDriverCashSheetOpen, setIsDriverCashSheetOpen] = useState(false);
 
     // Real-time Firestore sync for compliance documents
     useEffect(() => {
@@ -3114,6 +4169,201 @@ const ManagerDashboard = () => {
                                             </div>
                                         </div>
 
+                                        {/* Compliance & Regulatory Documents Section (Gewerbeanmeldung, Taxiunternehmerschein & PBefG) - NUR FLOTTEN MANAGER (FM) */}
+                                        {managerContext === 'FM' && (
+                                            <div className="space-y-6 pt-6 border-t border-white/10">
+                                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                                    <div>
+                                                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                            <span className="px-3 py-1 bg-brand/15 border border-brand/40 text-brand text-[9px] md:text-xs font-mono font-black uppercase tracking-widest rounded-full">
+                                                                § Personenbeförderungsgesetz (PBefG) & GewO
+                                                            </span>
+                                                            <span className="px-3 py-1 bg-cyan-500/15 border border-cyan-500/40 text-cyan-400 text-[9px] md:text-xs font-mono font-bold uppercase tracking-widest rounded-full">
+                                                                📸 Foto (JPG, PNG) oder 📄 PDF
+                                                            </span>
+                                                        </div>
+                                                        <h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tight text-brand flex items-center gap-2.5">
+                                                            <ShieldCheck size={26} className="text-brand" /> Behördliche Genehmigungen & Gewerbenachweise
+                                                        </h3>
+                                                        <p className="text-xs md:text-sm text-gray-400 font-medium max-w-3xl mt-1 leading-relaxed">
+                                                            Als registrierter Flotten- & Mietwagen-/Taxiunternehmer müssen diese Nachweise für die rechtssichere Auftragsvermittlung vorliegen. Sie können Fotos direkt mit der Handykamera aufnehmen oder digitale PDF-Dokumente hochladen.
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-1 gap-6">
+                                                    {complianceDocDefinitions.map(def => {
+                                                        const docData = profileForm.documents?.[def.key];
+                                                        const isUploaded = Boolean(docData && docData.dataUrl);
+
+                                                        return (
+                                                            <div 
+                                                                key={def.key} 
+                                                                className={`p-6 md:p-8 rounded-[2rem] border transition-all ${
+                                                                    isUploaded 
+                                                                        ? 'bg-brand/5 border-brand/40 shadow-xl shadow-brand/5' 
+                                                                        : 'bg-white/[0.03] border-white/10 hover:border-white/20'
+                                                                }`}
+                                                            >
+                                                                {/* Header: Title, Description & Status Badge */}
+                                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-5 border-b border-white/10">
+                                                                    <div className="space-y-1">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-[10px] md:text-xs font-black text-brand uppercase tracking-wider">{def.badge}</span>
+                                                                            {def.required && (
+                                                                                <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-rose-500/20 text-rose-400 uppercase border border-rose-500/30">Pflichtdokument</span>
+                                                                            )}
+                                                                        </div>
+                                                                        <h4 className="text-base md:text-lg font-black italic text-white uppercase tracking-tight">{def.title}</h4>
+                                                                        <p className="text-xs text-gray-400">{def.subtitle}</p>
+                                                                    </div>
+
+                                                                    <div>
+                                                                        {isUploaded ? (
+                                                                            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-mono text-xs font-bold">
+                                                                                <CheckCircle2 size={16} />
+                                                                                <span>Eingereicht ({docData.uploadedAt})</span>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono text-xs font-bold animate-pulse">
+                                                                                <AlertCircle size={16} />
+                                                                                <span>Ausstehend / Fehlt</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Metadata Inputs (Number & Expiry Date) */}
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-5 border-b border-white/10">
+                                                                    <div className="space-y-1.5">
+                                                                        <label className="text-[10px] md:text-xs font-black uppercase tracking-wider text-gray-400">
+                                                                            {def.numberLabel}
+                                                                        </label>
+                                                                        <input 
+                                                                            type="text"
+                                                                            value={profileForm.documents?.[def.key]?.docNumber || ''}
+                                                                            onChange={(e) => handleManagerDocMetadataChange(def.key, 'docNumber', e.target.value)}
+                                                                            placeholder={def.numberPlaceholder}
+                                                                            className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-xs font-bold text-white focus:outline-none focus:border-brand/40"
+                                                                        />
+                                                                    </div>
+                                                                    <div className="space-y-1.5">
+                                                                        <label className="text-[10px] md:text-xs font-black uppercase tracking-wider text-gray-400">
+                                                                            {def.dateLabel}
+                                                                        </label>
+                                                                        <input 
+                                                                            type="date"
+                                                                            value={profileForm.documents?.[def.key]?.expiryDate || ''}
+                                                                            onChange={(e) => handleManagerDocMetadataChange(def.key, 'expiryDate', e.target.value)}
+                                                                            className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-xs font-bold text-white focus:outline-none focus:border-brand/40"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* File Upload / Preview Area */}
+                                                                <div className="pt-5">
+                                                                    {!isUploaded ? (
+                                                                        <div className="relative border-2 border-dashed border-white/15 hover:border-brand/50 rounded-2xl p-6 text-center transition-all bg-white/[0.01] hover:bg-brand/[0.02]">
+                                                                            <input 
+                                                                                type="file"
+                                                                                accept="image/*,application/pdf,.pdf"
+                                                                                onChange={(e) => {
+                                                                                    if (e.target.files && e.target.files[0]) {
+                                                                                        handleManagerDocUpload(def.key, e.target.files[0]);
+                                                                                    }
+                                                                                }}
+                                                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                                                            />
+                                                                            <div className="flex flex-col items-center justify-center gap-3 pointer-events-none">
+                                                                                <div className="w-12 h-12 rounded-2xl bg-brand/10 border border-brand/30 flex items-center justify-center text-brand shadow-lg shadow-brand/10">
+                                                                                    <Upload size={22} />
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-xs md:text-sm font-bold text-white">
+                                                                                        Klicken oder Datei hier ablegen
+                                                                                    </p>
+                                                                                    <p className="text-[11px] text-gray-400 mt-0.5">
+                                                                                        📸 <strong>Foto (Kamera-Scan / JPG / PNG)</strong> oder 📄 <strong>PDF-Dokument</strong> bis 15 MB
+                                                                                    </p>
+                                                                                </div>
+                                                                                <div className="flex gap-2">
+                                                                                    <span className="px-2.5 py-1 bg-white/5 rounded-lg text-[10px] font-mono text-gray-300 border border-white/10">.PDF</span>
+                                                                                    <span className="px-2.5 py-1 bg-white/5 rounded-lg text-[10px] font-mono text-gray-300 border border-white/10">.JPG</span>
+                                                                                    <span className="px-2.5 py-1 bg-white/5 rounded-lg text-[10px] font-mono text-gray-300 border border-white/10">.PNG</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-black/40 border border-white/10">
+                                                                            <div className="flex items-center gap-3.5 w-full sm:w-auto">
+                                                                                {docData.type === 'pdf' ? (
+                                                                                    <div className="w-14 h-14 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 flex-shrink-0">
+                                                                                        <FileText size={28} />
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <div className="w-14 h-14 rounded-xl overflow-hidden border border-brand/40 flex-shrink-0 bg-dark-900 shadow-md">
+                                                                                        <img src={docData.dataUrl} alt="Thumbnail" className="w-full h-full object-cover" />
+                                                                                    </div>
+                                                                                )}
+                                                                                <div className="overflow-hidden">
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        <span className="text-xs md:text-sm font-black text-white truncate max-w-[200px] sm:max-w-xs">{docData.name}</span>
+                                                                                        <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold ${
+                                                                                            docData.type === 'pdf' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-brand/20 text-brand border border-brand/30'
+                                                                                        }`}>
+                                                                                            {docData.type === 'pdf' ? 'PDF' : 'FOTO'}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <p className="text-[10px] text-gray-400 font-mono mt-0.5">
+                                                                                        Größe: {docData.size} • Hochgeladen am: {docData.uploadedAt}
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                                                                                <button 
+                                                                                    type="button"
+                                                                                    onClick={() => handleOpenDocumentPreview(docData)}
+                                                                                    className="px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/10 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                                                                                    title="Dokument in voller Auflösung ansehen"
+                                                                                >
+                                                                                    <Eye size={14} /> Ansehen
+                                                                                </button>
+                                                                                
+                                                                                <label className="cursor-pointer">
+                                                                                    <input 
+                                                                                        type="file"
+                                                                                        accept="image/*,application/pdf,.pdf"
+                                                                                        onChange={(e) => {
+                                                                                            if (e.target.files && e.target.files[0]) {
+                                                                                                handleManagerDocUpload(def.key, e.target.files[0]);
+                                                                                            }
+                                                                                        }}
+                                                                                        className="hidden"
+                                                                                    />
+                                                                                    <div className="px-4 py-2.5 bg-brand/15 hover:bg-brand/25 border border-brand/40 text-brand rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer">
+                                                                                        <Upload size={14} /> Ersetzen
+                                                                                    </div>
+                                                                                </label>
+
+                                                                                <button 
+                                                                                    type="button"
+                                                                                    onClick={() => handleRemoveManagerDoc(def.key)}
+                                                                                    className="p-2.5 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-xl transition-all cursor-pointer"
+                                                                                    title="Dokument löschen"
+                                                                                >
+                                                                                    <Trash2 size={15} />
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* Save Action Button */}
                                         <div className="pt-6 border-t border-white/10 flex justify-end">
@@ -3124,7 +4374,30 @@ const ManagerDashboard = () => {
                                                     if (user && setUser) {
                                                         setUser({ ...user, ...profileForm, name: `${profileForm.firstName} ${profileForm.lastName}` });
                                                     }
+                                                    if (user?.email && fbDb) {
+                                                        try {
+                                                            const userRef = doc(fbDb, 'users', user.email.toLowerCase());
+                                                            updateDoc(userRef, {
+                                                                firstName: profileForm.firstName,
+                                                                lastName: profileForm.lastName,
+                                                                name: `${profileForm.firstName} ${profileForm.lastName}`,
+                                                                phone: profileForm.phone,
+                                                                businessName: profileForm.businessName,
+                                                                address: profileForm.address,
+                                                                zip: profileForm.zip,
+                                                                city: profileForm.city,
+                                                                complianceDocsOverview: {
+                                                                    gewerbe: Boolean(profileForm.documents?.gewerbe?.dataUrl),
+                                                                    konzession: Boolean(profileForm.documents?.konzession?.dataUrl),
+                                                                    unternehmerschein: Boolean(profileForm.documents?.unternehmerschein?.dataUrl),
+                                                                    versicherung: Boolean(profileForm.documents?.versicherung?.dataUrl),
+                                                                    updatedAt: new Date().toISOString()
+                                                                }
+                                                            }).catch(() => {});
+                                                        } catch (e) {}
+                                                    }
                                                     setProfileSaveSuccess(true);
+                                                    triggerNotification('success', 'Profil & Dokumente gespeichert ✓', 'Stammdaten und behördliche Dokumente wurden gesichert.');
                                                     setTimeout(() => setProfileSaveSuccess(false), 4000);
                                                 }}
                                                 className="w-full md:w-auto px-10 py-5 bg-brand text-dark-950 font-black uppercase tracking-[0.2em] text-xs md:text-sm rounded-2xl shadow-xl shadow-brand/20 hover:scale-105 active:scale-95 transition-all"
@@ -4109,44 +5382,86 @@ const ManagerDashboard = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-btn-sec to-brand/5 p-8 rounded-[3rem] border border-main">
             <div>
                 <h1 className="text-4xl font-black italic uppercase tracking-tighter leading-none text-primary">Shuttle <span className="text-brand">Service</span></h1>
-                <p className="text-secondary text-xs md:text-sm font-bold uppercase tracking-[0.3em] mt-1">Incoming Hotel Guest Group Transfers & Acceptance Tracker</p>
-            </div>
-            <div className="flex items-center gap-3">
-                <span className="text-xs font-black text-secondary uppercase">Current Fare:</span>
-                <span className="px-4 py-2 bg-brand/10 border border-brand/30 text-brand text-sm font-black rounded-xl">€10.00 / Person</span>
+                <p className="text-secondary text-xs md:text-sm font-bold uppercase tracking-[0.3em] mt-1">Incoming Guest Group Transfers & Acceptance Tracker</p>
             </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-6 bg-glass border border-main rounded-[2rem] space-y-2">
                 <p className="text-[9px] md:text-xs font-black text-secondary uppercase tracking-widest">Expected Guests Today</p>
-                <p className="text-3xl font-black italic text-brand">10 Guests (8 Confirmed)</p>
+                <p className="text-3xl font-black italic text-brand">10 Guests ({shuttleRequests.filter(r => r.status === 'ACCEPTED').reduce((acc, curr) => acc + curr.guests, 0)} Confirmed)</p>
             </div>
             <div className="p-6 bg-glass border border-main rounded-[2rem] space-y-2">
                 <p className="text-[9px] md:text-xs font-black text-secondary uppercase tracking-widest">Assigned Shuttle Fleet</p>
                 <p className="text-3xl font-black italic text-cyan-400">2x VIP Sprinters (Auto-Split)</p>
             </div>
             <div className="p-6 bg-glass border border-main rounded-[2rem] space-y-2">
-                <p className="text-[9px] md:text-xs font-black text-secondary uppercase tracking-widest">Total Group Revenue</p>
-                <p className="text-3xl font-black italic text-primary">€80.00 (€10/pax)</p>
+                <p className="text-[9px] md:text-xs font-black text-secondary uppercase tracking-widest">Total Luggage Volume</p>
+                <p className="text-3xl font-black italic text-primary">{shuttleRequests.reduce((acc, curr) => acc + curr.bags, 0)} Luggage Bags</p>
             </div>
         </div>
 
         <div className="bg-glass border border-main rounded-[3rem] p-8 space-y-6">
-            <h3 className="text-lg font-black italic uppercase tracking-tighter text-primary">Incoming Guest Manifest (Steigenberger Icon Parkhotel)</h3>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-main pb-4">
+                <div>
+                    <h3 className="text-lg font-black italic uppercase tracking-tighter text-primary">Incoming Guest Manifest</h3>
+                    <p className="text-xs text-secondary font-bold uppercase tracking-wider">Live Shuttle Buchungen & Fahrpreis-Aufschlüsselung</p>
+                </div>
+                <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-400 text-xs font-black uppercase tracking-widest">
+                    Gesamt-Shuttle Umsatz: €{shuttleRequests.reduce((acc, curr) => acc + (curr.totalPrice || (curr.guests * curr.pricePerPax)), 0).toFixed(2)}
+                </div>
+            </div>
+
             <div className="space-y-4">
-                {[
-                    { title: 'Airport FRA T1 Group Transfer (8 Guests Confirmed)', time: '14:00 - 14:30 Arrival', vehicle: '2x VIP Sprinter Vans', bags: '14 Luggage Bags', status: 'Accepted & Confirmed' },
-                    { title: 'Airport MUC T2 Group Transfer (2 Guests Confirmed)', time: '16:15 - 16:45 Arrival', vehicle: '1x Executive Van', bags: '3 Luggage Bags', status: 'Pending 24h Offer' }
-                ].map((s, idx) => (
-                    <div key={idx} className="p-5 bg-btn-sec border border-main rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                            <p className="text-base font-black italic uppercase text-primary">{s.title}</p>
-                            <p className="text-xs font-bold text-secondary uppercase tracking-wider">{s.time} • {s.vehicle} • {s.bags}</p>
+                {shuttleRequests.map((s) => {
+                    const pricePerPax = s.pricePerPax || calculateShuttleFare(s.distanceKm || 12);
+                    const totalPrice = s.totalPrice || (s.guests * pricePerPax);
+
+                    return (
+                        <div key={s.id} className="p-6 bg-btn-sec border border-main rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-brand/20 transition-all shadow-md">
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-3">
+                                    <p className="text-base font-black italic uppercase text-primary">{s.title}</p>
+                                    <span className="px-2.5 py-1 bg-brand/10 text-brand border border-brand/30 text-[10px] font-black rounded-lg uppercase tracking-wider">
+                                        {s.distanceKm || 12} KM
+                                    </span>
+                                </div>
+                                <div className="flex flex-wrap gap-2 text-xs font-bold uppercase tracking-wider">
+                                    <span className="px-3 py-1.5 bg-brand/10 text-brand rounded-xl border border-brand/20">👥 {s.guests} Guests</span>
+                                    <span className="px-3 py-1.5 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20">🧳 {s.bags} Luggage Bags</span>
+                                    <span className="px-3 py-1.5 bg-white/5 text-secondary rounded-xl border border-white/10">🕒 {s.time}</span>
+                                    <span className="px-3 py-1.5 bg-white/5 text-secondary rounded-xl border border-white/10">🚐 {s.vehicle}</span>
+                                    <span className="px-3 py-1.5 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/30 font-black">
+                                        💳 €{pricePerPax.toFixed(2)} / Pax
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-4 shrink-0 w-full md:w-auto justify-between md:justify-end">
+                                <div className="text-right px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl">
+                                    <span className="text-[9px] font-black uppercase text-emerald-400 tracking-widest block">Fahrpreis Gesamt</span>
+                                    <span className="text-xl font-black italic text-emerald-400 block">€{totalPrice.toFixed(2)}</span>
+                                    <span className="text-[9px] text-gray-400 font-bold block">€{pricePerPax.toFixed(2)} × {s.guests} Pax</span>
+                                </div>
+
+                                <div>
+                                    {s.status === 'ACCEPTED' ? (
+                                        <span className="w-full md:w-auto px-5 py-3.5 bg-brand/20 text-brand border border-brand/30 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                                            <CheckCircle size={16} /> Accepted & Confirmed
+                                        </span>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleAcceptShuttle(s.id)}
+                                            className="w-full md:w-auto px-6 py-3.5 bg-brand text-dark-900 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-brand/20 flex items-center justify-center gap-2"
+                                        >
+                                            <CheckCircle size={16} /> Accept Request
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                        <span className="px-4 py-2 bg-brand/20 text-brand border border-brand/30 rounded-xl text-xs font-black uppercase">{s.status}</span>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     </motion.div>
@@ -4189,16 +5504,37 @@ const ManagerDashboard = () => {
                                             </div>
 
                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                                <div className="bg-black/50 border border-white/10 rounded-2xl p-6 space-y-2">
-                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Brutto Ticket-Umsatz</span>
+                                                <div 
+                                                    onClick={() => {
+                                                        setSelectedTicketCategory(null);
+                                                        setTicketStatusFilter('all');
+                                                        setIsTicketRevenueModalOpen(true);
+                                                    }}
+                                                    className="bg-black/50 border border-white/10 hover:border-[#00e5ff] hover:bg-white/[0.04] cursor-pointer transition-all rounded-2xl p-6 space-y-2 group shadow-lg active:scale-98"
+                                                    title="Klicken für Ticket-Aufschlüsselung & Kategorien"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Brutto Ticket-Umsatz</span>
+                                                        <span className="text-[9px] font-black uppercase text-[#00e5ff] tracking-wider opacity-75 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">Details ↗</span>
+                                                    </div>
                                                     <span className="text-2xl font-black italic text-white block">€2.400,00</span>
-                                                    <span className="text-[9px] text-gray-500">12 VIP & Sektor Tickets verkauft</span>
+                                                    <span className="text-[9px] text-gray-500 block">12 VIP & Sektor Tickets verkauft</span>
                                                 </div>
 
-                                                <div className="bg-black/50 border border-white/10 rounded-2xl p-6 space-y-2">
-                                                    <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">- Shuttle-Service an Green</span>
+                                                <div 
+                                                    onClick={() => {
+                                                        setShuttleStatusFilter('all');
+                                                        setIsShuttleServiceModalOpen(true);
+                                                    }}
+                                                    className="bg-black/50 border border-white/10 hover:border-amber-400 hover:bg-white/[0.04] cursor-pointer transition-all rounded-2xl p-6 space-y-2 group shadow-lg active:scale-98"
+                                                    title="Klicken für Shuttle-Service Aufschlüsselung & PDF-Download"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">- Shuttle-Service an Green</span>
+                                                        <span className="text-[9px] font-black uppercase text-amber-400 tracking-wider opacity-75 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">Details ↗</span>
+                                                    </div>
                                                     <span className="text-2xl font-black italic text-amber-400 block">-€192,00</span>
-                                                    <span className="text-[9px] text-gray-500">12 Passagiere @ €16,00 Staffeltarif</span>
+                                                    <span className="text-[9px] text-gray-500 block">12 Passagiere @ €16,00 Staffeltarif</span>
                                                 </div>
 
                                                 <div className="bg-black/50 border border-white/10 rounded-2xl p-6 space-y-2">
@@ -4235,16 +5571,37 @@ const ManagerDashboard = () => {
                                             </div>
 
                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                                <div className="bg-black/50 border border-white/10 rounded-2xl p-6 space-y-2">
-                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Brutto Zimmer-Umsatz</span>
+                                                <div 
+                                                    onClick={() => {
+                                                        setSelectedRoomCategory(null);
+                                                        setRoomStatusFilter('all');
+                                                        setIsHotelRevenueModalOpen(true);
+                                                    }}
+                                                    className="bg-black/50 border border-white/10 hover:border-[#00e5ff] hover:bg-white/[0.04] cursor-pointer transition-all rounded-2xl p-6 space-y-2 group shadow-lg active:scale-98"
+                                                    title="Klicken für Zimmer-Aufschlüsselung & Kategorien"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Brutto Zimmer-Umsatz</span>
+                                                        <span className="text-[9px] font-black uppercase text-[#00e5ff] tracking-wider opacity-75 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">Details ↗</span>
+                                                    </div>
                                                     <span className="text-2xl font-black italic text-white block">€3.500,00</span>
-                                                    <span className="text-[9px] text-gray-500">14 Zimmer-Nächte gebucht</span>
+                                                    <span className="text-[9px] text-gray-500 block">14 Zimmer-Nächte gebucht</span>
                                                 </div>
 
-                                                <div className="bg-black/50 border border-white/10 rounded-2xl p-6 space-y-2">
-                                                    <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">- Hotel Shuttle-Service</span>
+                                                <div 
+                                                    onClick={() => {
+                                                        setHotelShuttleStatusFilter('all');
+                                                        setIsHotelShuttleModalOpen(true);
+                                                    }}
+                                                    className="bg-black/50 border border-white/10 hover:border-amber-400 hover:bg-white/[0.04] cursor-pointer transition-all rounded-2xl p-6 space-y-2 group shadow-lg active:scale-98"
+                                                    title="Klicken für Hotel Shuttle-Service Aufschlüsselung & PDF-Download"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">- Hotel Shuttle-Service</span>
+                                                        <span className="text-[9px] font-black uppercase text-amber-400 tracking-wider opacity-75 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">Details ↗</span>
+                                                    </div>
                                                     <span className="text-2xl font-black italic text-amber-400 block">-€224,00</span>
-                                                    <span className="text-[9px] text-gray-500">14 Shuttle-Fahrten @ €16,00 Staffeltarif</span>
+                                                    <span className="text-[9px] text-gray-500 block">14 Shuttle-Fahrten @ €16,00 Staffeltarif</span>
                                                 </div>
 
                                                 <div className="bg-black/50 border border-white/10 rounded-2xl p-6 space-y-2">
@@ -4263,93 +5620,867 @@ const ManagerDashboard = () => {
                                     )}
 
                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                        <div className="lg:col-span-2 bg-dark-900 border border-main rounded-[3rem] p-6 md:p-10 space-y-8 shadow-2xl relative overflow-hidden">
-                                            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:20px_20px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_100%)] opacity-30"></div>
-                                            <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center relative z-10">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-brand/10 border border-brand/20 rounded-xl flex items-center justify-center text-brand shadow-[0_0_15px_rgba(33,255,165,0.2)] shrink-0">
-                                                        <Activity size={24} />
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="text-2xl font-black italic uppercase tracking-tighter text-primary leading-none">Gross Performance</h3>
-                                                        <p className="text-[9px] md:text-[11px] lg:text-xs font-bold text-secondary uppercase tracking-[0.2em] mt-1">Real-time Revenue Telemetry</p>
-                                                    </div>
-                                                </div>
-                                                <select className="bg-btn-sec border border-main rounded-xl px-4 py-2 text-[10px] md:text-xs lg:text-sm font-black uppercase outline-none text-primary cursor-pointer hover:border-brand/40 transition-all w-full sm:w-auto">
-                                                    <option>Last 30 Days</option>
-                                                    <option>Last 7 Days</option>
-                                                    <option>Year to Date</option>
-                                                </select>
-                                            </div>
-                                            
-                                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 relative z-10 border-b border-white/5 pb-8">
-                                                <div className="p-4 bg-black/40 border border-main rounded-2xl flex flex-col justify-between">
-                                                    <p className="text-[7px] font-black text-secondary uppercase tracking-[0.1em] mb-2">Primary Sales</p>
-                                                    <p className="text-xl font-black text-primary italic">€{financialsSummary.primarySales.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                                                    <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-blue-400" style={{ width: financialsSummary.primarySales > 0 ? '65%' : '0%' }}></div></div>
-                                                </div>
-                                                <div className="p-4 bg-black/40 border border-main rounded-2xl flex flex-col justify-between">
-                                                    <p className="text-[7px] font-black text-secondary uppercase tracking-[0.1em] mb-2">Premium / VIP</p>
-                                                    <p className="text-xl font-black text-primary italic">€{financialsSummary.premiumSales.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                                                    <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-purple-400" style={{ width: financialsSummary.premiumSales > 0 ? '80%' : '0%' }}></div></div>
-                                                </div>
-                                                <div className="p-4 bg-black/40 border border-main rounded-2xl flex flex-col justify-between">
-                                                    <p className="text-[7px] font-black text-secondary uppercase tracking-[0.1em] mb-2">Ancillary / F&B</p>
-                                                    <p className="text-xl font-black text-primary italic">€{financialsSummary.ancillarySales.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                                                    <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-emerald-400" style={{ width: financialsSummary.ancillarySales > 0 ? '40%' : '0%' }}></div></div>
-                                                </div>
-                                                <div className="p-4 bg-black/40 border border-main rounded-2xl flex flex-col justify-between">
-                                                    <p className="text-[7px] font-black text-secondary uppercase tracking-[0.1em] mb-2">Tx Volume</p>
-                                                    <p className="text-xl font-black text-primary italic">{financialsSummary.txVolume.toLocaleString('de-DE')}</p>
-                                                    <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-brand" style={{ width: financialsSummary.txVolume > 0 ? '100%' : '0%' }}></div></div>
-                                                </div>
-                                            </div>
+                                        {/* WÖCHENTLICHES FLOTTEN-LEDGER & REVENUE TELEMETRY */}
+                                        {managerContext === 'FM' ? (
+                                            <div className={`lg:col-span-2 ${isLight ? 'bg-white border-slate-200 text-slate-900 shadow-xl' : 'bg-dark-900 border-main text-white shadow-2xl'} border rounded-[2.5rem] md:rounded-[3rem] p-6 md:p-8 lg:p-10 space-y-7 relative overflow-hidden`}>
+                                                {/* Ambient Grid Background */}
+                                                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:20px_20px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_100%)] opacity-20 pointer-events-none"></div>
 
-                                            <div className="h-48 flex items-end justify-between gap-3 px-2 relative z-10 pt-4">
-                                                {[
-                                                    { h: 35, v: 4200, l: 'Mon' }, 
-                                                    { h: 45, v: 5400, l: 'Tue' }, 
-                                                    { h: 40, v: 4800, l: 'Wed' }, 
-                                                    { h: 65, v: 7800, l: 'Thu' }, 
-                                                    { h: 85, v: 10200, l: 'Fri' }, 
-                                                    { h: 95, v: 11400, l: 'Sat' }, 
-                                                    { h: 55, v: 6600, l: 'Sun' }
-                                                ].map((bar, i) => (
-                                                    <div key={i} className="flex flex-col items-center gap-3 w-full h-full justify-end group">
-                                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] md:text-xs lg:text-sm font-black text-primary bg-dark-900 border border-brand/30 px-2 py-1 rounded mb-1 whitespace-nowrap">
-                                                            €{bar.v.toLocaleString()}
+                                                {/* Header Bar */}
+                                                <div className="flex flex-col xl:flex-row gap-4 xl:justify-between xl:items-center relative z-10">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 rounded-2xl bg-brand/10 border border-brand/30 flex items-center justify-center text-brand shadow-[0_0_20px_rgba(33,255,165,0.25)] shrink-0">
+                                                            <Activity size={24} />
                                                         </div>
-                                                        <motion.div 
-                                                            initial={{ height: 0 }}
-                                                            animate={{ height: `${bar.h}%` }}
-                                                            className="w-full bg-btn-sec border border-main rounded-t-lg relative overflow-hidden group-hover:border-brand/50 group-hover:bg-brand/10 transition-all"
-                                                        >
-                                                            <div className="absolute bottom-0 w-full bg-brand/40 h-1" />
-                                                            <div className="absolute inset-0 bg-gradient-to-t from-brand/20 to-transparent opacity-0 group-hover:opacity-100" />
-                                                        </motion.div>
-                                                        <span className="text-[8px] md:text-[10px] lg:text-xs font-black text-secondary uppercase">{bar.l}</span>
+                                                        <div>
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <h3 className={`text-xl md:text-2xl font-black italic uppercase tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                                    Wöchentliches Flotten-Ledger & Analytics
+                                                                </h3>
+                                                                <span className={`text-[9px] md:text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                                                                    fleetPeriod === 'KW41' 
+                                                                        ? (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30')
+                                                                        : (isLight ? 'bg-slate-100 text-slate-700 border-slate-300' : 'bg-white/10 text-slate-300 border-white/10')
+                                                                }`}>
+                                                                    {fleetPeriod === 'KW41' ? 'KW 41 (Aktuelle Woche)' : fleetPeriod === 'KW40' ? 'KW 40 (Vorwoche)' : 'KW 42 (Zukunft)'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                ))}
-                                            </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 relative z-10 border-t border-white/5">
-                                                <div className="p-6 bg-black/40 rounded-[2rem] border border-main flex flex-col justify-center items-center">
-                                                    <p className="text-[8px] md:text-[10px] lg:text-xs font-black text-secondary uppercase tracking-[0.2em] mb-2">Gross Invoiced</p>
-                                                    <p className="text-2xl font-black italic text-primary">€{commissionData.gross.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                                    {/* Controls: Universelle KW-Suche & Alle Kalenderwochen (Vergangenheit bis Zukunft) */}
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        {/* Schnellsprung-Pfeile */}
+                                                        <button
+                                                            type="button"
+                                                            title="Vorherige Kalenderwoche"
+                                                            onClick={() => {
+                                                                const curNum = parseInt(String(fleetPeriod).replace(/[^0-9]/g, '')) || 41;
+                                                                if (curNum > 1) setFleetPeriod(`KW${curNum - 1}`);
+                                                            }}
+                                                            className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all ${
+                                                                isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800' : 'bg-btn-sec hover:bg-white/10 border-white/10 text-white'
+                                                            }`}
+                                                        >
+                                                            ◀
+                                                        </button>
+
+                                                        {/* KW Dropdown Selector (KW 01 bis KW 52) */}
+                                                        <div className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[11px] font-black ${isLight ? 'bg-slate-100 border-slate-300 text-slate-900' : 'bg-btn-sec border-white/10 text-white'}`}>
+                                                            <Calendar size={13} className="text-brand shrink-0" />
+                                                            <select 
+                                                                value={fleetPeriod}
+                                                                onChange={(e) => setFleetPeriod(e.target.value)}
+                                                                className="bg-transparent font-black uppercase outline-none cursor-pointer text-[10px] md:text-xs max-w-[210px] md:max-w-none"
+                                                            >
+                                                                {Array.from({ length: 52 }, (_, idx) => {
+                                                                    const weekNum = idx + 1;
+                                                                    const info = getFleetWeekMetrics(`KW${weekNum}`);
+                                                                    const isCur = weekNum === 41;
+                                                                    const prefix = isCur ? '🟢 ' : weekNum < 41 ? '⏱️ ' : '🔮 ';
+                                                                    const suffix = isCur ? ' • JETZT (Aktuell)' : weekNum === 40 ? ' • Vorwoche' : weekNum === 42 ? ' • Kommende Woche' : '';
+                                                                    return (
+                                                                        <option 
+                                                                            key={weekNum} 
+                                                                            value={`KW${weekNum}`}
+                                                                            className={isLight ? 'text-slate-900 bg-white' : 'text-white bg-dark-900'}
+                                                                        >
+                                                                            {`${prefix}KW ${String(weekNum).padStart(2, '0')} (${info.rangeStr})${suffix}`}
+                                                                        </option>
+                                                                    );
+                                                                })}
+                                                            </select>
+                                                        </div>
+
+                                                        {/* Schnellsprung-Pfeil Vorwärts */}
+                                                        <button
+                                                            type="button"
+                                                            title="Nächste Kalenderwoche"
+                                                            onClick={() => {
+                                                                const curNum = parseInt(String(fleetPeriod).replace(/[^0-9]/g, '')) || 41;
+                                                                if (curNum < 52) setFleetPeriod(`KW${curNum + 1}`);
+                                                            }}
+                                                            className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all ${
+                                                                isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800' : 'bg-btn-sec hover:bg-white/10 border-white/10 text-white'
+                                                            }`}
+                                                        >
+                                                            ▶
+                                                        </button>
+
+                                                        {/* Schnelleingabe / Direkte KW-Suche */}
+                                                        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border text-xs ${
+                                                            isLight ? 'bg-white border-slate-300 text-slate-800 shadow-xs' : 'bg-black/40 border-white/10 text-white'
+                                                        }`}>
+                                                            <Search size={12} className="text-brand shrink-0" />
+                                                            <input
+                                                                type="text"
+                                                                placeholder="KW (z.B. 38)"
+                                                                value={kwSearchQuery}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    setKwSearchQuery(val);
+                                                                    const num = parseInt(val.replace(/[^0-9]/g, ''));
+                                                                    if (num >= 1 && num <= 52) {
+                                                                        setFleetPeriod(`KW${num}`);
+                                                                    }
+                                                                }}
+                                                                className="w-16 md:w-20 bg-transparent text-[10px] md:text-xs font-black uppercase outline-none placeholder:text-slate-400 placeholder:normal-case"
+                                                            />
+                                                        </div>
+
+                                                        {/* Reset auf JETZT (KW 41) */}
+                                                        {fleetPeriod !== 'KW41' && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setFleetPeriod('KW41');
+                                                                    setKwSearchQuery('');
+                                                                }}
+                                                                className="px-2.5 py-1.5 rounded-xl text-[10px] font-black uppercase bg-emerald-500 text-dark-950 shadow-sm hover:scale-105 transition-all"
+                                                            >
+                                                                Heute (KW 41)
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div className={`p-6 rounded-[2rem] border flex flex-col justify-center items-center ${commissionData.isFree ? "bg-brand/5 border-brand/20" : "bg-red-500/5 border-red-500/10"}`}>
-                                                    <p className={`text-[8px] md:text-[10px] lg:text-xs font-black uppercase tracking-[0.2em] mb-2 ${commissionData.isFree ? "text-brand" : "text-red-500/70"}`}>{commissionData.rateLabel}</p>
-                                                    <p className={`text-2xl font-black italic ${commissionData.isFree ? "text-brand" : "text-red-400"}`}>-€{commissionData.commission.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+
+                                                {/* Navigation Sub-Tabs */}
+                                                <div className={`flex items-center gap-2 p-1.5 rounded-2xl border relative z-10 overflow-x-auto ${isLight ? 'bg-slate-100/90 border-slate-200' : 'bg-black/40 border-white/5'}`}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFleetFinanceSubTab('ledger')}
+                                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                                                            fleetFinanceSubTab === 'ledger'
+                                                                ? 'bg-brand text-dark-900 shadow-md font-black'
+                                                                : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-white/80' : 'text-slate-400 hover:text-white hover:bg-white/5')
+                                                        }`}
+                                                    >
+                                                        <BarChart3 size={14} />
+                                                        Wöchentliche Bilanz & Bar-Verrechnung
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFleetFinanceSubTab('cancellations')}
+                                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                                                            fleetFinanceSubTab === 'cancellations'
+                                                                ? 'bg-brand text-dark-900 shadow-md font-black'
+                                                                : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-white/80' : 'text-slate-400 hover:text-white hover:bg-white/5')
+                                                        }`}
+                                                    >
+                                                        <Ban size={14} />
+                                                        Stornierte Fahrten (Kunde vs. Fahrer)
+                                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
+                                                            fleetFinanceSubTab === 'cancellations' 
+                                                                ? 'bg-dark-900 text-brand' 
+                                                                : (isLight ? 'bg-rose-100 text-rose-800' : 'bg-rose-500/20 text-rose-400')
+                                                        }`}>
+                                                            {fleetPeriod === 'KW41' ? '14' : '12'}
+                                                        </span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setFleetFinanceSubTab('audit')}
+                                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                                                            fleetFinanceSubTab === 'audit'
+                                                                ? 'bg-brand text-dark-900 shadow-md font-black'
+                                                                : (isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-white/80' : 'text-slate-400 hover:text-white hover:bg-white/5')
+                                                        }`}
+                                                    >
+                                                        <FileText size={14} />
+                                                        Echtzeit-Auditliste & Einzelbelege
+                                                    </button>
                                                 </div>
-                                                <div className="p-6 bg-brand/10 rounded-[2rem] border border-brand/30 flex flex-col justify-center items-center relative overflow-hidden">
-                                                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(33,255,165,0.15)_0%,transparent_70%)]" />
-                                                    <p className="text-[8px] md:text-[10px] lg:text-xs font-black text-brand uppercase tracking-[0.2em] mb-2 relative z-10">Settlement Amount</p>
-                                                    <p className="text-2xl font-black italic text-brand relative z-10">€{commissionData.settlement.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+
+                                                {/* TAB 1: WÖCHENTLICHE BILANZ & BAR-VERRECHNUNG */}
+                                                {fleetFinanceSubTab === 'ledger' && (
+                                                    <div className="space-y-6 relative z-10">
+                                                        {/* 4 Main Fleet KPI Cards */}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                                            {/* 1. Fahrten Gesamt */}
+                                                            <div className={`p-4 md:p-5 rounded-2xl border flex flex-col justify-between transition-all ${
+                                                                isLight ? 'bg-slate-50 border-slate-200/90 shadow-sm' : 'bg-black/40 border-white/10'
+                                                            }`}>
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Wöchentliche Fahrten</span>
+                                                                    <Car size={15} className="text-cyan-500" />
+                                                                </div>
+                                                                <div className="my-3">
+                                                                    <div className={`text-2xl md:text-3xl font-black italic tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                                        {activeWeekMetrics.tripsTotal} <span className="text-xs not-italic font-bold text-slate-500">Fahrten</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2 mt-1.5 text-[10px] font-bold">
+                                                                        <span className={`px-2 py-0.5 rounded-md border font-black ${isLight ? 'bg-cyan-50 text-cyan-800 border-cyan-200' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'}`}>
+                                                                            💳 {activeWeekMetrics.tripsCard} Karte
+                                                                        </span>
+                                                                        <span className={`px-2 py-0.5 rounded-md border font-black ${isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
+                                                                            💵 {activeWeekMetrics.tripsCash} Bar
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className={`text-[9px] font-extrabold flex items-center justify-between pt-2 border-t ${isLight ? 'border-slate-200 text-slate-500' : 'border-white/10 text-slate-400'}`}>
+                                                                    <span>Erfolgsquote: 90.2%</span>
+                                                                    <span className="text-rose-500">{activeWeekMetrics.stornos} Stornos</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* 2. Brutto-Umsatz */}
+                                                            <div className={`p-4 md:p-5 rounded-2xl border flex flex-col justify-between transition-all ${
+                                                                isLight ? 'bg-slate-50 border-slate-200/90 shadow-sm' : 'bg-black/40 border-white/10'
+                                                            }`}>
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Flotten Brutto-Umsatz</span>
+                                                                    <DollarSign size={15} className="text-brand" />
+                                                                </div>
+                                                                <div className="my-3">
+                                                                    <div className={`text-2xl md:text-3xl font-black italic tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                                        €{activeWeekMetrics.grossTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2 mt-1.5 text-[10px] font-bold">
+                                                                        <span className={`px-2 py-0.5 rounded-md border font-black ${isLight ? 'bg-cyan-50 text-cyan-800 border-cyan-200' : 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'}`}>
+                                                                            💳 €{activeWeekMetrics.grossCard.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                                                        </span>
+                                                                        <span className={`px-2 py-0.5 rounded-md border font-black ${isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
+                                                                            💵 €{activeWeekMetrics.grossCash.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className={`text-[9px] font-extrabold flex items-center justify-between pt-2 border-t ${isLight ? 'border-slate-200 text-slate-500' : 'border-white/10 text-slate-400'}`}>
+                                                                    <span>Ø Fahrpreis: {activeWeekMetrics.tripsTotal > 0 ? `€${(activeWeekMetrics.grossTotal / activeWeekMetrics.tripsTotal).toFixed(2).replace('.', ',')}` : '€0,00'}</span>
+                                                                    <span className="text-brand font-black">Vor Provision</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* 3. Green Provision & Bar-Offset */}
+                                                            <div className={`p-4 md:p-5 rounded-2xl border flex flex-col justify-between transition-all ${
+                                                                isLight ? 'bg-slate-50 border-slate-200/90 shadow-sm' : 'bg-black/40 border-white/10'
+                                                            }`}>
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Green Provision (15%)</span>
+                                                                    <BadgePercent size={15} className="text-purple-400" />
+                                                                </div>
+                                                                <div className="my-3">
+                                                                    <div className="text-2xl md:text-3xl font-black italic tracking-tight text-purple-500">
+                                                                        -{activeWeekMetrics.commTotal === 0 ? '€0,00' : `€${activeWeekMetrics.commTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                                                                    </div>
+                                                                    <div className="flex flex-col gap-1 mt-1.5 text-[9px] font-bold">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>Karten-Provision:</span>
+                                                                            <span className="font-black text-purple-400">€{activeWeekMetrics.commCard.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                                        </div>
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className={isLight ? 'text-emerald-700' : 'text-emerald-400'}>🔄 Bar-Provisions Offset:</span>
+                                                                            <span className="font-black text-emerald-500">-{activeWeekMetrics.commCashOffset === 0 ? '€0,00' : `€${activeWeekMetrics.commCashOffset.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className={`text-[9px] font-extrabold flex items-center justify-between pt-2 border-t ${isLight ? 'border-slate-200 text-slate-500' : 'border-white/10 text-slate-400'}`}>
+                                                                    <span>Stripe-Gebühr: 0 €</span>
+                                                                    <span className="text-emerald-500 font-bold">Von Green bezahlt</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* 4. Stripe Netto Auszahlung */}
+                                                            <div 
+                                                                onClick={() => setIsDriverCashSheetOpen(true)}
+                                                                title="Klicken für Fahrer-Bargeldaufschlüsselung"
+                                                                className={`p-4 md:p-5 rounded-2xl border flex flex-col justify-between transition-all relative overflow-hidden cursor-pointer group hover:scale-[1.01] hover:shadow-lg ${
+                                                                    isLight ? 'bg-emerald-50/70 hover:bg-emerald-50 border-emerald-300 shadow-sm' : 'bg-emerald-500/10 hover:bg-emerald-500/15 border-emerald-500/30'
+                                                                }`}
+                                                            >
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-emerald-900' : 'text-emerald-400'}`}>Stripe Bank-Payout (Mo)</span>
+                                                                    <div className="flex items-center gap-1 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                                                                        <span>Fahrer-Details</span>
+                                                                        <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                                                                    </div>
+                                                                </div>
+                                                                <div className="my-3">
+                                                                    <div className="text-2xl md:text-3xl font-black italic tracking-tight text-emerald-500">
+                                                                        €{activeWeekMetrics.stripeNetPayout.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                    </div>
+                                                                    <div className={`text-[10px] font-bold mt-1.5 flex items-center justify-between px-2 py-1 rounded-lg border transition-all ${
+                                                                        isLight ? 'bg-white/90 border-emerald-200 text-emerald-900 shadow-xs group-hover:border-emerald-300' : 'bg-black/40 border-emerald-500/20 text-emerald-300 group-hover:border-emerald-500/40'
+                                                                    }`}>
+                                                                        <span>+ €{activeWeekMetrics.grossCash.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bar beim Fahrer (Gesamt)</span>
+                                                                        <span className="text-[9px] font-black uppercase text-emerald-500 underline ml-1">Fahrer ➔</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className={`text-[9px] font-black flex items-center justify-between pt-2 border-t ${isLight ? 'border-emerald-200 text-emerald-900' : 'border-emerald-500/30 text-emerald-400'}`}>
+                                                                    <span>Flotten-Gesamtertrag:</span>
+                                                                    <span className="text-emerald-600 dark:text-emerald-300 font-black text-xs">€{activeWeekMetrics.fleetTotal.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Wochen-Balkendiagramm mit dynamischer Wochen-Navigation & sauberer Legende */}
+                                                        <div className="space-y-3 pt-2">
+                                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                                {/* Dynamischer 3-Wochen-Navigator (1 Woche davor, aktuelle Auswahl, 1 Woche danach) */}
+                                                                <div className={`flex items-center gap-1.5 p-1 rounded-2xl border ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-black/40 border-white/10'}`}>
+                                                                    {activeWeekMetrics.kwNum > 1 && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setFleetPeriod(`KW${activeWeekMetrics.kwNum - 1}`)}
+                                                                            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${
+                                                                                isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-white' : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                                                            }`}
+                                                                        >
+                                                                            {`◀ KW ${activeWeekMetrics.kwNum - 1}`}
+                                                                        </button>
+                                                                    )}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setFleetPeriod('KW41')}
+                                                                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black uppercase transition-all flex items-center gap-1.5 bg-brand text-dark-950 shadow-sm font-black`}
+                                                                    >
+                                                                        {activeWeekMetrics.isCurrent && (
+                                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                                                                        )}
+                                                                        {`KW ${activeWeekMetrics.kwNum} (${activeWeekMetrics.isCurrent ? 'Aktuell: JETZT' : activeWeekMetrics.isPast ? 'Vergangenheit' : 'Zukunft'})`}
+                                                                    </button>
+                                                                    {activeWeekMetrics.kwNum < 52 && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setFleetPeriod(`KW${activeWeekMetrics.kwNum + 1}`)}
+                                                                            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase transition-all ${
+                                                                                isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-white' : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                                                            }`}
+                                                                        >
+                                                                            {`KW ${activeWeekMetrics.kwNum + 1} ▶`}
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Saubere Legende (Ohne (Stripe) und ohne (Fahrzeug)) */}
+                                                                <div className="flex items-center gap-3.5 text-xs font-black self-end sm:self-auto">
+                                                                    <span className="flex items-center gap-1.5">
+                                                                        <span className="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                                                                        Karte
+                                                                    </span>
+                                                                    <span className="flex items-center gap-1.5">
+                                                                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                                                        Bar
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Scrollbarer Chart-Container mit allen 7 Wochentagen (Mo, Di, Mi, Do, Fr, Sa, So) */}
+                                                            <div className={`overflow-x-auto pb-3 pt-2 rounded-2xl border ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/30 border-white/5'}`}>
+                                                                <div className="min-w-[560px] grid grid-cols-7 gap-2 h-44 items-end px-3">
+                                                                    {activeWeekMetrics.days.map((b, i) => (
+                                                                        <div key={i} className="flex flex-col items-center gap-2 h-full justify-end group">
+                                                                            <div className={`opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-black px-2 py-0.5 rounded shadow-lg mb-1 whitespace-nowrap z-20 ${
+                                                                                isLight ? 'bg-slate-900 text-white' : 'bg-black text-brand border border-brand/30'
+                                                                            }`}>
+                                                                                €{b.tot} (💳 €{b.card} | 💵 €{b.cash})
+                                                                            </div>
+                                                                            <div className="w-full max-w-[52px] flex flex-col justify-end gap-0.5" style={{ height: `${b.h}%` }}>
+                                                                                <motion.div 
+                                                                                    initial={{ height: 0 }}
+                                                                                    animate={{ height: `${b.tot > 0 ? (b.cash / b.tot) * 100 : 0}%` }}
+                                                                                    className="w-full bg-emerald-500 rounded-t-sm"
+                                                                                    title={`Bar: €${b.cash}`}
+                                                                                />
+                                                                                <motion.div 
+                                                                                    initial={{ height: 0 }}
+                                                                                    animate={{ height: `${b.tot > 0 ? (b.card / b.tot) * 100 : 0}%` }}
+                                                                                    className="w-full bg-cyan-500 rounded-b-sm"
+                                                                                    title={`Karte: €${b.card}`}
+                                                                                />
+                                                                            </div>
+                                                                            <div className="text-center pt-1">
+                                                                                <span className={`text-xs font-black uppercase block ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>{b.d}</span>
+                                                                                <span className={`text-[9px] font-bold block ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>{b.date}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                                {activeWeekMetrics.isFuture && (
+                                                                    <div className={`mt-2 mx-3 text-center py-2 px-3 rounded-xl border text-xs font-bold ${
+                                                                        isLight ? 'bg-slate-100/80 border-slate-200 text-slate-500' : 'bg-white/5 border-white/5 text-slate-400'
+                                                                    }`}>
+                                                                        📅 Zukünftige Periode ({activeWeekMetrics.label}) • Noch keine Fahrten oder Umsätze erfasst
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* TAB 2: STORNO-INTELLIGENCE (KUNDE VS. FAHRER) */}
+                                                {fleetFinanceSubTab === 'cancellations' && (
+                                                    <div className="space-y-6 relative z-10">
+                                                        {activeWeekMetrics.isFuture ? (
+                                                            <div className={`p-10 rounded-3xl border text-center ${isLight ? 'bg-slate-50 border-slate-200 text-slate-500' : 'bg-black/30 border-white/5 text-slate-400'}`}>
+                                                                <Ban size={40} className="mx-auto mb-3 text-rose-500/70" />
+                                                                <h4 className={`text-base font-black uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
+                                                                    Zukünftige Kalenderwoche ({activeWeekMetrics.label})
+                                                                </h4>
+                                                                <p className="text-xs opacity-75 mt-1 max-w-md mx-auto">
+                                                                    Für diesen Zeitraum liegen noch keine Fahrten oder Stornierungen vor. Alle Stornokennzahlen stehen bei 0.
+                                                                </p>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                {/* Summary Ribbon */}
+                                                                <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 ${
+                                                                    isLight ? 'bg-rose-50/60 border-rose-200 text-slate-800' : 'bg-rose-500/10 border-rose-500/20 text-white'
+                                                                }`}>
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-500 flex items-center justify-center shrink-0">
+                                                                            <Ban size={20} />
+                                                                        </div>
+                                                                        <div>
+                                                                            <h4 className="text-sm font-black uppercase tracking-wider">
+                                                                                {activeWeekMetrics.stornos} Stornierungen erfasst (Stornoquote: {activeWeekMetrics.tripsTotal > 0 ? ((activeWeekMetrics.stornos / (activeWeekMetrics.tripsTotal + activeWeekMetrics.stornos)) * 100).toFixed(1) + '%' : '0.0%'})
+                                                                            </h4>
+                                                                            <p className={`text-xs ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                                                                                Präzise Verursacher-Zuordnung mit automatischem Ausfallschutz für Flottenunternehmer
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className={`px-4 py-2 rounded-xl border text-center font-black text-xs ${
+                                                                        isLight ? 'bg-white border-rose-200 text-rose-700' : 'bg-dark-900 border-rose-500/30 text-rose-400'
+                                                                    }`}>
+                                                                        <span className="block text-[9px] uppercase tracking-wider opacity-70">Flotten-Ausfallentschädigung</span>
+                                                                        <span className="text-base text-emerald-500">+{activeWeekMetrics.stornos > 0 ? '€19,50' : '€0,00'}</span> Gutschrift
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Two Columns: Customer vs Driver Cancellations */}
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                                    {/* 1. SELBST STORNIERT DURCH KUNDE / FAHRGAST */}
+                                                                    <div className={`p-6 rounded-3xl border space-y-4 ${
+                                                                        isLight ? 'bg-slate-50 border-slate-200 shadow-sm' : 'bg-black/40 border-white/10'
+                                                                    }`}>
+                                                                        <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)' }}>
+                                                                            <div className="flex items-center gap-2.5">
+                                                                                <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center font-black">
+                                                                                    <User size={16} />
+                                                                                </div>
+                                                                                <div>
+                                                                                    <h5 className={`text-sm font-black uppercase tracking-wider ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                                                        1. Selbst storniert (Kunde)
+                                                                                    </h5>
+                                                                                    <span className="text-[10px] text-slate-500 font-bold">{Math.round(activeWeekMetrics.stornos * 0.78)} Stornos durch Fahrgast</span>
+                                                                                </div>
+                                                                            </div>
+                                                                            <span className={`text-xs font-black px-2.5 py-1 rounded-full ${
+                                                                                isLight ? 'bg-blue-100 text-blue-800' : 'bg-blue-500/20 text-blue-400'
+                                                                            }`}>
+                                                                                {Math.round(activeWeekMetrics.stornos * 0.78)} Stornos
+                                                                            </span>
+                                                                        </div>
+
+                                                                        <div className="space-y-3">
+                                                                            {/* Free instant cancellation */}
+                                                                            <div className={`p-3.5 rounded-2xl border ${isLight ? 'bg-white border-slate-200' : 'bg-dark-900 border-white/5'}`}>
+                                                                                <div className="flex items-center justify-between">
+                                                                                    <span className="text-xs font-black flex items-center gap-1.5 text-slate-500">
+                                                                                        <CheckCircle size={14} className="text-slate-400" />
+                                                                                        Sofort-Storno (&lt; 2 Min)
+                                                                                    </span>
+                                                                                    <span className="text-xs font-extrabold">{Math.round(activeWeekMetrics.stornos * 0.55)} Fahrten</span>
+                                                                                </div>
+                                                                                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-white/5 text-[10px]">
+                                                                                    <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>Kulanzfenster vor Fahrtantritt:</span>
+                                                                                    <span className="font-bold text-slate-400">0,00 € Gebühr</span>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {/* Late cancellation with fee */}
+                                                                            <div className={`p-3.5 rounded-2xl border ${isLight ? 'bg-rose-50/70 border-rose-200' : 'bg-rose-500/10 border-rose-500/20'}`}>
+                                                                                <div className="flex items-center justify-between">
+                                                                                    <span className="text-xs font-black flex items-center gap-1.5 text-rose-500">
+                                                                                        <AlertCircle size={14} />
+                                                                                        Spät-Storno (&gt; 2 Min / Anfahrt)
+                                                                                    </span>
+                                                                                    <span className="text-xs font-black text-rose-500">{Math.max(0, Math.round(activeWeekMetrics.stornos * 0.78) - Math.round(activeWeekMetrics.stornos * 0.55))} Fahrten</span>
+                                                                                </div>
+                                                                                <div className="space-y-1.5 mt-2 pt-2 border-t border-rose-200/50 dark:border-rose-500/20 text-[10px]">
+                                                                                    <div className="flex items-center justify-between">
+                                                                                        <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>Stornogebühr vom Kunden eingezogen:</span>
+                                                                                        <span className="font-extrabold">€{(Math.max(0, Math.round(activeWeekMetrics.stornos * 0.78) - Math.round(activeWeekMetrics.stornos * 0.55)) * 6).toFixed(2).replace('.', ',')}</span>
+                                                                                    </div>
+                                                                                    <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 font-black">
+                                                                                        <span>Flotten-Entschädigung (75%):</span>
+                                                                                        <span>+€{(Math.max(0, Math.round(activeWeekMetrics.stornos * 0.78) - Math.round(activeWeekMetrics.stornos * 0.55)) * 4.5).toFixed(2).replace('.', ',')} an Flotte</span>
+                                                                                    </div>
+                                                                                    <div className="flex items-center justify-between text-slate-500 font-bold">
+                                                                                        <span>Green Plattformanteil (25%):</span>
+                                                                                        <span>€{(Math.max(0, Math.round(activeWeekMetrics.stornos * 0.78) - Math.round(activeWeekMetrics.stornos * 0.55)) * 1.5).toFixed(2).replace('.', ',')}</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <p className={`text-[10px] leading-relaxed ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                                                                            ℹ️ Bei Stornos nach 2 Minuten schützt Green Ihre Fahrer: Die Stornogebühr wird dem Kunden automatisch belastet und als Aufwandsentschädigung für Akkuladung und Fahrtzeit Ihrer Flotte gutgeschrieben.
+                                                                        </p>
+                                                                    </div>
+
+                                                                    {/* 2. VOM FAHRER STORNIERT */}
+                                                                    <div className={`p-6 rounded-3xl border space-y-4 ${
+                                                                        isLight ? 'bg-slate-50 border-slate-200 shadow-sm' : 'bg-black/40 border-white/10'
+                                                                    }`}>
+                                                                        <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)' }}>
+                                                                            <div className="flex items-center gap-2.5">
+                                                                                <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center font-black">
+                                                                                    <Car size={16} />
+                                                                                </div>
+                                                                                <div>
+                                                                                    <h5 className={`text-sm font-black uppercase tracking-wider ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                                                        2. Vom Fahrer storniert
+                                                                                    </h5>
+                                                                                    <span className="text-[10px] text-slate-500 font-bold">{Math.max(0, activeWeekMetrics.stornos - Math.round(activeWeekMetrics.stornos * 0.78))} Stornos durch Fahrer</span>
+                                                                                </div>
+                                                                            </div>
+                                                                            <span className={`text-xs font-black px-2.5 py-1 rounded-full ${
+                                                                                isLight ? 'bg-amber-100 text-amber-800' : 'bg-amber-500/20 text-amber-400'
+                                                                            }`}>
+                                                                                {Math.max(0, activeWeekMetrics.stornos - Math.round(activeWeekMetrics.stornos * 0.78))} Stornos
+                                                                            </span>
+                                                                        </div>
+
+                                                                        <div className="space-y-3">
+                                                                            {/* No-show after waiting */}
+                                                                            <div className={`p-3.5 rounded-2xl border ${isLight ? 'bg-amber-50/70 border-amber-200' : 'bg-amber-500/10 border-amber-500/20'}`}>
+                                                                                <div className="flex items-center justify-between">
+                                                                                    <span className="text-xs font-black flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                                                                                        <Clock size={14} />
+                                                                                        Kunde No-Show (&gt; 8 Min Wartezeit)
+                                                                                    </span>
+                                                                                    <span className="text-xs font-black">{activeWeekMetrics.stornos > 0 ? '1 Fahrt' : '0 Fahrten'}</span>
+                                                                                </div>
+                                                                                <div className="space-y-1 mt-2 pt-2 border-t border-amber-200/50 dark:border-amber-500/20 text-[10px]">
+                                                                                    <div className="flex items-center justify-between">
+                                                                                        <span className={isLight ? 'text-slate-600' : 'text-slate-400'}>Fahrer am Abholort gewartet & kontaktiert:</span>
+                                                                                        <span className="font-bold text-amber-600 dark:text-amber-400">GPS verifiziert</span>
+                                                                                    </div>
+                                                                                    <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 font-black">
+                                                                                        <span>No-Show Entschädigung für Flotte:</span>
+                                                                                        <span>+{activeWeekMetrics.stornos > 0 ? '€4,50' : '€0,00'}</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {/* Traffic or emergency */}
+                                                                            <div className={`p-3.5 rounded-2xl border ${isLight ? 'bg-white border-slate-200' : 'bg-dark-900 border-white/5'}`}>
+                                                                                <div className="flex items-center justify-between">
+                                                                                    <span className="text-xs font-black flex items-center gap-1.5 text-slate-500">
+                                                                                        <AlertTriangle size={14} className="text-slate-400" />
+                                                                                        Stau / Straßensperrung / Defekt
+                                                                                    </span>
+                                                                                    <span className="text-xs font-extrabold">{Math.max(0, activeWeekMetrics.stornos - Math.round(activeWeekMetrics.stornos * 0.78) - (activeWeekMetrics.stornos > 0 ? 1 : 0))} Fahrten</span>
+                                                                                </div>
+                                                                                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-white/5 text-[10px]">
+                                                                                    <span className={isLight ? 'text-slate-500' : 'text-slate-400'}>Kulanzstorno ohne Sanktion:</span>
+                                                                                    <span className="font-bold text-slate-400">0,00 € (Neuzuweisung)</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <p className={`text-[10px] leading-relaxed ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                                                                            ℹ️ No-Show-Erkennung: Wenn ein Fahrer nachweislich mindestens 8 Minuten am Treffpunkt gewartet hat und der Kunde nicht erscheint, wird dem Kunden die No-Show Gebühr berechnet und der Flotte gutgeschrieben.
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* TAB 3: AUDITLISTE & EINZELBELEGE */}
+                                                {fleetFinanceSubTab === 'audit' && (
+                                                    <div className="space-y-4 relative z-10">
+                                                        {activeWeekMetrics.isFuture ? (
+                                                            <div className={`p-10 rounded-3xl border text-center ${isLight ? 'bg-slate-50 border-slate-200 text-slate-500' : 'bg-black/30 border-white/5 text-slate-400'}`}>
+                                                                <FileText size={40} className="mx-auto mb-3 text-slate-400/60" />
+                                                                <h4 className={`text-base font-black uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
+                                                                    Zukünftige Kalenderwoche ({activeWeekMetrics.label})
+                                                                </h4>
+                                                                <p className="text-xs opacity-75 mt-1 max-w-md mx-auto">
+                                                                    In diesem Zeitraum wurden noch keine Fahrten oder Einzelbelege verbucht.
+                                                                </p>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                {/* Filter Bar */}
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    {[
+                                                                        { id: 'all', label: 'Alle Einträge (8)' },
+                                                                        { id: 'card', label: '💳 Nur Karte (2)' },
+                                                                        { id: 'cash', label: '💵 Nur Barzahlung (2)' },
+                                                                        { id: 'storno_customer', label: '👤 Kunde storniert (2)' },
+                                                                        { id: 'storno_driver', label: '🚗 Fahrer storniert (2)' }
+                                                                    ].map(f => (
+                                                                        <button
+                                                                            key={f.id}
+                                                                            type="button"
+                                                                            onClick={() => setFleetAuditFilter(f.id)}
+                                                                            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${
+                                                                                fleetAuditFilter === f.id
+                                                                                    ? (isLight ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-brand text-dark-900 border-brand font-black')
+                                                                                    : (isLight ? 'bg-white border-slate-200 text-slate-600 hover:border-slate-300' : 'bg-dark-900 border-white/10 text-slate-400 hover:text-white')
+                                                                            }`}
+                                                                        >
+                                                                            {f.label}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+
+                                                                {/* Audit Entries List */}
+                                                                <div className="space-y-2.5">
+                                                                    {[
+                                                                        {
+                                                                            id: 'TRP-8841',
+                                                                            time: 'Heute, 14:10',
+                                                                            filterType: 'card',
+                                                                            badgeText: 'Kreditkarte (Stripe)',
+                                                                            badgeColor: 'cyan',
+                                                                            driver: 'Sami Rahimi • Tesla Model S',
+                                                                            passenger: 'Dr. Markus Weber',
+                                                                            route: 'Kö-Bogen ➔ Flughafen DUS',
+                                                                            gross: '€48,50',
+                                                                            commission: '-€7,28 (15%)',
+                                                                            net: '€41,22',
+                                                                            status: 'Auszahlung Mo reserviert'
+                                                                        },
+                                                                        {
+                                                                            id: 'TRP-8840',
+                                                                            time: 'Heute, 13:25',
+                                                                            filterType: 'cash',
+                                                                            badgeText: 'Barzahlung im Fahrzeug',
+                                                                            badgeColor: 'emerald',
+                                                                            driver: 'Darius Meier • Mercedes EQS',
+                                                                            passenger: 'Elena Sommer',
+                                                                            route: 'Stadttor ➔ Hauptbahnhof DUS',
+                                                                            gross: '€32,00',
+                                                                            commission: '-€4,80 (Soll-Offset)',
+                                                                            net: '€32,00 Bar',
+                                                                            status: 'Bar im Auto • Provision im Stripe-Soll'
+                                                                        },
+                                                                        {
+                                                                            id: 'TRP-8839',
+                                                                            time: 'Heute, 12:48',
+                                                                            filterType: 'storno_customer',
+                                                                            badgeText: '👤 Kunde Spät-Storno (>2m)',
+                                                                            badgeColor: 'rose',
+                                                                            driver: 'Elena Rostova • Porsche Taycan',
+                                                                            passenger: 'Thomas K. (Fahrgast)',
+                                                                            route: 'Medienhafen ➔ Hyatt Regency',
+                                                                            gross: '€6,00 Gebühr',
+                                                                            commission: '-€1,50 Green',
+                                                                            net: '+€4,50 Entschädigung',
+                                                                            status: 'Flotten-Entschädigung gutgeschrieben'
+                                                                        },
+                                                                        {
+                                                                            id: 'TRP-8838',
+                                                                            time: 'Heute, 11:15',
+                                                                            filterType: 'storno_customer',
+                                                                            badgeText: '👤 Kunde Sofort-Storno (<2m)',
+                                                                            badgeColor: 'slate',
+                                                                            driver: 'Sami Rahimi • Tesla Model S',
+                                                                            passenger: 'Lukas M. (Fahrgast)',
+                                                                            route: 'Königsallee ➔ Messe DUS',
+                                                                            gross: '€0,00',
+                                                                            commission: '€0,00',
+                                                                            net: '€0,00',
+                                                                            status: 'Kostenlos im Kulanzfenster'
+                                                                        },
+                                                                        {
+                                                                            id: 'TRP-8837',
+                                                                            time: 'Gestern, 22:30',
+                                                                            filterType: 'storno_driver',
+                                                                            badgeText: '🚗 Fahrer No-Show (>8m)',
+                                                                            badgeColor: 'purple',
+                                                                            driver: 'Darius Meier • Mercedes EQS',
+                                                                            passenger: 'Maximilian B. (Fahrgast)',
+                                                                            route: 'Rheinterrasse ➔ Breidenbacher Hof',
+                                                                            gross: '€6,00 Gebühr',
+                                                                            commission: '-€1,50 Green',
+                                                                            net: '+€4,50 Entschädigung',
+                                                                            status: 'Wartezeit No-Show vergütet'
+                                                                        },
+                                                                        {
+                                                                            id: 'TRP-8836',
+                                                                            time: 'Gestern, 19:40',
+                                                                            filterType: 'card',
+                                                                            badgeText: 'Apple Pay (Stripe)',
+                                                                            badgeColor: 'cyan',
+                                                                            driver: 'Elena Rostova • Porsche Taycan',
+                                                                            passenger: 'Sophie von Berg',
+                                                                            route: 'Flughafen DUS ➔ Altstadt',
+                                                                            gross: '€54,00',
+                                                                            commission: '-€8,10 (15%)',
+                                                                            net: '€45,90',
+                                                                            status: 'Auszahlung Mo reserviert'
+                                                                        },
+                                                                        {
+                                                                            id: 'TRP-8835',
+                                                                            time: 'Gestern, 16:15',
+                                                                            filterType: 'cash',
+                                                                            badgeText: 'Barzahlung im Fahrzeug',
+                                                                            badgeColor: 'emerald',
+                                                                            driver: 'Sami Rahimi • Tesla Model S',
+                                                                            passenger: 'Alexander P.',
+                                                                            route: 'Oberkassel ➔ Carlsplatz',
+                                                                            gross: '€26,00',
+                                                                            commission: '-€3,90 (Soll-Offset)',
+                                                                            net: '€26,00 Bar',
+                                                                            status: 'Bar im Auto • Provision im Stripe-Soll'
+                                                                        },
+                                                                        {
+                                                                            id: 'TRP-8834',
+                                                                            time: 'Gestern, 14:05',
+                                                                            filterType: 'storno_driver',
+                                                                            badgeText: '🚗 Fahrer Stau / Kulanz',
+                                                                            badgeColor: 'slate',
+                                                                            driver: 'Darius Meier • Mercedes EQS',
+                                                                            passenger: 'Nadine S. (Fahrgast)',
+                                                                            route: 'Graf-Adolf-Platz ➔ Benrath',
+                                                                            gross: '€0,00',
+                                                                            commission: '€0,00',
+                                                                            net: '€0,00',
+                                                                            status: 'Kulanzstorno durch Fahrer'
+                                                                        }
+                                                                    ]
+                                                                    .filter(item => fleetAuditFilter === 'all' || item.filterType === fleetAuditFilter)
+                                                                    .map((item, idx) => (
+                                                                        <div 
+                                                                            key={idx}
+                                                                            className={`p-4 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-3 transition-all ${
+                                                                                isLight ? 'bg-slate-50 border-slate-200/90 hover:bg-white hover:border-slate-300 shadow-sm' : 'bg-black/30 border-white/5 hover:border-white/10'
+                                                                            }`}
+                                                                        >
+                                                                            <div className="space-y-1.5">
+                                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                                    <span className={`text-xs font-black font-mono ${isLight ? 'text-slate-900' : 'text-white'}`}>#{item.id}</span>
+                                                                                    <span className={`text-[10px] font-bold ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>• {item.time}</span>
+                                                                                    <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
+                                                                                        item.badgeColor === 'cyan' ? (isLight ? 'bg-cyan-50 text-cyan-800 border-cyan-200' : 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30') :
+                                                                                        item.badgeColor === 'emerald' ? (isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30') :
+                                                                                        item.badgeColor === 'rose' ? (isLight ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-rose-500/20 text-rose-400 border-rose-500/30') :
+                                                                                        item.badgeColor === 'purple' ? (isLight ? 'bg-purple-50 text-purple-800 border-purple-200' : 'bg-purple-500/20 text-purple-400 border-purple-500/30') :
+                                                                                        (isLight ? 'bg-slate-200 text-slate-700 border-slate-300' : 'bg-white/10 text-slate-300 border-white/10')
+                                                                                    }`}>
+                                                                                        {item.badgeText}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div className={`text-xs font-bold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>
+                                                                                    {item.driver} ➔ <span className={isLight ? 'text-slate-900 font-extrabold' : 'text-white font-extrabold'}>{item.passenger}</span>
+                                                                                </div>
+                                                                                <div className={`text-[11px] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                                                                                    Route: {item.route}
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center border-t md:border-t-0 pt-2 md:pt-0 border-slate-200 dark:border-white/5">
+                                                                                <div className="flex items-center gap-2 md:text-right">
+                                                                                    <span className={`text-base font-black italic ${isLight ? 'text-slate-900' : 'text-white'}`}>{item.gross}</span>
+                                                                                    <span className="text-[10px] font-bold text-purple-500">({item.commission})</span>
+                                                                                </div>
+                                                                                <div className="text-right">
+                                                                                    <span className="text-xs font-black text-emerald-500">{item.net}</span>
+                                                                                    <span className={`block text-[9px] font-bold ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{item.status}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            /* STANDARD GROSS PERFORMANCE (FOR VENUES / EVENT BOX OFFICES) */
+                                            <div className={`lg:col-span-2 ${isLight ? 'bg-white border-slate-200 text-slate-900 shadow-xl' : 'bg-dark-900 border-main text-white shadow-2xl'} border rounded-[3rem] p-6 md:p-10 space-y-8 relative overflow-hidden`}>
+                                                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:20px_20px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_100%)] opacity-30"></div>
+                                                <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center relative z-10">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-12 h-12 bg-brand/10 border border-brand/20 rounded-xl flex items-center justify-center text-brand shadow-[0_0_15px_rgba(33,255,165,0.2)] shrink-0">
+                                                            <Activity size={24} />
+                                                        </div>
+                                                        <div>
+                                                            <h3 className={`text-2xl font-black italic uppercase tracking-tighter leading-none ${isLight ? 'text-slate-900' : 'text-white'}`}>Gross Performance</h3>
+                                                            <p className={`text-[9px] md:text-[11px] lg:text-xs font-bold uppercase tracking-[0.2em] mt-1 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Real-time Revenue Telemetry</p>
+                                                        </div>
+                                                    </div>
+                                                    <select className={`border rounded-xl px-4 py-2 text-[10px] md:text-xs lg:text-sm font-black uppercase outline-none cursor-pointer transition-all w-full sm:w-auto ${isLight ? 'bg-slate-100 border-slate-300 text-slate-800' : 'bg-btn-sec border-main text-white'}`}>
+                                                        <option>Last 30 Days</option>
+                                                        <option>Last 7 Days</option>
+                                                        <option>Year to Date</option>
+                                                    </select>
+                                                </div>
+                                                
+                                                <div className={`grid grid-cols-2 lg:grid-cols-4 gap-4 relative z-10 border-b pb-8 ${isLight ? 'border-slate-200' : 'border-white/5'}`}>
+                                                    <div className={`p-4 rounded-2xl border flex flex-col justify-between ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/40 border-main'}`}>
+                                                        <p className={`text-[7px] font-black uppercase tracking-[0.1em] mb-2 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Primary Sales</p>
+                                                        <p className={`text-xl font-black italic ${isLight ? 'text-slate-900' : 'text-white'}`}>€{financialsSummary.primarySales.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                                        <div className="mt-3 h-1 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-blue-400" style={{ width: financialsSummary.primarySales > 0 ? '65%' : '0%' }}></div></div>
+                                                    </div>
+                                                    <div className={`p-4 rounded-2xl border flex flex-col justify-between ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/40 border-main'}`}>
+                                                        <p className={`text-[7px] font-black uppercase tracking-[0.1em] mb-2 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Premium / VIP</p>
+                                                        <p className={`text-xl font-black italic ${isLight ? 'text-slate-900' : 'text-white'}`}>€{financialsSummary.premiumSales.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                                        <div className="mt-3 h-1 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-purple-400" style={{ width: financialsSummary.premiumSales > 0 ? '80%' : '0%' }}></div></div>
+                                                    </div>
+                                                    <div className={`p-4 rounded-2xl border flex flex-col justify-between ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/40 border-main'}`}>
+                                                        <p className={`text-[7px] font-black uppercase tracking-[0.1em] mb-2 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Ancillary / F&B</p>
+                                                        <p className={`text-xl font-black italic ${isLight ? 'text-slate-900' : 'text-white'}`}>€{financialsSummary.ancillarySales.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                                        <div className="mt-3 h-1 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-emerald-400" style={{ width: financialsSummary.ancillarySales > 0 ? '40%' : '0%' }}></div></div>
+                                                    </div>
+                                                    <div className={`p-4 rounded-2xl border flex flex-col justify-between ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/40 border-main'}`}>
+                                                        <p className={`text-[7px] font-black uppercase tracking-[0.1em] mb-2 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Tx Volume</p>
+                                                        <p className={`text-xl font-black italic ${isLight ? 'text-slate-900' : 'text-white'}`}>{financialsSummary.txVolume.toLocaleString('de-DE')}</p>
+                                                        <div className="mt-3 h-1 w-full bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-brand" style={{ width: financialsSummary.txVolume > 0 ? '100%' : '0%' }}></div></div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="h-48 flex items-end justify-between gap-3 px-2 relative z-10 pt-4">
+                                                    {[
+                                                        { h: 35, v: 4200, l: 'Mon' }, 
+                                                        { h: 45, v: 5400, l: 'Tue' }, 
+                                                        { h: 40, v: 4800, l: 'Wed' }, 
+                                                        { h: 65, v: 7800, l: 'Thu' }, 
+                                                        { h: 85, v: 10200, l: 'Fri' }, 
+                                                        { h: 95, v: 11400, l: 'Sat' }, 
+                                                        { h: 55, v: 6600, l: 'Sun' }
+                                                    ].map((bar, i) => (
+                                                        <div key={i} className="flex flex-col items-center gap-3 w-full h-full justify-end group">
+                                                            <div className={`opacity-0 group-hover:opacity-100 transition-opacity text-[10px] md:text-xs font-black px-2 py-1 rounded mb-1 whitespace-nowrap ${isLight ? 'bg-slate-900 text-white' : 'bg-dark-900 text-white border border-brand/30'}`}>
+                                                                €{bar.v.toLocaleString()}
+                                                            </div>
+                                                            <motion.div 
+                                                                initial={{ height: 0 }}
+                                                                animate={{ height: `${bar.h}%` }}
+                                                                className="w-full bg-btn-sec border border-main rounded-t-lg relative overflow-hidden group-hover:border-brand/50 group-hover:bg-brand/10 transition-all"
+                                                            >
+                                                                <div className="absolute bottom-0 w-full bg-brand/40 h-1" />
+                                                                <div className="absolute inset-0 bg-gradient-to-t from-brand/20 to-transparent opacity-0 group-hover:opacity-100" />
+                                                            </motion.div>
+                                                            <span className={`text-[8px] md:text-[10px] lg:text-xs font-black uppercase ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>{bar.l}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 relative z-10 border-t ${isLight ? 'border-slate-200' : 'border-white/5'}`}>
+                                                    <div className={`p-6 rounded-[2rem] border flex flex-col justify-center items-center ${isLight ? 'bg-slate-50 border-slate-200' : 'bg-black/40 border-main'}`}>
+                                                        <p className={`text-[8px] md:text-[10px] lg:text-xs font-black uppercase tracking-[0.2em] mb-2 ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Gross Invoiced</p>
+                                                        <p className={`text-2xl font-black italic ${isLight ? 'text-slate-900' : 'text-white'}`}>€{commissionData.gross.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                                    </div>
+                                                    <div className={`p-6 rounded-[2rem] border flex flex-col justify-center items-center ${commissionData.isFree ? "bg-brand/5 border-brand/20" : "bg-red-500/5 border-red-500/10"}`}>
+                                                        <p className={`text-[8px] md:text-[10px] lg:text-xs font-black uppercase tracking-[0.2em] mb-2 ${commissionData.isFree ? "text-brand" : "text-red-500/70"}`}>{commissionData.rateLabel}</p>
+                                                        <p className={`text-2xl font-black italic ${commissionData.isFree ? "text-brand" : "text-red-400"}`}>-€{commissionData.commission.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                                    </div>
+                                                    <div className="p-6 bg-brand/10 rounded-[2rem] border border-brand/30 flex flex-col justify-center items-center relative overflow-hidden">
+                                                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(33,255,165,0.15)_0%,transparent_70%)]" />
+                                                        <p className="text-[8px] md:text-[10px] lg:text-xs font-black text-brand uppercase tracking-[0.2em] mb-2 relative z-10">Settlement Amount</p>
+                                                        <p className="text-2xl font-black italic text-brand relative z-10">€{commissionData.settlement.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                         <div className="space-y-8">
+                                        )}                                         <div className="space-y-8">
                                              {/* SETTLEMENT & BUSINESS CREDENTIALS CARD */}
                                              {(managerContext === 'FM' || managerContext === 'RM' || managerContext === 'HM' || managerContext === 'CM' || managerContext === 'BM' || managerContext === 'SM' || managerContext === 'VM') && (
                                                  <div className="bg-glass border border-main rounded-[3rem] p-6 md:p-10 space-y-6 relative overflow-hidden shadow-2xl">
@@ -4523,7 +6654,7 @@ const ManagerDashboard = () => {
                                                 <div className="w-10 h-10 bg-brand/10 rounded-xl flex items-center justify-center text-brand"><Activity size={24} /></div>
                                                 <h1 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-primary">Marketing <span className="text-brand">Hub</span></h1>
                                             </div>
-                                            <p className="text-secondary text-xs md:text-sm lg:text-base font-bold uppercase tracking-widest leading-none">Broadcast 15s 4K Reels to the Green Network</p>
+                                            <p className="text-secondary text-xs md:text-sm lg:text-base font-bold uppercase tracking-widest leading-none">Broadcast 15s 4K Reels to the Grien Network</p>
                                         </div>
                                         <div className="flex gap-4 w-full md:w-auto">
                                             <div className="flex-1 md:flex-initial px-4 md:px-6 py-3 bg-btn-sec border border-main rounded-xl text-right">
@@ -5932,7 +8063,7 @@ const ManagerDashboard = () => {
                                             onClick={() => setView('onboarding')}
                                             className="w-full md:w-auto px-8 py-4 bg-brand text-dark-900 rounded-[2rem] text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-widest shadow-xl shadow-brand/20 text-center flex items-center justify-center gap-2"
                                         >
-                                            <PlusCircle size={16} /> Onboard via Green ID
+                                            <PlusCircle size={16} /> Onboard via Grien ID
                                         </button>
                                     </div>
                                     
@@ -5980,7 +8111,7 @@ const ManagerDashboard = () => {
                                             <PlusCircle size={40} />
                                         </div>
                                         <h1 className="text-4xl font-black italic uppercase tracking-tighter leading-none">Staff <span className="text-primary">Onboarding</span></h1>
-                                        <p className="text-secondary text-xs md:text-sm lg:text-base font-bold uppercase tracking-[0.3em] leading-none">Search Personnel by Green ID</p>
+                                        <p className="text-secondary text-xs md:text-sm lg:text-base font-bold uppercase tracking-[0.3em] leading-none">Search Personnel by Grien ID</p>
                                     </div>
 
                                     {/* --- BULK INVITE LINK --- */}
@@ -6020,8 +8151,8 @@ const ManagerDashboard = () => {
                                                 <ShieldCheck size={22} />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-black italic uppercase text-primary">Onboard via Green ID</p>
-                                                <p className="text-[9px] md:text-[11px] lg:text-xs font-bold text-secondary uppercase tracking-widest">Enter the Green ID of the registered staff or driver</p>
+                                                <p className="text-sm font-black italic uppercase text-primary">Onboard via Grien ID</p>
+                                                <p className="text-[9px] md:text-[11px] lg:text-xs font-bold text-secondary uppercase tracking-widest">Enter the Grien ID of the registered staff or driver</p>
                                             </div>
                                         </div>
 
@@ -6029,7 +8160,7 @@ const ManagerDashboard = () => {
                                             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-secondary" size={20} />
                                             <input 
                                                 type="text" 
-                                                placeholder="Enter Green ID (e.g. GRN-AB3X-Y7KP)" 
+                                                placeholder="Enter Grien ID (e.g. GRN-AB3X-Y7KP)" 
                                                 value={staffSearchId}
                                                 onChange={(e) => setStaffSearchId(e.target.value)}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleSearchByGreenId()}
@@ -6050,8 +8181,8 @@ const ManagerDashboard = () => {
                                                     <X size={14} className="text-red-400" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] md:text-xs lg:text-sm font-black text-red-400 uppercase tracking-widest">Green ID Not Found</p>
-                                                    <p className="text-[9px] md:text-[11px] lg:text-xs text-secondary font-bold mt-0.5">No registered staff or driver matches this ID. Ask them to check their Green ID on the pending page.</p>
+                                                    <p className="text-[10px] md:text-xs lg:text-sm font-black text-red-400 uppercase tracking-widest">Grien ID Not Found</p>
+                                                    <p className="text-[9px] md:text-[11px] lg:text-xs text-secondary font-bold mt-0.5">No registered staff or driver matches this ID. Ask them to check their Grien ID on the pending page.</p>
                                                 </div>
                                             </motion.div>
                                         )}
@@ -6071,7 +8202,7 @@ const ManagerDashboard = () => {
                                                             {foundStaff.email && <p className="text-[9px] md:text-[11px] lg:text-xs text-secondary font-bold mt-0.5 truncate">{foundStaff.email}</p>}
                                                         </div>
                                                         <div className="shrink-0 text-right">
-                                                            <p className="text-[7px] font-black text-brand/60 uppercase tracking-widest mb-1">Green ID</p>
+                                                            <p className="text-[7px] font-black text-brand/60 uppercase tracking-widest mb-1">Grien ID</p>
                                                             <span className="px-3 py-1.5 bg-brand/10 text-brand rounded-xl text-[9px] md:text-[11px] lg:text-xs font-black font-mono tracking-widest border border-brand/20">{foundStaff.greenId}</span>
                                                         </div>
                                                     </div>
@@ -7054,7 +9185,7 @@ const ManagerDashboard = () => {
                                                     {managerContext === 'HM' ? 'Hotel Guest' : 'Venue Guest'}
                                                 </span>
                                             </div>
-                                            <p className="text-xs md:text-sm lg:text-base font-bold text-secondary uppercase tracking-widest opacity-60">Verified Green Network Member</p>
+                                            <p className="text-xs md:text-sm lg:text-base font-bold text-secondary uppercase tracking-widest opacity-60">Verified Grien Network Member</p>
                                         </div>
                                     </div>
 
@@ -7599,19 +9730,20 @@ const ManagerDashboard = () => {
                                         alert("Bitte Name und E-Mail des Fahrers eingeben.");
                                         return;
                                     }
+                                    const generatedCode = `DRV-${Math.floor(1000 + Math.random() * 9000)}-FM`;
                                     const created = {
                                         id: `drv_${Date.now()}`,
                                         ...newDriverForm,
                                         status: 'Wartend auf Admin-Freigabe',
                                         approvalStatus: 'Pending Admin Verification',
-                                        accessCode: null,
+                                        accessCode: generatedCode,
                                         rating: 5.0,
                                         tripsCompleted: 0
                                     };
                                     setDriversList([...driversList, created]);
                                     setIsAddDriverOpen(false);
                                     setNewDriverForm({ name: '', phone: '', email: '', licenseNumber: '', vehicleAssigned: 'Kein Fahrzeug', status: 'Wartend auf Admin-Freigabe', approvalStatus: 'Pending Admin Verification', accessCode: null, photoUrl: '', pScheinDoc: null, fuehrerscheinDoc: null, ausweisDoc: null });
-                                    alert(`⏳ Fahrer "${created.name}" wurde eingereicht!\nStatus: Wartend auf Admin-Freigabe.`);
+                                    alert(`✅ Fahrer "${created.name}" wurde angelegt!\n🔑 Flotten-Manager Code für Fahrer: ${generatedCode}\n(Diesen Code kann dein Fahrer bei der Registrierung eingeben, um sich exklusiv mit deinem Dashboard zu verbinden.)`);
                                 }} className="px-8 py-3 bg-cyan-400 text-dark-950 font-black uppercase tracking-wider text-xs rounded-xl shadow-lg hover:bg-cyan-300 hover:scale-105 transition-all cursor-pointer">
                                     Fahrer Anmelden
                                 </button>
@@ -7777,6 +9909,1525 @@ const ManagerDashboard = () => {
                                 }} className="px-8 py-3 bg-cyan-400 text-dark-950 font-black uppercase tracking-wider text-xs rounded-xl shadow-lg hover:bg-cyan-300 hover:scale-105 transition-all cursor-pointer">
                                     Auto Anmelden
                                 </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+
+            {/* DRIVER CASH BREAKDOWN BOTTOM SHEET */}
+            <AnimatePresence>
+                {isDriverCashSheetOpen && (
+                    <div className="fixed inset-0 z-50 flex items-end justify-center">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsDriverCashSheetOpen(false)}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+                        />
+
+                        {/* Bottom Sheet Container */}
+                        <motion.div
+                            initial={{ y: '100%' }}
+                            animate={{ y: 0 }}
+                            exit={{ y: '100%' }}
+                            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+                            className={`relative z-10 w-full max-w-4xl max-h-[85vh] rounded-t-[2.5rem] md:rounded-t-[3rem] p-6 md:p-8 flex flex-col shadow-2xl border-t border-x overflow-hidden ${
+                                isLight 
+                                    ? 'bg-white border-slate-200 text-slate-900' 
+                                    : 'bg-dark-900 border-white/10 text-white'
+                            }`}
+                        >
+                            {/* Drag Handle Indicator */}
+                            <div className="w-14 h-1.5 rounded-full mx-auto mb-4 bg-slate-300 dark:bg-white/20"></div>
+
+                            {/* Header */}
+                            <div className="flex items-center justify-between pb-4 border-b" style={{ borderColor: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)' }}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-black shrink-0 border border-emerald-500/20">
+                                        <Banknote size={24} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className={`text-lg md:text-xl font-black uppercase tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                Bargeldbestand Fahrer
+                                            </h3>
+                                            <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'}`}>
+                                                {activeWeekMetrics.label}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <div className={`hidden sm:flex flex-col text-right px-4 py-1.5 rounded-xl border ${isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
+                                        <span className="text-[9px] uppercase font-black opacity-75">Gesamt bei Fahrern</span>
+                                        <span className="text-base font-black italic">€{activeWeekMetrics.grossCash.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsDriverCashSheetOpen(false)}
+                                        className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${isLight ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-white/5 hover:bg-white/10 text-white'}`}
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Scrollable Driver Cards Area */}
+                            <div className="overflow-y-auto py-4 space-y-3.5 pr-1 max-h-[58vh]">
+                                {activeWeekMetrics.isFuture ? (
+                                    <div className={`p-10 rounded-3xl border text-center ${isLight ? 'bg-slate-50 border-slate-200 text-slate-500' : 'bg-black/30 border-white/5 text-slate-400'}`}>
+                                        <Banknote size={40} className="mx-auto mb-3 text-emerald-500/60" />
+                                        <h4 className={`text-base font-black uppercase tracking-wider ${isLight ? 'text-slate-800' : 'text-slate-200'}`}>
+                                            Zukünftige Kalenderwoche ({activeWeekMetrics.label})
+                                        </h4>
+                                        <p className="text-xs opacity-75 mt-1 max-w-md mx-auto">
+                                            In diesem Zeitraum liegen noch keine Fahrten vor. Die Kassenstände aller Fahrer stehen bei 0,00 €.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    [
+                                        {
+                                            id: 'drv_1',
+                                            name: 'Sami Rahimi',
+                                            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&fit=crop',
+                                            vehicle: 'Tesla Model S Plaid',
+                                            plate: 'F-GR 777E',
+                                            cashTrips: fleetPeriod === 'KW41' ? 14 : Math.round(14 * (activeWeekMetrics.tripsCash / 34)),
+                                            cashAmount: fleetPeriod === 'KW41' ? 490.00 : Math.round(490.00 * (activeWeekMetrics.grossCash / 1240.00)),
+                                            commissionAmount: fleetPeriod === 'KW41' ? 73.50 : Math.round(490.00 * (activeWeekMetrics.grossCash / 1240.00) * 0.15),
+                                            netCash: fleetPeriod === 'KW41' ? 416.50 : Math.round(490.00 * (activeWeekMetrics.grossCash / 1240.00) * 0.85),
+                                            status: '💵 Im Fahrzeug',
+                                            statusBadge: 'emerald',
+                                            shift: activeWeekMetrics.isCurrent ? 'Schichtende heute 18:00 Uhr • Letzte Fahrt: Vor 35 Min (€32,00)' : 'Schicht beendet • Wochenabrechnung archiviert'
+                                        },
+                                        {
+                                            id: 'drv_2',
+                                            name: 'Darius Meier',
+                                            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&fit=crop',
+                                            vehicle: 'Mercedes-Benz EQS 450+',
+                                            plate: 'F-GR 888E',
+                                            cashTrips: fleetPeriod === 'KW41' ? 12 : Math.round(12 * (activeWeekMetrics.tripsCash / 34)),
+                                            cashAmount: fleetPeriod === 'KW41' ? 430.00 : Math.round(430.00 * (activeWeekMetrics.grossCash / 1240.00)),
+                                            commissionAmount: fleetPeriod === 'KW41' ? 64.50 : Math.round(430.00 * (activeWeekMetrics.grossCash / 1240.00) * 0.15),
+                                            netCash: fleetPeriod === 'KW41' ? 365.50 : Math.round(430.00 * (activeWeekMetrics.grossCash / 1240.00) * 0.85),
+                                            status: '💵 Im Fahrzeug',
+                                            statusBadge: 'emerald',
+                                            shift: activeWeekMetrics.isCurrent ? 'Schichtende heute 22:00 Uhr • Letzte Fahrt: Gestern, 16:15 (€26,00)' : 'Schicht beendet • Wochenabrechnung archiviert'
+                                        },
+                                        {
+                                            id: 'drv_3',
+                                            name: 'Elena Rostova',
+                                            avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&fit=crop',
+                                            vehicle: 'Porsche Taycan 4S',
+                                            plate: 'F-GR 999E',
+                                            cashTrips: fleetPeriod === 'KW41' ? 8 : Math.max(0, activeWeekMetrics.tripsCash - Math.round(14 * (activeWeekMetrics.tripsCash / 34)) - Math.round(12 * (activeWeekMetrics.tripsCash / 34))),
+                                            cashAmount: fleetPeriod === 'KW41' ? 320.00 : Math.max(0, activeWeekMetrics.grossCash - Math.round(490.00 * (activeWeekMetrics.grossCash / 1240.00)) - Math.round(430.00 * (activeWeekMetrics.grossCash / 1240.00))),
+                                            commissionAmount: fleetPeriod === 'KW41' ? 48.00 : Math.round(320.00 * 0.15),
+                                            netCash: fleetPeriod === 'KW41' ? 272.00 : Math.round(320.00 * 0.85),
+                                            status: '✅ In Firmenkasse übergeben',
+                                            statusBadge: 'emerald',
+                                            shift: 'Schicht beendet & quittiert • Übergeben an Manager'
+                                        }
+                                    ].map((driver) => (
+                                        <div
+                                            key={driver.id}
+                                            className={`p-4 md:p-5 rounded-2xl border transition-all ${
+                                                isLight 
+                                                    ? 'bg-slate-50 border-slate-200/90 hover:bg-white hover:border-slate-300 shadow-sm' 
+                                                    : 'bg-black/30 border-white/5 hover:border-white/10'
+                                            }`}
+                                        >
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                {/* Driver Info */}
+                                                <div className="flex items-center gap-3">
+                                                    <img
+                                                        src={driver.avatar}
+                                                        alt={driver.name}
+                                                        className="w-12 h-12 rounded-2xl object-cover border border-brand/30 shadow-md shrink-0"
+                                                    />
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <h4 className={`text-sm md:text-base font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                                {driver.name}
+                                                            </h4>
+                                                            <span className={`text-[10px] font-black font-mono px-2 py-0.5 rounded-md border ${
+                                                                isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-dark-900 border-white/10 text-cyan-400'
+                                                            }`}>
+                                                                {driver.plate}
+                                                            </span>
+                                                        </div>
+                                                        <div className={`text-xs font-semibold ${isLight ? 'text-slate-500' : 'text-slate-400'} mt-0.5`}>
+                                                            {driver.vehicle} • <strong className={isLight ? 'text-slate-700' : 'text-slate-300'}>{driver.cashTrips} Barfahrten</strong>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Cash Amounts */}
+                                                <div className="flex items-center gap-3 self-end sm:self-center">
+                                                    <div className="text-right">
+                                                        <span className={`text-[9px] font-black uppercase tracking-wider block ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                                                            Kassiertes Bargeld
+                                                        </span>
+                                                        <span className="text-xl md:text-2xl font-black italic text-emerald-500">
+                                                            €{driver.cashAmount.toFixed(2).replace('.', ',')}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Status Bar & Shift Details */}
+                                            <div className={`mt-3 pt-3 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] ${
+                                                isLight ? 'border-slate-200 text-slate-600' : 'border-white/5 text-slate-400'
+                                            }`}>
+                                                <div className="flex items-center gap-1.5">
+                                                    <Clock size={12} className="shrink-0 text-slate-400" />
+                                                    <span>{driver.shift}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* Sheet Bottom Footer */}
+                            <div className={`pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 ${
+                                isLight ? 'border-slate-200' : 'border-white/5'
+                            }`}>
+                                <div className="text-xs font-bold text-slate-500">
+                                    Insgesamt <strong className={isLight ? 'text-slate-900' : 'text-white'}>{activeWeekMetrics.tripsCash} Barfahrten</strong> erfasst
+                                </div>
+                                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            alert(`📄 Kassen- und Fahrer-Bargeldbeleg (${activeWeekMetrics.label}) als PDF generiert!`);
+                                        }}
+                                        className={`px-4 py-2.5 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto ${
+                                            isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                                        }`}
+                                    >
+                                        <FileText size={14} />
+                                        Quittung PDF
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsDriverCashSheetOpen(false)}
+                                        className="px-6 py-2.5 bg-brand text-dark-950 font-black uppercase tracking-wider text-xs rounded-xl shadow-lg hover:scale-105 transition-all w-full sm:w-auto text-center"
+                                    >
+                                        Fertig
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* B2B STADION TICKET-UMSATZ BOTTOM SHEET */}
+            <AnimatePresence>
+                {isTicketRevenueModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-end justify-center">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsTicketRevenueModalOpen(false)}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+                        />
+
+                        {/* Bottom Sheet Container */}
+                        <motion.div
+                            initial={{ y: '100%' }}
+                            animate={{ y: 0 }}
+                            exit={{ y: '100%' }}
+                            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+                            className={`relative z-10 w-full max-w-5xl max-h-[88vh] rounded-t-[2.5rem] md:rounded-t-[3rem] p-6 md:p-8 flex flex-col shadow-2xl border-t border-x overflow-hidden ${
+                                isLight 
+                                    ? 'bg-white border-slate-200 text-slate-900' 
+                                    : 'bg-dark-900 border-white/10 text-white'
+                            }`}
+                        >
+                            {/* Drag Handle Indicator */}
+                            <div className="w-14 h-1.5 rounded-full mx-auto mb-4 bg-slate-300 dark:bg-white/20"></div>
+
+                            {/* Header */}
+                            <div className="flex items-center justify-between pb-4 border-b shrink-0" style={{ borderColor: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)' }}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-black shrink-0 border border-cyan-500/20">
+                                        <Ticket size={24} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className={`text-lg md:text-xl font-black uppercase tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                {selectedTicketCategory ? selectedTicketCategory : 'Stadion Ticket-Umsatz Aufschlüsselung'}
+                                            </h3>
+                                            <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                                                isLight ? 'bg-cyan-50 text-cyan-800 border-cyan-200' : 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
+                                            }`}>
+                                                {selectedTicketCategory ? 'Kategorie-Details' : 'Alle Kategorien'}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                                            {selectedTicketCategory 
+                                                ? 'Einzeltickets aufgeschlüsselt nach Verkauft, Reserviert und Storniert' 
+                                                : 'Gesamte Ticket-Verkäufe, Reservierungen & Stornierungen im Überblick'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    {selectedTicketCategory && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedTicketCategory(null)}
+                                            className={`px-3 py-1.5 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 ${
+                                                isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700' : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-300'
+                                            }`}
+                                        >
+                                            <ArrowLeft size={14} />
+                                            Zurück
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsTicketRevenueModalOpen(false)}
+                                        className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all ${
+                                            isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                                        }`}
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* KPI Metrics Summary */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4 shrink-0">
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-emerald-50/80 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/20'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-500">🟢 Verkauft</span>
+                                        <span className="text-[10px] font-bold text-emerald-600">
+                                            €{selectedTicketCategory 
+                                                ? stadiumTicketData.filter(t => t.category === selectedTicketCategory && t.status === 'sold').reduce((sum, t) => sum + t.price, 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })
+                                                : totalTicketStats.soldRev.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div className="text-xl font-black italic text-emerald-500 mt-1">
+                                        {selectedTicketCategory 
+                                            ? stadiumTicketData.filter(t => t.category === selectedTicketCategory && t.status === 'sold').length
+                                            : totalTicketStats.sold} <span className="text-xs font-bold font-sans not-italic">Tickets</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-amber-50/80 border-amber-200' : 'bg-amber-500/10 border-amber-500/20'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-500">🟡 Reserviert</span>
+                                        <span className="text-[10px] font-bold text-amber-600">
+                                            €{selectedTicketCategory 
+                                                ? stadiumTicketData.filter(t => t.category === selectedTicketCategory && t.status === 'reserved').reduce((sum, t) => sum + t.price, 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })
+                                                : totalTicketStats.reservedRev.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div className="text-xl font-black italic text-amber-500 mt-1">
+                                        {selectedTicketCategory 
+                                            ? stadiumTicketData.filter(t => t.category === selectedTicketCategory && t.status === 'reserved').length
+                                            : totalTicketStats.reserved} <span className="text-xs font-bold font-sans not-italic">Tickets</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-rose-50/80 border-rose-200' : 'bg-rose-500/10 border-rose-500/20'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-rose-500">🔴 Storniert</span>
+                                        <span className="text-[10px] font-bold text-rose-600">
+                                            €{selectedTicketCategory 
+                                                ? stadiumTicketData.filter(t => t.category === selectedTicketCategory && t.status === 'cancelled').reduce((sum, t) => sum + t.price, 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })
+                                                : totalTicketStats.cancelledRev.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div className="text-xl font-black italic text-rose-500 mt-1">
+                                        {selectedTicketCategory 
+                                            ? stadiumTicketData.filter(t => t.category === selectedTicketCategory && t.status === 'cancelled').length
+                                            : totalTicketStats.cancelled} <span className="text-xs font-bold font-sans not-italic">Tickets</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">🎫 Gesamt</span>
+                                        <span className="text-[10px] font-bold text-cyan-400">Brutto</span>
+                                    </div>
+                                    <div className={`text-xl font-black italic mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                        {selectedTicketCategory 
+                                            ? stadiumTicketData.filter(t => t.category === selectedTicketCategory).length
+                                            : totalTicketStats.total} <span className="text-xs font-bold font-sans not-italic">Tickets</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* MAIN BODY: VIEW 1 (CATEGORIES) VS VIEW 2 (TICKETS DRILL-DOWN) */}
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-1 pb-4 custom-scrollbar">
+                                {!selectedTicketCategory ? (
+                                    /* VIEW 1: CATEGORY OVERVIEW LIST */
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between px-1">
+                                            <span className={`text-xs font-black uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                                                Kategorien auswählen für Detail-Ansicht
+                                            </span>
+                                            <span className="text-[10px] text-slate-500 font-bold">
+                                                {ticketCategorySummary.length} Kategorien gelistet
+                                            </span>
+                                        </div>
+
+                                        {ticketCategorySummary.map((cat) => (
+                                            <div
+                                                key={cat.name}
+                                                onClick={() => {
+                                                    setSelectedTicketCategory(cat.name);
+                                                    setTicketStatusFilter('all');
+                                                }}
+                                                className={`p-4 md:p-5 rounded-2xl border cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] group ${
+                                                    isLight
+                                                        ? 'bg-slate-50 hover:bg-cyan-50/40 border-slate-200 hover:border-cyan-300 shadow-sm'
+                                                        : 'bg-black/30 hover:bg-cyan-950/20 border-white/5 hover:border-cyan-500/40'
+                                                }`}
+                                            >
+                                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                                    <div className="flex items-center gap-3.5">
+                                                        <div className="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-black shrink-0 group-hover:scale-110 transition-transform">
+                                                            <Target size={20} />
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <h4 className={`text-base font-black ${isLight ? 'text-slate-900' : 'text-white'} group-hover:text-cyan-400 transition-colors`}>
+                                                                    {cat.name}
+                                                                </h4>
+                                                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
+                                                                    isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-dark-900 border-white/10 text-slate-300'
+                                                                }`}>
+                                                                    {cat.total} Tickets
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xs text-slate-400 font-medium mt-0.5">
+                                                                Klicken, um verkaufte, stornierte & reservierte Einzeltickets einzusehen
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 flex-wrap self-end md:self-center">
+                                                        <span className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                                            🟢 {cat.sold} Verkauft (€{cat.soldRevenue.toLocaleString('de-DE', { minimumFractionDigits: 2 })})
+                                                        </span>
+                                                        <span className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                                            🟡 {cat.reserved} Reserviert
+                                                        </span>
+                                                        {cat.cancelled > 0 && (
+                                                            <span className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                                                🔴 {cat.cancelled} Storno
+                                                            </span>
+                                                        )}
+                                                        {cat.shuttlePax > 0 && (
+                                                            <span className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-1">
+                                                                <Bus size={12} /> {cat.shuttlePax} Shuttle-Gäste
+                                                            </span>
+                                                        )}
+                                                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all ml-1">
+                                                            <ChevronRight size={18} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    /* VIEW 2: DRILL-DOWN TICKETS IN SELECTED CATEGORY */
+                                    <div className="space-y-3">
+                                        {/* Status Filter Tabs */}
+                                        <div className="flex items-center justify-between flex-wrap gap-2 pb-1">
+                                            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/20 border border-white/5">
+                                                {[
+                                                    { id: 'all', label: 'Alle Status' },
+                                                    { id: 'sold', label: '🟢 Verkauft' },
+                                                    { id: 'reserved', label: '🟡 Reserviert' },
+                                                    { id: 'cancelled', label: '🔴 Storniert' }
+                                                ].map(tab => (
+                                                    <button
+                                                        key={tab.id}
+                                                        type="button"
+                                                        onClick={() => setTicketStatusFilter(tab.id)}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                                                            ticketStatusFilter === tab.id
+                                                                ? 'bg-cyan-500 text-black shadow-md'
+                                                                : isLight
+                                                                    ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                                                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                                        }`}
+                                                    >
+                                                        {tab.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            <span className="text-xs font-bold text-slate-400">
+                                                Zeigt {stadiumTicketData.filter(t => t.category === selectedTicketCategory && (ticketStatusFilter === 'all' || t.status === ticketStatusFilter)).length} Tickets
+                                            </span>
+                                        </div>
+
+                                        {stadiumTicketData
+                                            .filter(t => t.category === selectedTicketCategory)
+                                            .filter(t => ticketStatusFilter === 'all' || t.status === ticketStatusFilter)
+                                            .map((ticket) => (
+                                                <div
+                                                    key={ticket.id}
+                                                    className={`p-4 rounded-2xl border transition-all ${
+                                                        isLight
+                                                            ? 'bg-slate-50 border-slate-200'
+                                                            : 'bg-black/30 border-white/5'
+                                                    }`}
+                                                >
+                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                                                                    {ticket.id}
+                                                                </span>
+                                                                <h5 className={`text-base font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                                    {ticket.name}
+                                                                </h5>
+                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                                                                    isLight ? 'bg-white border-slate-200 text-slate-600' : 'bg-dark-900 border-white/10 text-slate-300'
+                                                                }`}>
+                                                                    {ticket.ticketType}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-3 text-xs text-slate-400">
+                                                                <span>👤 Käufer: <strong className={isLight ? 'text-slate-700' : 'text-slate-200'}>{ticket.buyerName}</strong></span>
+                                                                <span>•</span>
+                                                                <span>✉️ {ticket.buyerEmail}</span>
+                                                                <span>•</span>
+                                                                <span>📅 {ticket.date}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-3 self-end sm:self-center">
+                                                            {ticket.hasShuttle ? (
+                                                                <span className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                                                                    <Bus size={13} /> Shuttle ({ticket.shuttlePax} Pax)
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[11px] font-bold px-2 py-1 rounded-lg bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                                                                    Ohne Shuttle
+                                                                </span>
+                                                            )}
+
+                                                            <div className="text-right min-w-[70px]">
+                                                                <span className={`text-base font-black italic block ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                                    €{ticket.price.toFixed(2).replace('.', ',')}
+                                                                </span>
+                                                            </div>
+
+                                                            <div>
+                                                                {ticket.status === 'sold' && (
+                                                                    <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                                                                        🟢 Verkauft
+                                                                    </span>
+                                                                )}
+                                                                {ticket.status === 'reserved' && (
+                                                                    <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 whitespace-nowrap">
+                                                                        🟡 Reserviert
+                                                                    </span>
+                                                                )}
+                                                                {ticket.status === 'cancelled' && (
+                                                                    <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30 whitespace-nowrap">
+                                                                        🔴 Storniert
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Sheet Bottom Footer */}
+                            <div className={`pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 ${
+                                isLight ? 'border-slate-200' : 'border-white/5'
+                            }`}>
+                                <div className="text-xs font-bold text-slate-500">
+                                    Insgesamt <strong className={isLight ? 'text-slate-900' : 'text-white'}>{totalTicketStats.total} Tickets</strong> in allen Kategorien erfasst
+                                </div>
+                                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                                    {selectedTicketCategory && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedTicketCategory(null)}
+                                            className={`px-4 py-2.5 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto ${
+                                                isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                                            }`}
+                                        >
+                                            <ArrowLeft size={14} />
+                                            Zurück zu Kategorien
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsTicketRevenueModalOpen(false)}
+                                        className="px-6 py-2.5 bg-brand text-dark-950 font-black uppercase tracking-wider text-xs rounded-xl shadow-lg hover:scale-105 transition-all w-full sm:w-auto text-center"
+                                    >
+                                        Fertig
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* B2B STADION SHUTTLE-SERVICE BOTTOM SHEET */}
+            <AnimatePresence>
+                {isShuttleServiceModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-end justify-center">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsShuttleServiceModalOpen(false)}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+                        />
+
+                        {/* Bottom Sheet Container */}
+                        <motion.div
+                            initial={{ y: '100%' }}
+                            animate={{ y: 0 }}
+                            exit={{ y: '100%' }}
+                            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+                            className={`relative z-10 w-full max-w-5xl max-h-[88vh] rounded-t-[2.5rem] md:rounded-t-[3rem] p-6 md:p-8 flex flex-col shadow-2xl border-t border-x overflow-hidden ${
+                                isLight 
+                                    ? 'bg-white border-slate-200 text-slate-900' 
+                                    : 'bg-dark-900 border-white/10 text-white'
+                            }`}
+                        >
+                            {/* Drag Handle Indicator */}
+                            <div className="w-14 h-1.5 rounded-full mx-auto mb-4 bg-slate-300 dark:bg-white/20"></div>
+
+                            {/* Header */}
+                            <div className="flex items-center justify-between pb-4 border-b shrink-0" style={{ borderColor: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)' }}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-black shrink-0 border border-amber-500/20">
+                                        <Bus size={24} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className={`text-lg md:text-xl font-black uppercase tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                Stadion Shuttle-Service Abrechnung
+                                            </h3>
+                                            <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                                                isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                                            }`}>
+                                                Green Mobility
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                                            Aufschlüsselung aller Shuttle-Transfers: Verkauft, Reserviert und Storno (@ €16,00 Staffeltarif)
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleDownloadShuttlePdf}
+                                        className="px-4 py-2 rounded-xl bg-amber-500 text-black font-black uppercase tracking-wider text-xs shadow-lg hover:bg-amber-400 transition-all flex items-center gap-1.5"
+                                        title="Shuttle-Service Abrechnung als PDF herunterladen"
+                                    >
+                                        <Download size={14} />
+                                        PDF herunterladen
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsShuttleServiceModalOpen(false)}
+                                        className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all ${
+                                            isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                                        }`}
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* KPI Metrics Summary */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4 shrink-0">
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-emerald-50/80 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/20'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-500">🟢 Verkauft</span>
+                                        <span className="text-[10px] font-bold text-emerald-600">
+                                            €{totalShuttleStats.soldTotal.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div className="text-xl font-black italic text-emerald-500 mt-1">
+                                        {totalShuttleStats.soldCount} Fahrten <span className="text-xs font-bold font-sans not-italic">({totalShuttleStats.soldPax} Pax)</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-amber-50/80 border-amber-200' : 'bg-amber-500/10 border-amber-500/20'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-500">🟡 Reserviert</span>
+                                        <span className="text-[10px] font-bold text-amber-600">
+                                            €{totalShuttleStats.reservedTotal.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div className="text-xl font-black italic text-amber-500 mt-1">
+                                        {totalShuttleStats.reservedCount} Fahrten <span className="text-xs font-bold font-sans not-italic">({totalShuttleStats.reservedPax} Pax)</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-rose-50/80 border-rose-200' : 'bg-rose-500/10 border-rose-500/20'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-rose-500">🔴 Storniert</span>
+                                        <span className="text-[10px] font-bold text-rose-600">
+                                            €{totalShuttleStats.cancelledTotal.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div className="text-xl font-black italic text-rose-500 mt-1">
+                                        {totalShuttleStats.cancelledCount} Fahrten <span className="text-xs font-bold font-sans not-italic">({totalShuttleStats.cancelledPax} Pax)</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">🚍 Transfers</span>
+                                        <span className="text-[10px] font-bold text-amber-400">Green Fleet</span>
+                                    </div>
+                                    <div className={`text-xl font-black italic mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                        {totalShuttleStats.totalTrips} Fahrten <span className="text-xs font-bold font-sans not-italic">gesamt</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Status Filter Tabs */}
+                            <div className="flex items-center justify-between flex-wrap gap-2 pb-2 shrink-0">
+                                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/20 border border-white/5">
+                                    {[
+                                        { id: 'all', label: `Alle (${totalShuttleStats.totalTrips})` },
+                                        { id: 'sold', label: `🟢 Verkauft (${totalShuttleStats.soldCount})` },
+                                        { id: 'reserved', label: `🟡 Reserviert (${totalShuttleStats.reservedCount})` },
+                                        { id: 'cancelled', label: `🔴 Storno (${totalShuttleStats.cancelledCount})` }
+                                    ].map(tab => (
+                                        <button
+                                            key={tab.id}
+                                            type="button"
+                                            onClick={() => setShuttleStatusFilter(tab.id)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                                                shuttleStatusFilter === tab.id
+                                                    ? 'bg-amber-400 text-black shadow-md'
+                                                    : isLight
+                                                        ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                            }`}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <span className="text-xs font-bold text-slate-400">
+                                    Zeigt {stadiumShuttleData.filter(s => shuttleStatusFilter === 'all' || s.status === shuttleStatusFilter).length} Shuttle-Buchungen
+                                </span>
+                            </div>
+
+                            {/* Shuttle Bookings List */}
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-1 pb-4 custom-scrollbar">
+                                {stadiumShuttleData
+                                    .filter(s => shuttleStatusFilter === 'all' || s.status === shuttleStatusFilter)
+                                    .map((shuttle) => (
+                                        <div
+                                            key={shuttle.id}
+                                            className={`p-4 md:p-5 rounded-2xl border transition-all ${
+                                                isLight
+                                                    ? 'bg-slate-50 border-slate-200 shadow-sm'
+                                                    : 'bg-black/30 border-white/5'
+                                            }`}
+                                        >
+                                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                                                <div className="space-y-1.5">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                                                            {shuttle.id}
+                                                        </span>
+                                                        <h5 className={`text-base font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                            {shuttle.guestName}
+                                                        </h5>
+                                                        <span className="text-xs text-slate-400 font-mono">
+                                                            {shuttle.guestPhone}
+                                                        </span>
+                                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${
+                                                            isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-dark-900 border-white/10 text-cyan-400'
+                                                        }`}>
+                                                            {shuttle.vehicleType}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Route details */}
+                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 text-xs">
+                                                        <div className="flex items-center gap-1.5 text-slate-400">
+                                                            <MapPin size={13} className="text-amber-400 shrink-0" />
+                                                            <span>Von: <strong className={isLight ? 'text-slate-700' : 'text-slate-200'}>{shuttle.pickup}</strong></span>
+                                                        </div>
+                                                        <span className="hidden sm:inline text-slate-500">→</span>
+                                                        <div className="flex items-center gap-1.5 text-slate-400">
+                                                            <MapPin size={13} className="text-emerald-400 shrink-0" />
+                                                            <span>Nach: <strong className={isLight ? 'text-slate-700' : 'text-slate-200'}>{shuttle.destination}</strong></span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-3 text-xs text-slate-400 pt-0.5">
+                                                        <span className="flex items-center gap-1">
+                                                            <Calendar size={12} /> {shuttle.date}
+                                                        </span>
+                                                        <span>•</span>
+                                                        <span className="flex items-center gap-1">
+                                                            <Clock size={12} /> {shuttle.time}
+                                                        </span>
+                                                        <span>•</span>
+                                                        <span className="font-bold text-slate-300">
+                                                            👥 {shuttle.pax} Passagiere • 🧳 {shuttle.bags} Gepäck
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-3 self-end lg:self-center">
+                                                    <div className="text-right">
+                                                        <span className={`text-[9px] font-black uppercase tracking-wider block ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                                                            €16,00 / Pax Staffeltarif
+                                                        </span>
+                                                        <span className="text-lg md:text-xl font-black italic text-amber-400">
+                                                            -€{shuttle.totalPrice.toFixed(2).replace('.', ',')}
+                                                        </span>
+                                                    </div>
+
+                                                    <div>
+                                                        {shuttle.status === 'sold' && (
+                                                            <span className="text-xs font-black px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap block">
+                                                                🟢 Verkauft
+                                                            </span>
+                                                        )}
+                                                        {shuttle.status === 'reserved' && (
+                                                            <span className="text-xs font-black px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 whitespace-nowrap block">
+                                                                🟡 Reserviert
+                                                            </span>
+                                                        )}
+                                                        {shuttle.status === 'cancelled' && (
+                                                            <span className="text-xs font-black px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 whitespace-nowrap block">
+                                                                🔴 Storniert
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                            </div>
+
+                            {/* Sheet Bottom Footer */}
+                            <div className={`pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 ${
+                                isLight ? 'border-slate-200' : 'border-white/5'
+                            }`}>
+                                <div className="text-xs font-bold text-slate-500">
+                                    Abrechnungspartner: <strong className={isLight ? 'text-slate-900' : 'text-white'}>Green Fleet Logistics & Mobility</strong>
+                                </div>
+                                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                                    <button
+                                        type="button"
+                                        onClick={handleDownloadShuttlePdf}
+                                        className="px-4 py-2.5 rounded-xl bg-amber-500 text-black font-black uppercase tracking-wider text-xs shadow-lg hover:bg-amber-400 transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto"
+                                    >
+                                        <Printer size={14} />
+                                        Als PDF herunterladen
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsShuttleServiceModalOpen(false)}
+                                        className="px-6 py-2.5 bg-brand text-dark-950 font-black uppercase tracking-wider text-xs rounded-xl shadow-lg hover:scale-105 transition-all w-full sm:w-auto text-center"
+                                    >
+                                        Fertig
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* B2B HOTEL ZIMMER-UMSATZ BOTTOM SHEET */}
+            <AnimatePresence>
+                {isHotelRevenueModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-end justify-center">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsHotelRevenueModalOpen(false)}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+                        />
+
+                        {/* Bottom Sheet Container */}
+                        <motion.div
+                            initial={{ y: '100%' }}
+                            animate={{ y: 0 }}
+                            exit={{ y: '100%' }}
+                            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+                            className={`relative z-10 w-full max-w-5xl max-h-[88vh] rounded-t-[2.5rem] md:rounded-t-[3rem] p-6 md:p-8 flex flex-col shadow-2xl border-t border-x overflow-hidden ${
+                                isLight 
+                                    ? 'bg-white border-slate-200 text-slate-900' 
+                                    : 'bg-dark-900 border-white/10 text-white'
+                            }`}
+                        >
+                            {/* Drag Handle Indicator */}
+                            <div className="w-14 h-1.5 rounded-full mx-auto mb-4 bg-slate-300 dark:bg-white/20"></div>
+
+                            {/* Header */}
+                            <div className="flex items-center justify-between pb-4 border-b shrink-0" style={{ borderColor: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)' }}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-black shrink-0 border border-cyan-500/20">
+                                        <BedDouble size={24} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className={`text-lg md:text-xl font-black uppercase tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                {selectedRoomCategory ? selectedRoomCategory : 'Hotel Zimmer-Umsatz Aufschlüsselung'}
+                                            </h3>
+                                            <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                                                isLight ? 'bg-cyan-50 text-cyan-800 border-cyan-200' : 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30'
+                                            }`}>
+                                                {selectedRoomCategory ? 'Kategorie-Details' : 'Alle Zimmer-Kategorien'}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                                            {selectedRoomCategory 
+                                                ? 'Einzelbuchungen aufgeschlüsselt nach Gebucht, Reserviert und Storniert' 
+                                                : 'Gesamte Zimmer-Buchungen, Reservierungen & Stornierungen im Überblick'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    {selectedRoomCategory && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedRoomCategory(null)}
+                                            className={`px-3 py-1.5 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1 ${
+                                                isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700' : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-300'
+                                            }`}
+                                        >
+                                            <ArrowLeft size={14} />
+                                            Zurück
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsHotelRevenueModalOpen(false)}
+                                        className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all ${
+                                            isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                                        }`}
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* KPI Metrics Summary */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4 shrink-0">
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-emerald-50/80 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/20'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-500">🟢 Gebucht</span>
+                                        <span className="text-[10px] font-bold text-emerald-600">
+                                            €{selectedRoomCategory 
+                                                ? hotelRoomData.filter(r => r.category === selectedRoomCategory && r.status === 'sold').reduce((sum, r) => sum + r.price, 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })
+                                                : totalRoomStats.soldRev.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div className="text-xl font-black italic text-emerald-500 mt-1">
+                                        {selectedRoomCategory 
+                                            ? hotelRoomData.filter(r => r.category === selectedRoomCategory && r.status === 'sold').length
+                                            : totalRoomStats.sold} <span className="text-xs font-bold font-sans not-italic">Zimmer</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-amber-50/80 border-amber-200' : 'bg-amber-500/10 border-amber-500/20'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-500">🟡 Reserviert</span>
+                                        <span className="text-[10px] font-bold text-amber-600">
+                                            €{selectedRoomCategory 
+                                                ? hotelRoomData.filter(r => r.category === selectedRoomCategory && r.status === 'reserved').reduce((sum, r) => sum + r.price, 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })
+                                                : totalRoomStats.reservedRev.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div className="text-xl font-black italic text-amber-500 mt-1">
+                                        {selectedRoomCategory 
+                                            ? hotelRoomData.filter(r => r.category === selectedRoomCategory && r.status === 'reserved').length
+                                            : totalRoomStats.reserved} <span className="text-xs font-bold font-sans not-italic">Zimmer</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-rose-50/80 border-rose-200' : 'bg-rose-500/10 border-rose-500/20'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-rose-500">🔴 Storniert</span>
+                                        <span className="text-[10px] font-bold text-rose-600">
+                                            €{selectedRoomCategory 
+                                                ? hotelRoomData.filter(r => r.category === selectedRoomCategory && r.status === 'cancelled').reduce((sum, r) => sum + r.price, 0).toLocaleString('de-DE', { minimumFractionDigits: 2 })
+                                                : totalRoomStats.cancelledRev.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div className="text-xl font-black italic text-rose-500 mt-1">
+                                        {selectedRoomCategory 
+                                            ? hotelRoomData.filter(r => r.category === selectedRoomCategory && r.status === 'cancelled').length
+                                            : totalRoomStats.cancelled} <span className="text-xs font-bold font-sans not-italic">Zimmer</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">🛏️ Gesamt</span>
+                                        <span className="text-[10px] font-bold text-cyan-400">Brutto</span>
+                                    </div>
+                                    <div className={`text-xl font-black italic mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                        {selectedRoomCategory 
+                                            ? hotelRoomData.filter(r => r.category === selectedRoomCategory).length
+                                            : totalRoomStats.total} <span className="text-xs font-bold font-sans not-italic">Zimmer</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* MAIN BODY: VIEW 1 (ROOM CATEGORIES) VS VIEW 2 (ROOMS DRILL-DOWN) */}
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-1 pb-4 custom-scrollbar">
+                                {!selectedRoomCategory ? (
+                                    /* VIEW 1: CATEGORY OVERVIEW LIST */
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between px-1">
+                                            <span className={`text-xs font-black uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                                                Kategorien auswählen für Detail-Ansicht
+                                            </span>
+                                            <span className="text-[10px] text-slate-500 font-bold">
+                                                {hotelCategorySummary.length} Zimmer-Kategorien gelistet
+                                            </span>
+                                        </div>
+
+                                        {hotelCategorySummary.map((cat) => (
+                                            <div
+                                                key={cat.name}
+                                                onClick={() => {
+                                                    setSelectedRoomCategory(cat.name);
+                                                    setRoomStatusFilter('all');
+                                                }}
+                                                className={`p-4 md:p-5 rounded-2xl border cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99] group ${
+                                                    isLight
+                                                        ? 'bg-slate-50 hover:bg-cyan-50/40 border-slate-200 hover:border-cyan-300 shadow-sm'
+                                                        : 'bg-black/30 hover:bg-cyan-950/20 border-white/5 hover:border-cyan-500/40'
+                                                }`}
+                                            >
+                                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                                    <div className="flex items-center gap-3.5">
+                                                        <div className="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center font-black shrink-0 group-hover:scale-110 transition-transform">
+                                                            <BedDouble size={20} />
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <h4 className={`text-base font-black ${isLight ? 'text-slate-900' : 'text-white'} group-hover:text-cyan-400 transition-colors`}>
+                                                                    {cat.name}
+                                                                </h4>
+                                                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${
+                                                                    isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-dark-900 border-white/10 text-slate-300'
+                                                                }`}>
+                                                                    {cat.total} Zimmer
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xs text-slate-400 font-medium mt-0.5">
+                                                                Klicken, um gebuchte, stornierte & reservierte Zimmer einzusehen
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2 flex-wrap self-end md:self-center">
+                                                        <span className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                                            🟢 {cat.sold} Gebucht (€{cat.soldRevenue.toLocaleString('de-DE', { minimumFractionDigits: 2 })})
+                                                        </span>
+                                                        <span className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                                            🟡 {cat.reserved} Reserviert
+                                                        </span>
+                                                        {cat.cancelled > 0 && (
+                                                            <span className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                                                🔴 {cat.cancelled} Storno
+                                                            </span>
+                                                        )}
+                                                        {cat.shuttlePax > 0 && (
+                                                            <span className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-1">
+                                                                <Bus size={12} /> {cat.shuttlePax} Shuttle-Gäste
+                                                            </span>
+                                                        )}
+                                                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all ml-1">
+                                                            <ChevronRight size={18} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    /* VIEW 2: DRILL-DOWN ROOMS IN SELECTED CATEGORY */
+                                    <div className="space-y-3">
+                                        {/* Status Filter Tabs */}
+                                        <div className="flex items-center justify-between flex-wrap gap-2 pb-1">
+                                            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/20 border border-white/5">
+                                                {[
+                                                    { id: 'all', label: 'Alle Status' },
+                                                    { id: 'sold', label: '🟢 Gebucht' },
+                                                    { id: 'reserved', label: '🟡 Reserviert' },
+                                                    { id: 'cancelled', label: '🔴 Storniert' }
+                                                ].map(tab => (
+                                                    <button
+                                                        key={tab.id}
+                                                        type="button"
+                                                        onClick={() => setRoomStatusFilter(tab.id)}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                                                            roomStatusFilter === tab.id
+                                                                ? 'bg-cyan-500 text-black shadow-md'
+                                                                : isLight
+                                                                    ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                                                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                                        }`}
+                                                    >
+                                                        {tab.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            <span className="text-xs font-bold text-slate-400">
+                                                Zeigt {hotelRoomData.filter(r => r.category === selectedRoomCategory && (roomStatusFilter === 'all' || r.status === roomStatusFilter)).length} Zimmer
+                                            </span>
+                                        </div>
+
+                                        {hotelRoomData
+                                            .filter(r => r.category === selectedRoomCategory)
+                                            .filter(r => roomStatusFilter === 'all' || r.status === roomStatusFilter)
+                                            .map((room) => (
+                                                <div
+                                                    key={room.id}
+                                                    className={`p-4 rounded-2xl border transition-all ${
+                                                        isLight
+                                                            ? 'bg-slate-50 border-slate-200'
+                                                            : 'bg-black/30 border-white/5'
+                                                    }`}
+                                                >
+                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                                                                    {room.id}
+                                                                </span>
+                                                                <h5 className={`text-base font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                                    {room.name}
+                                                                </h5>
+                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                                                                    isLight ? 'bg-white border-slate-200 text-slate-600' : 'bg-dark-900 border-white/10 text-slate-300'
+                                                                }`}>
+                                                                    {room.roomType}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center gap-3 text-xs text-slate-400">
+                                                                <span>👤 Gast: <strong className={isLight ? 'text-slate-700' : 'text-slate-200'}>{room.guestName}</strong></span>
+                                                                <span>•</span>
+                                                                <span>✉️ {room.guestEmail}</span>
+                                                                <span>•</span>
+                                                                <span>📅 Check-in: {room.checkIn} ({room.nights} {room.nights > 1 ? 'Nächte' : 'Nacht'})</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-3 self-end sm:self-center">
+                                                            {room.hasShuttle ? (
+                                                                <span className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                                                                    <Bus size={13} /> Shuttle ({room.shuttlePax} Pax)
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[11px] font-bold px-2 py-1 rounded-lg bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                                                                    Ohne Shuttle
+                                                                </span>
+                                                            )}
+
+                                                            <div className="text-right min-w-[70px]">
+                                                                <span className={`text-base font-black italic block ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                                    €{room.price.toFixed(2).replace('.', ',')}
+                                                                </span>
+                                                            </div>
+
+                                                            <div>
+                                                                {room.status === 'sold' && (
+                                                                    <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
+                                                                        🟢 Gebucht
+                                                                    </span>
+                                                                )}
+                                                                {room.status === 'reserved' && (
+                                                                    <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 whitespace-nowrap">
+                                                                        🟡 Reserviert
+                                                                    </span>
+                                                                )}
+                                                                {room.status === 'cancelled' && (
+                                                                    <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30 whitespace-nowrap">
+                                                                        🔴 Storniert
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Sheet Bottom Footer */}
+                            <div className={`pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 ${
+                                isLight ? 'border-slate-200' : 'border-white/5'
+                            }`}>
+                                <div className="text-xs font-bold text-slate-500">
+                                    Insgesamt <strong className={isLight ? 'text-slate-900' : 'text-white'}>{totalRoomStats.total} Zimmer-Einheiten</strong> in allen Kategorien erfasst
+                                </div>
+                                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                                    {selectedRoomCategory && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedRoomCategory(null)}
+                                            className={`px-4 py-2.5 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto ${
+                                                isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                                            }`}
+                                        >
+                                            <ArrowLeft size={14} />
+                                            Zurück zu Kategorien
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsHotelRevenueModalOpen(false)}
+                                        className="px-6 py-2.5 bg-brand text-dark-950 font-black uppercase tracking-wider text-xs rounded-xl shadow-lg hover:scale-105 transition-all w-full sm:w-auto text-center"
+                                    >
+                                        Fertig
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* B2B HOTEL SHUTTLE-SERVICE BOTTOM SHEET */}
+            <AnimatePresence>
+                {isHotelShuttleModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-end justify-center">
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsHotelShuttleModalOpen(false)}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+                        />
+
+                        {/* Bottom Sheet Container */}
+                        <motion.div
+                            initial={{ y: '100%' }}
+                            animate={{ y: 0 }}
+                            exit={{ y: '100%' }}
+                            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+                            className={`relative z-10 w-full max-w-5xl max-h-[88vh] rounded-t-[2.5rem] md:rounded-t-[3rem] p-6 md:p-8 flex flex-col shadow-2xl border-t border-x overflow-hidden ${
+                                isLight 
+                                    ? 'bg-white border-slate-200 text-slate-900' 
+                                    : 'bg-dark-900 border-white/10 text-white'
+                            }`}
+                        >
+                            {/* Drag Handle Indicator */}
+                            <div className="w-14 h-1.5 rounded-full mx-auto mb-4 bg-slate-300 dark:bg-white/20"></div>
+
+                            {/* Header */}
+                            <div className="flex items-center justify-between pb-4 border-b shrink-0" style={{ borderColor: isLight ? '#e2e8f0' : 'rgba(255,255,255,0.08)' }}>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center font-black shrink-0 border border-amber-500/20">
+                                        <Bus size={24} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className={`text-lg md:text-xl font-black uppercase tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                Hotel Shuttle-Service Abrechnung
+                                            </h3>
+                                            <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                                                isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                                            }`}>
+                                                Green Mobility
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                                            Aufschlüsselung aller Hotel-Transfers: Verkauft, Reserviert und Storno (@ €16,00 Staffeltarif)
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleDownloadHotelShuttlePdf}
+                                        className="px-4 py-2 rounded-xl bg-amber-500 text-black font-black uppercase tracking-wider text-xs shadow-lg hover:bg-amber-400 transition-all flex items-center gap-1.5"
+                                        title="Hotel Shuttle-Service Abrechnung als PDF herunterladen"
+                                    >
+                                        <Download size={14} />
+                                        PDF herunterladen
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsHotelShuttleModalOpen(false)}
+                                        className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all ${
+                                            isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700' : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                                        }`}
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* KPI Metrics Summary */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4 shrink-0">
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-emerald-50/80 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/20'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-500">🟢 Ausgeführt</span>
+                                        <span className="text-[10px] font-bold text-emerald-600">
+                                            €{totalHotelShuttleStats.soldTotal.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div className="text-xl font-black italic text-emerald-500 mt-1">
+                                        {totalHotelShuttleStats.soldCount} Fahrten <span className="text-xs font-bold font-sans not-italic">({totalHotelShuttleStats.soldPax} Pax)</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-amber-50/80 border-amber-200' : 'bg-amber-500/10 border-amber-500/20'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-amber-500">🟡 Reserviert</span>
+                                        <span className="text-[10px] font-bold text-amber-600">
+                                            €{totalHotelShuttleStats.reservedTotal.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div className="text-xl font-black italic text-amber-500 mt-1">
+                                        {totalHotelShuttleStats.reservedCount} Fahrten <span className="text-xs font-bold font-sans not-italic">({totalHotelShuttleStats.reservedPax} Pax)</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-rose-50/80 border-rose-200' : 'bg-rose-500/10 border-rose-500/20'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-rose-500">🔴 Storniert</span>
+                                        <span className="text-[10px] font-bold text-rose-600">
+                                            €{totalHotelShuttleStats.cancelledTotal.toLocaleString('de-DE', { minimumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div className="text-xl font-black italic text-rose-500 mt-1">
+                                        {totalHotelShuttleStats.cancelledCount} Fahrten <span className="text-xs font-bold font-sans not-italic">({totalHotelShuttleStats.cancelledPax} Pax)</span>
+                                    </div>
+                                </div>
+
+                                <div className={`p-3.5 rounded-2xl border ${
+                                    isLight ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'
+                                }`}>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">🚍 Transfers</span>
+                                        <span className="text-[10px] font-bold text-amber-400">Hotel Flotte</span>
+                                    </div>
+                                    <div className={`text-xl font-black italic mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                        {totalHotelShuttleStats.totalTrips} Fahrten <span className="text-xs font-bold font-sans not-italic">gesamt</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Status Filter Tabs */}
+                            <div className="flex items-center justify-between flex-wrap gap-2 pb-2 shrink-0">
+                                <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/20 border border-white/5">
+                                    {[
+                                        { id: 'all', label: `Alle (${totalHotelShuttleStats.totalTrips})` },
+                                        { id: 'sold', label: `🟢 Ausgeführt (${totalHotelShuttleStats.soldCount})` },
+                                        { id: 'reserved', label: `🟡 Reserviert (${totalHotelShuttleStats.reservedCount})` },
+                                        { id: 'cancelled', label: `🔴 Storno (${totalHotelShuttleStats.cancelledCount})` }
+                                    ].map(tab => (
+                                        <button
+                                            key={tab.id}
+                                            type="button"
+                                            onClick={() => setHotelShuttleStatusFilter(tab.id)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
+                                                hotelShuttleStatusFilter === tab.id
+                                                    ? 'bg-amber-400 text-black shadow-md'
+                                                    : isLight
+                                                        ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                            }`}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <span className="text-xs font-bold text-slate-400">
+                                    Zeigt {hotelShuttleData.filter(s => hotelShuttleStatusFilter === 'all' || s.status === hotelShuttleStatusFilter).length} Hotel-Shuttles
+                                </span>
+                            </div>
+
+                            {/* Hotel Shuttle Bookings List */}
+                            <div className="flex-1 overflow-y-auto space-y-3 pr-1 pb-4 custom-scrollbar">
+                                {hotelShuttleData
+                                    .filter(s => hotelShuttleStatusFilter === 'all' || s.status === hotelShuttleStatusFilter)
+                                    .map((shuttle) => (
+                                        <div
+                                            key={shuttle.id}
+                                            className={`p-4 md:p-5 rounded-2xl border transition-all ${
+                                                isLight
+                                                    ? 'bg-slate-50 border-slate-200 shadow-sm'
+                                                    : 'bg-black/30 border-white/5'
+                                            }`}
+                                        >
+                                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                                                <div className="space-y-1.5">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="font-mono text-xs font-black px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                                                            {shuttle.id}
+                                                        </span>
+                                                        <h5 className={`text-base font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                                                            {shuttle.guestName}
+                                                        </h5>
+                                                        <span className="text-xs text-slate-400 font-mono">
+                                                            {shuttle.guestPhone}
+                                                        </span>
+                                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${
+                                                            isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-dark-900 border-white/10 text-cyan-400'
+                                                        }`}>
+                                                            {shuttle.vehicleType}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Route details */}
+                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 text-xs">
+                                                        <div className="flex items-center gap-1.5 text-slate-400">
+                                                            <MapPin size={13} className="text-amber-400 shrink-0" />
+                                                            <span>Von: <strong className={isLight ? 'text-slate-700' : 'text-slate-200'}>{shuttle.pickup}</strong></span>
+                                                        </div>
+                                                        <span className="hidden sm:inline text-slate-500">→</span>
+                                                        <div className="flex items-center gap-1.5 text-slate-400">
+                                                            <MapPin size={13} className="text-emerald-400 shrink-0" />
+                                                            <span>Nach: <strong className={isLight ? 'text-slate-700' : 'text-slate-200'}>{shuttle.destination}</strong></span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-3 text-xs text-slate-400 pt-0.5">
+                                                        <span className="flex items-center gap-1">
+                                                            <Calendar size={12} /> {shuttle.date}
+                                                        </span>
+                                                        <span>•</span>
+                                                        <span className="flex items-center gap-1">
+                                                            <Clock size={12} /> {shuttle.time}
+                                                        </span>
+                                                        <span>•</span>
+                                                        <span className="font-bold text-slate-300">
+                                                            👥 {shuttle.pax} Personen • 🧳 {shuttle.bags} Gepäck
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-3 self-end lg:self-center">
+                                                    <div className="text-right">
+                                                        <span className={`text-[9px] font-black uppercase tracking-wider block ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                                                            €16,00 / Fahrt Staffeltarif
+                                                        </span>
+                                                        <span className="text-lg md:text-xl font-black italic text-amber-400">
+                                                            -€{shuttle.totalPrice.toFixed(2).replace('.', ',')}
+                                                        </span>
+                                                    </div>
+
+                                                    <div>
+                                                        {shuttle.status === 'sold' && (
+                                                            <span className="text-xs font-black px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap block">
+                                                                🟢 Ausgeführt
+                                                            </span>
+                                                        )}
+                                                        {shuttle.status === 'reserved' && (
+                                                            <span className="text-xs font-black px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 whitespace-nowrap block">
+                                                                🟡 Reserviert
+                                                            </span>
+                                                        )}
+                                                        {shuttle.status === 'cancelled' && (
+                                                            <span className="text-xs font-black px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 whitespace-nowrap block">
+                                                                🔴 Storniert
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                            </div>
+
+                            {/* Sheet Bottom Footer */}
+                            <div className={`pt-4 border-t flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 ${
+                                isLight ? 'border-slate-200' : 'border-white/5'
+                            }`}>
+                                <div className="text-xs font-bold text-slate-500">
+                                    Abrechnungspartner: <strong className={isLight ? 'text-slate-900' : 'text-white'}>Green Fleet Logistics & Mobility</strong>
+                                </div>
+                                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                                    <button
+                                        type="button"
+                                        onClick={handleDownloadHotelShuttlePdf}
+                                        className="px-4 py-2.5 rounded-xl bg-amber-500 text-black font-black uppercase tracking-wider text-xs shadow-lg hover:bg-amber-400 transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto"
+                                    >
+                                        <Printer size={14} />
+                                        Als PDF herunterladen
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsHotelShuttleModalOpen(false)}
+                                        className="px-6 py-2.5 bg-brand text-dark-950 font-black uppercase tracking-wider text-xs rounded-xl shadow-lg hover:scale-105 transition-all w-full sm:w-auto text-center"
+                                    >
+                                        Fertig
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     </div>

@@ -8,16 +8,25 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useRide } from '../context/RideContext';
 import { useAuth } from '../context/AuthContext';
+import { calculateShuttleFare, getShuttleFareConfig, estimateDistanceKm } from '../utils/shuttleFareHelper';
 
 const StadiumBoxOffice = () => {
     const navigate = useNavigate();
     const { addVenueTicket } = useRide();
     const { user } = useAuth();
     const [selectedEvent, setSelectedEvent] = useState(null);
-    const [selectedTier, setSelectedTier] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [isProcessing, setIsProcessing] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [pickupLocation, setPickupLocation] = useState(() => user?.address || 'Mörfelder Landstraße 362, Frankfurt');
+
+    const shuttleConfig = getShuttleFareConfig();
+    const currentVenue = selectedEvent?.venue || 'Deutsche Bank Park';
+    const distanceKm = estimateDistanceKm(pickupLocation, currentVenue);
+    const perTicketShuttleFare = calculateShuttleFare(distanceKm, shuttleConfig);
+    const ticketBaseTotal = selectedTier ? selectedTier.price * quantity : 0;
+    const shuttleTotal = selectedTier ? perTicketShuttleFare * quantity : 0;
+    const grandTotal = ticketBaseTotal + shuttleTotal;
 
     const [events] = useState(() => {
         const saved = localStorage.getItem('green_stadium_events');
@@ -81,11 +90,15 @@ const StadiumBoxOffice = () => {
                 id: `TKT-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
                 event: selectedEvent.title,
                 tier: selectedTier.name,
-                price: selectedTier.price * quantity,
+                baseTicketPrice: selectedTier.price * quantity,
+                shuttleFare: shuttleTotal,
+                price: grandTotal,
                 date: selectedEvent.date,
                 time: selectedEvent.time,
                 quantity,
                 venue: selectedEvent.venue,
+                pickupLocation,
+                distanceKm,
                 guestName: user?.name || 'Anonymous Passenger'
             };
             addVenueTicket(ticket);
@@ -214,17 +227,31 @@ const StadiumBoxOffice = () => {
                                 ))}
                             </div>
 
-                            {/* Quantity & Summary */}
+                            {/* Quantity, Pickup Location & Fare Summary */}
                             {selectedTier && (
                                 <motion.div 
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-8"
+                                    className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6"
                                 >
-                                    <div className="flex items-center justify-between">
+                                    {/* Pickup Location Input */}
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] md:text-xs font-black uppercase tracking-widest text-brand flex items-center gap-2">
+                                            <MapPin size={14} /> Pickup Location (For Included VIP Shuttle)
+                                        </label>
+                                        <input 
+                                            type="text"
+                                            value={pickupLocation}
+                                            onChange={(e) => setPickupLocation(e.target.value)}
+                                            placeholder="Enter your Hotel, Airport or Address..."
+                                            className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 px-4 text-xs font-medium text-white focus:outline-none focus:border-brand transition-all"
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-2">
                                         <div>
                                             <h4 className="text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-widest text-white/40">Quantity</h4>
-                                            <div className="flex items-center gap-6 mt-3">
+                                            <div className="flex items-center gap-6 mt-2">
                                                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-all">-</button>
                                                 <span className="text-2xl font-black italic text-white">{quantity}</span>
                                                 <button onClick={() => setQuantity(quantity + 1)} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-all">+</button>
@@ -232,8 +259,25 @@ const StadiumBoxOffice = () => {
                                         </div>
                                         <div className="text-right">
                                             <h4 className="text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-widest text-white/40">Total Settlement</h4>
-                                            <p className="text-4xl font-black italic text-white tracking-tighter mt-2">€{selectedTier.price * quantity}</p>
+                                            <p className="text-4xl font-black italic text-brand tracking-tighter mt-1">€{grandTotal.toFixed(2)}</p>
                                         </div>
+                                    </div>
+
+                                    {/* Dynamic Tiered Price Breakdown */}
+                                    <div className="p-4 rounded-2xl bg-black/40 border border-white/5 space-y-2 text-xs">
+                                        <div className="flex justify-between text-white/70">
+                                            <span>Ticket Base ({quantity}x {selectedTier.name})</span>
+                                            <span className="font-bold text-white">€{ticketBaseTotal.toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-white/70">
+                                            <span className="flex items-center gap-1.5 text-brand font-medium">
+                                                <span>🚌 VIP Shuttle ({distanceKm} km to {currentVenue})</span>
+                                            </span>
+                                            <span className="font-bold text-brand">€{shuttleTotal.toFixed(2)}</span>
+                                        </div>
+                                        <p className="text-[9px] text-white/40 pt-1 border-t border-white/5">
+                                            Tiered Shuttle Tariff: {shuttleConfig.baseKm}km = €{shuttleConfig.basePrice.toFixed(2)} base, +€{shuttleConfig.stepFee.toFixed(2)} per +{shuttleConfig.stepKm}km.
+                                        </p>
                                     </div>
 
                                     <div className="pt-6 border-t border-white/5 space-y-4">

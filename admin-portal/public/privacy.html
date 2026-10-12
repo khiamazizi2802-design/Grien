@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Green Nightlife</title>
+    <style>
+        :root {
+            --bg-primary: #050b14;
+            --bg-secondary: #0d1625;
+            --brand: #34d399;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --border: rgba(52, 211, 153, 0.15);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 24px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            font-style: italic;
+            text-transform: uppercase;
+            letter-spacing: -0.05em;
+            margin-bottom: 8px;
+        }
+
+        h1 span {
+            color: var(--brand);
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--brand);
+            margin-top: 32px;
+            margin-bottom: 16px;
+            border-left: 4px solid var(--brand);
+            padding-left: 12px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            font-size: 0.95rem;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Green <span>Datenschutzerklärung</span></h1>
+            <p>Stand: 27. Juli 2026</p>
+        </header>
+
+        <section>
+            <p>Green („wir“, „unser“ oder „uns“) betreibt die mobile Anwendung Green Nightlife. Diese Datenschutzerklärung informiert Sie detailliert über Art, Umfang und Zweck der Erhebung und Verwendung personenbezogener Daten bei der Nutzung unserer Dienste. Die Verarbeitung erfolgt streng nach den Vorgaben der Europäischen Datenschutz-Grundverordnung (DSGVO) sowie des Bundesdatenschutzgesetzes (BDSG).</p>
+
+            <h2>1. Erhebung und Speicherung personenbezogener Daten</h2>
+            <p>Zur Bereitstellung unserer Dienstleistungen (Ride-Sharing, Ticketing, VIP-Nightlife-Management) erheben und verarbeiten wir folgende Datenkategorien:</p>
+            <ul>
+                <li><strong>Identitäts- und Kontaktdaten (Art. 6 Abs. 1 lit. b DSGVO)</strong>: Name, E-Mail-Adresse, Telefonnummer und Profilbild. Diese Daten werden in hochsicheren Datenbanken (Firebase Auth & Firestore) verschlüsselt gespeichert.</li>
+                <li><strong>Telemetrie- & Standortdaten (Art. 6 Abs. 1 lit. a DSGVO)</strong>: Präzise GPS-Standortdaten zur dynamischen Routenberechnung und Vermittlung der nächstgelegenen Premium-Shuttles. Die Erhebung erfolgt ausschließlich nach Ihrer ausdrücklichen Zustimmung.</li>
+                <li><strong>Verifizierungsdaten / KYC (Art. 6 Abs. 1 lit. c DSGVO)</strong>: Zur Einhaltung gesetzlicher Pflichten (Geldwäschegesetz – GwG) erheben wir bei Partnern und Managern Ausweisdokumente, Gewerbenachweise und Genehmigungen.</li>
+                <li><strong>Finanzdaten (Art. 6 Abs. 1 lit. b DSGVO)</strong>: Die Zahlungsabwicklung erfolgt über unseren PCI-DSS-zertifizierten Partner Stripe Connect. Wir speichern keine rohen Kreditkartendaten (PANs), sondern verarbeiten lediglich Tokens und Abrechnungs-IDs.</li>
+            </ul>
+
+            <h2>2. Zwecke der Datenverarbeitung</h2>
+            <p>Wir verarbeiten die erhobenen Daten ausschließlich zu folgenden Zwecken:</p>
+            <ul>
+                <li>Koordination, Disposition und Routing unserer VIP-Fahrzeugflotte.</li>
+                <li>Abwicklung von Transaktionen (z. B. VIP-Ticketing, Tischreservierungen, Split-Bill-Zahlungen).</li>
+                <li>Bereitstellung administrativer Zugänge für Partner (Venue Manager) zur Steuerung ihrer Angebote.</li>
+                <li>Erfüllung rechtlicher und regulatorischer Compliance-Anforderungen.</li>
+            </ul>
+
+            <h2>3. DSGVO Anonymizer Shield & Datensicherheit</h2>
+            <p>Wir wenden das Prinzip der Datenminimierung (Privacy by Design) an. Mittels unseres internen <strong>DSGVO Anonymizer Shields</strong> werden PII (Personally Identifiable Information) wie exakte Nutzernamen oder genaue Koordinaten in unseren administrativen Dashboards tokenisiert und maskiert. Dadurch wird unbefugtes Tracking oder die Offenlegung von Bewegungsprofilen technisch unterbunden.</p>
+
+            <h2>4. Ihre Rechte als betroffene Person (Art. 15-21 DSGVO)</h2>
+            <p>Sie haben jederzeit das Recht auf unentgeltliche Auskunft über Ihre gespeicherten personenbezogenen Daten, deren Herkunft und Empfänger sowie den Zweck der Datenverarbeitung. Ferner haben Sie ein Recht auf Berichtigung, Sperrung, Datenübertragbarkeit oder Löschung („Recht auf Vergessenwerden“) dieser Daten, sofern dem keine gesetzlichen Aufbewahrungspflichten entgegenstehen. Einwilligungen (z.B. zur GPS-Nutzung) können jederzeit mit Wirkung für die Zukunft widerrufen werden.</p>
+
+            <h2>5. Kontakt & Datenschutzbeauftragter</h2>
+            <p>Für Anfragen zum Thema Datenschutz, zur Ausübung Ihrer Rechte oder zur Meldung von Datenschutzvorfällen kontaktieren Sie bitte unser Datenschutz-Team unter:</p>
+            <p style="font-weight: bold; color: var(--text-primary);">E-Mail: support@green-2efb0.web.app</p>
+        </section>
+
+        <footer>
+            &copy; 2026 Green Nightlife. Alle Rechte vorbehalten.
+        </footer>
+    </div>
+</body>
+</html>

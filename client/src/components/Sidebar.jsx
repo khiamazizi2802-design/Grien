@@ -238,7 +238,7 @@ const Sidebar = ({ isOpen, onClose, currentRole = 'driver', onItemClick }) => {
                         {/* Header */}
                         <div className="p-8 border-b border-white/5 flex justify-between items-center">
                             <div>
-                                <h2 className="text-2xl font-black italic tracking-tighter text-white uppercase">Green</h2>
+                                <h2 className="text-2xl font-black italic tracking-tighter text-white uppercase">Grien</h2>
                                 <p className="text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-[0.25em] text-brand mt-1 italic">
                                     {currentRole === 'driver' 
                                         ? (user?.greenId || "GRN-MICK-DRIV")
