@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "green-2efb0"
+  },
+  "targets": {
+    "green-2efb0": {
+      "hosting": {
+        "admin": [
+          "grien-manager"
+        ],
+        "client": [
+          "green-2efb0"
+        ]
+      }
+    }
   }
 }

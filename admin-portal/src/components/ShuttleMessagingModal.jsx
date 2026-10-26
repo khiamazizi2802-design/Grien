@@ -11,8 +11,8 @@ const ShuttleMessagingModal = ({ isOpen, onClose, cluster, shuttleFare = 10, onS
     const [sending, setSending] = useState(false);
 
     const defaultTexts = {
-        '96h': `Advance Flight Notice (4 Days Prior): Hello {name}! Your GREEN VIP Shuttle to {hotel} is pre-reserved for your arrival at {airport}. Exclusive Rate: €${shuttleFare}.00 / person. Please accept your seat to lock fleet planning.`,
-        '48h': `Pre-Flight Reminder (48h): Hello {name}! Confirm your GREEN VIP Shuttle to {hotel} arriving at {airport} on {date}. Group Rate: €${shuttleFare}.00 / person. Tap to accept.`,
+        '96h': `Advance Flight Notice (4 Days Prior): Hello {name}! Your GRIEN VIP Shuttle to {hotel} is pre-reserved for your arrival at {airport}. Exclusive Rate: €${shuttleFare}.00 / person. Please accept your seat to lock fleet planning.`,
+        '48h': `Pre-Flight Reminder (48h): Hello {name}! Confirm your GRIEN VIP Shuttle to {hotel} arriving at {airport} on {date}. Group Rate: €${shuttleFare}.00 / person. Tap to accept.`,
         '24h': `Final Pre-Flight Notice (24h): Your arrival shuttle to {hotel} is ready at {airport} ({time}). Rate: €${shuttleFare}.00 per guest. Tap to confirm luggage & seat.`,
         'custom': customText || `Exclusive Shuttle Offer to {hotel}: €${shuttleFare}.00 per passenger.`
     };

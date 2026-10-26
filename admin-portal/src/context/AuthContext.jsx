@@ -408,14 +408,14 @@ export const AuthProvider = ({ children }) => {
                         const managerSnap = await getDoc(doc(fbDb, 'users', createdUser.managerId));
                         if (managerSnap.exists()) {
                             const managerData = managerSnap.data();
-                            createdUser.businessName = managerData.businessName || 'Green Fleet Ops';
+                            createdUser.businessName = managerData.businessName || 'Grien Fleet Ops';
                             createdUser.businessType = managerData.businessType || 'FM';
                         } else {
-                            createdUser.businessName = 'Green Fleet Ops';
+                            createdUser.businessName = 'Grien Fleet Ops';
                             createdUser.businessType = 'FM';
                         }
                     } catch (e) {
-                        createdUser.businessName = 'Green Fleet Ops';
+                        createdUser.businessName = 'Grien Fleet Ops';
                         createdUser.businessType = 'FM';
                     }
 

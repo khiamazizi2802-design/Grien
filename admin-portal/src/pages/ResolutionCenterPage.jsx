@@ -24,7 +24,7 @@ const ResolutionCenterPage = () => {
     const offers = [
         { id: 'vvip', label: 'VVIP Access Pass', icon: Sparkles, desc: 'Complimentary skip-the-line and entry for 4.' },
         { id: 'refund', label: 'Full Refund', icon: Utensils, desc: 'Total reimbursement of the transaction.' },
-        { id: 'voucher', label: '€50 Green Credit', icon: Gift, desc: 'Applicable to any service in the network.' }
+        { id: 'voucher', label: '€50 Grien Credit', icon: Gift, desc: 'Applicable to any service in the network.' }
     ];
 
     const handleSend = () => {
@@ -131,7 +131,7 @@ const ResolutionCenterPage = () => {
                                             <textarea 
                                                 value={message}
                                                 onChange={(e) => setMessage(e.target.value)}
-                                                placeholder="Explain the situation and express your commitment to Green standards..."
+                                                placeholder="Explain the situation and express your commitment to Grien standards..."
                                                 className="w-full h-full bg-[var(--bg-tertiary)] border border-white/10 rounded-[2rem] p-8 text-sm font-bold text-[var(--text-primary)] focus:border-brand/40 outline-none transition-all resize-none"
                                             />
                                             <div className="absolute bottom-6 right-6 flex gap-2">

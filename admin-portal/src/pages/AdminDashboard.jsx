@@ -170,7 +170,7 @@ const AdminDashboard = () => {
     const [searchQuery, setSearchQuery] = useState('');
 
     // Identity Dossier states
-    const [dossierFullName, setDossierFullName] = useState(() => localStorage.getItem('green_dossier_fullName') || (user?.name || 'Khiam Azizi'));
+    const [dossierFullName, setDossierFullName] = useState(() => localStorage.getItem('green_dossier_fullName') || (user?.name || 'Max Mustermann'));
     const [dossierEmail, setDossierEmail] = useState(() => localStorage.getItem('green_dossier_email') || (user?.email || 'khiamazizi2802@gmail.com'));
     const [dossierPhone, setDossierPhone] = useState(() => localStorage.getItem('green_dossier_phone') || (user?.phone || '017662111103'));
     const [dossierAddress, setDossierAddress] = useState(() => localStorage.getItem('green_dossier_address') || 'Auf dem schafberg 12-14');
@@ -222,7 +222,7 @@ const AdminDashboard = () => {
         triggerNotification('info', 'PROFILBILD ZURÜCKGESETZT', 'Das Standard-Avatar wurde wiederhergestellt.');
     };
 
-    const currentAvatarUrl = directorAvatar || user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(dossierFullName || 'Khiam Azizi')}`;
+    const currentAvatarUrl = directorAvatar || user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(dossierFullName || 'Max Mustermann')}`;
 
     const handleCommitDossier = () => {
         localStorage.setItem('green_dossier_fullName', dossierFullName);
@@ -243,7 +243,7 @@ const AdminDashboard = () => {
 *Clearance Level: PUBLIC / GLOBAL*
 
 ## PREAMBLE
-This Privacy Protocol ("Protocol") details the processing of personal data within the digital software application, fleet telemetry routing environment, and dispatch systems (collectively, "The Platform") operated by **Green Nightlife & Logistics GmbH**, Zeil 106, 60313 Frankfurt am Main, Germany (hereinafter "The Controller", "We", "Us", or "Our"). 
+This Privacy Protocol ("Protocol") details the processing of personal data within the digital software application, fleet telemetry routing environment, and dispatch systems (collectively, "The Platform") operated by **Grien Nightlife & Logistics GmbH**, Zeil 106, 60313 Frankfurt am Main, Germany (hereinafter "The Controller", "We", "Us", or "Our"). 
 
 This Protocol is compiled in strict compliance with the Regulation (EU) 2016/679 (General Data Protection Regulation, "GDPR" or "DSGVO"), the German Federal Data Protection Act ("BDSG"), the Telecommunications Digital Services Data Protection Act ("TDDDG"), and the German Passenger Transport Act ("PBefG").
 
@@ -252,7 +252,7 @@ This Protocol is compiled in strict compliance with the Regulation (EU) 2016/679
 ## SECTION 1: IDENTITY OF THE CONTROLLER & JUVENILE PROTECTION
 ### 1.1 Data Controller
 The responsible controller within the meaning of Art. 4 No. 7 GDPR is:
-Green Nightlife & Logistics GmbH  
+Grien Nightlife & Logistics GmbH  
 Zeil 106, 60313 Frankfurt am Main, Germany  
 Email: compliance@green-nightlife.com  
 
@@ -949,7 +949,7 @@ const [privacyPolicyText, setPrivacyPolicyText] = useState(defaultPrivacyProtoco
     const [angebotMessages, setAngebotMessages] = useState([
         {
             role: 'agent',
-            text: 'Greetings, Chief Director. I am your specialized Campaign AI Agent. I can architect bespoke customer campaigns and publish them across dynamic feeds. Tell me what deal you wish to deploy (e.g. "Create a 30% discount offer for Green Palace Hotel on Passenger Feed")!'
+            text: 'Greetings, Chief Director. I am your specialized Campaign AI Agent. I can architect bespoke customer campaigns and publish them across dynamic feeds. Tell me what deal you wish to deploy (e.g. "Create a 30% discount offer for Grien Palace Hotel on Passenger Feed")!'
         }
     ]);
     const [currentAngebotMessage, setCurrentAngebotMessage] = useState('');
@@ -1574,37 +1574,37 @@ const [privacyPolicyText, setPrivacyPolicyText] = useState(defaultPrivacyProtoco
         const query = input.toLowerCase();
         
         if (query.includes('fleet') || query.includes('driver') || query.includes('car')) {
-            return `### 🚗 KHIAM GREEN AI FLEET PARTNERSHIP PITCH PROPOSAL\n` +
+            return `### 🚗 GRIEN AI FLEET PARTNERSHIP PITCH PROPOSAL\n` +
                    `**Target Segment:** Fleet Managers & Luxury Transportation Operators\n` +
                    `**Strategic Foundation:** Direct response to service gaps identified in telemetries (such as vehicle cleanliness & driver dispatch lag under \`[SHIELD_UNIT_102]\`).\n\n` +
                    `---\n\n` +
                    `#### 1. THE PROBLEM-SOLUTION METRIC\n` +
                    `*   **The Telemetry Gap:** Recent feedback indicates that high-net-worth customers are highly sensitive to driver delays and vehicle standards.\n` +
-                   `*   **Our Solution:** The *Khiam Green Autonomous Matching Engine* solves this with a **6-second dispatch threshold** and live IoT-linked sanitization checklist confirmation before onboarding.\n\n` +
+                   `*   **Our Solution:** The *Grien Autonomous Matching Engine* solves this with a **6-second dispatch threshold** and live IoT-linked sanitization checklist confirmation before onboarding.\n\n` +
                    `#### 2. HIGH-INCENTIVE FINANCIAL MODEL (German Sector)\n` +
                    `*   **Base Provision:** Fleet managers earn a highly competitive base starting at **3.00 €** per completed trip.\n` +
                    `*   **Surge Tier Compensation:** For every incremental tier increase of **30.00 € or more**, an additional **2.00 €** bonus provision is dynamically compounded onto the base payout.\n` +
                    `*   **Example Model:** A standard premium shuttle trip of 90.00 € yields an immediate **7.00 € payout** to the manager, scaling profitability dynamically!\n\n` +
                    `#### 3. B2B OUTREACH PITCH SCRIPT\n` +
-                   `> *"Dear Fleet Director, your operational overhead demands punctuality. The Khiam Green suite ensures a 100% automated matchmaking response rate in under 6 seconds, combined with a progressive base provision starting from 3 € + 2 € increments for every 30 € tier increase. Protect your brand reputation while compounding your high-ticket margins."*`;
+                   `> *"Dear Fleet Director, your operational overhead demands punctuality. The Grien suite ensures a 100% automated matchmaking response rate in under 6 seconds, combined with a progressive base provision starting from 3 € + 2 € increments for every 30 € tier increase. Protect your brand reputation while compounding your high-ticket margins."*`;
         }
         
         if (query.includes('hotel') || query.includes('hospitality') || query.includes('concierge') || query.includes('room')) {
-            return `### 🏨 KHIAM GREEN VIP HOTEL CONCIERGE INTEGRATION OUTREACH\n` +
+            return `### 🏨 GRIEN VIP HOTEL CONCIERGE INTEGRATION OUTREACH\n` +
                    `**Target Segment:** 5-Star Hospitality Establishments (e.g. \`[SHIELD_UNIT_913]\` / Grand Frankfurt Sector)\n` +
                    `**Strategic Foundation:** Leveraging stellar concierges reviews under \`[GUEST_ANON_612]\` with seamless checkout logs.\n\n` +
                    `---\n\n` +
                    `#### 1. SEAMLESS VIP INTEGRATION\n` +
                    `*   **Direct Concierge Console:** Hotels receive a premium glassmorphic booking interface integrated directly into the guest reception terminal. Guests bypass queues with instant digital priority tickets.\n` +
-                   `*   **Eco-Luxury Appeal:** Highlight your property's ESG carbon-offset metrics with Khiam Green's premium fully-electric VIP fleet.\n\n` +
+                   `*   **Eco-Luxury Appeal:** Highlight your property's ESG carbon-offset metrics with Grien's premium fully-electric VIP fleet.\n\n` +
                    `#### 2. REVENUE COMMISSION MODEL\n` +
                    `*   **High-Yield commission:** The hotel receives a **5% revenue share** on all ticket types and a **5% provision** on all hotel transport arrangements booked through the app.\n\n` +
                    `#### 3. B2B OUTREACH PITCH SCRIPT\n` +
-                   `> *"Dear General Manager, your elite guests expect a continuous luxury experience. By integrating the Khiam Green VIP Concierge Console, you extend your 5-star service standard straight onto the highway. Command a 5% commission yield on all digital rides and ticketing, backed by 100% eco-luxury transport credentials. Let's arrange a pilot setup."*`;
+                   `> *"Dear General Manager, your elite guests expect a continuous luxury experience. By integrating the Grien VIP Concierge Console, you extend your 5-star service standard straight onto the highway. Command a 5% commission yield on all digital rides and ticketing, backed by 100% eco-luxury transport credentials. Let's arrange a pilot setup."*`;
         }
         
         if (query.includes('compliance') || query.includes('gdpr') || query.includes('dsgvo') || query.includes('law') || query.includes('secure') || query.includes('anonym')) {
-            return `### 🛡️ KHIAM NEURAL SENTINEL: DSGVO AUDIT REPORT\n` +
+            return `### 🛡️ GRIEN NEURAL SENTINEL: DSGVO AUDIT REPORT\n` +
                    `**Platform Status:** SECURED & ANONYMIZED\n` +
                    `**Scope:** Super Admin Telemetry logs & Third-Party API boundary checks.\n\n` +
                    `---\n\n` +
@@ -1616,7 +1616,7 @@ const [privacyPolicyText, setPrivacyPolicyText] = useState(defaultPrivacyProtoco
                    `*   **Compliance Clearance:** Verified compliant under German BDSG (Neu) and EU GDPR requirements. No regulatory infractions found.`;
         }
         
-        return `### 🔮 KHIAM INTELLIGENCE SCOUT ANALYTICAL REPORT\n` +
+        return `### 🔮 GRIEN INTELLIGENCE SCOUT ANALYTICAL REPORT\n` +
                `Director, I have analyzed your request against the latest platform parameters. Here is the active breakdown:\n\n` +
                `*   **Active Feedback Hub Sector:** Synthesized analysis of 4 active sectors (Fleet, Restaurants, Stadium, Hotels).\n` +
                `*   **Current Global Sentiment Rate:** **88.0%** positive margin.\n` +
@@ -1658,7 +1658,7 @@ const [privacyPolicyText, setPrivacyPolicyText] = useState(defaultPrivacyProtoco
 ██║  ██║██║  ██║██║██║  ██║██║ ╚═╝ ██║    ╚██████╔╝██║  ██║███████╗███████╗██║ ╚████║
 ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═╝     ╚═╝     ╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═══╝
 ========================================================================
-              KHIAM GREEN APP v4.0 - COMPLIANCE & INTELLIGENCE REPORT
+              GRIEN APP v4.0 - COMPLIANCE & INTELLIGENCE REPORT
               DSGVO / GDPR TELEMETRY SECURED GATEWAY AUDIT
               LOCAL TIMESTAMP: ${new Date().toLocaleString()}
 ========================================================================
@@ -1667,7 +1667,7 @@ const [privacyPolicyText, setPrivacyPolicyText] = useState(defaultPrivacyProtoco
 ------------------------------------------------------------------------
 Compliance Directives: All Personal Identifiable Information (PII) including
 guest names, exact location nodes, and vehicle routing IDs have been fully
-masked using the proprietary cryptographic tokenization engine of Khiam Green.
+masked using the proprietary cryptographic tokenization engine of Grien.
 
 [📊 PLATFORM REVENUE & COMMISSION PARAMETERS]
 ------------------------------------------------------------------------
@@ -1701,10 +1701,10 @@ ${anonymizeFeedback(rawFeedbackItems, anonymizedModeActive).map((f, idx) => (
 Target Segment: Fleet Managers & Transport Operators (Responding to Unit ${anonymizedModeActive ? '[SHIELD_UNIT_102]' : 'DR-492'} delays)
 
 * Strategic Pitch Proposal:
-  - Core Pitch Concept: Introduce the Khiam Green 6-second auto-matchmaking threshold to erase driver delay bottlenecks. Include IoT telemetry checklist for vehicle cleanliness audits prior to passenger boarding.
+  - Core Pitch Concept: Introduce the Grien 6-second auto-matchmaking threshold to erase driver delay bottlenecks. Include IoT telemetry checklist for vehicle cleanliness audits prior to passenger boarding.
   - Revenue Model Breakdown: Emphasize the progressive provision starting from 3 € plus an extra 2 € bonus for each 30 € fare increment to maximize driver retention.
   - Outreach Script:
-    "Dear Fleet Director, your operational overhead demands punctuality. The Khiam Green suite ensures a 100% automated matchmaking response rate in under 6 seconds, combined with a progressive base provision starting from 3 € + 2 € increments for every 30 € tier increase. Protect your brand reputation while compounding your high-ticket margins."
+    "Dear Fleet Director, your operational overhead demands punctuality. The Grien suite ensures a 100% automated matchmaking response rate in under 6 seconds, combined with a progressive base provision starting from 3 € + 2 € increments for every 30 € tier increase. Protect your brand reputation while compounding your high-ticket margins."
 
 === PITCH OPTION B: LUXURY HOTEL PARTNERSHIP PITCH ===
 Target Segment: 5-Star Hotel Concierge desks (Responding to Unit ${anonymizedModeActive ? '[SHIELD_UNIT_913]' : 'Grand Frankfurt'} concierge success)
@@ -1713,12 +1713,12 @@ Target Segment: 5-Star Hotel Concierge desks (Responding to Unit ${anonymizedMod
   - Core Pitch Concept: Provide a dedicated glassmorphic concierge booking app to fast-track bookings for elite hotel guests. Carbon-neutral EV transport matches corporate ESG metrics.
   - Revenue Model Breakdown: Highlight the direct 5% hotel reservation share and 5% ticket commission rewards built into the ecosystem.
   - Outreach Script:
-    "Dear General Manager, your elite guests expect a continuous luxury experience. By integrating the Khiam Green VIP Concierge Console, you extend your 5-star service standard straight onto the highway. Command a 5% commission yield on all digital rides and ticketing, backed by 100% eco-luxury transport credentials. Let's arrange a pilot setup."
+    "Dear General Manager, your elite guests expect a continuous luxury experience. By integrating the Grien VIP Concierge Console, you extend your 5-star service standard straight onto the highway. Command a 5% commission yield on all digital rides and ticketing, backed by 100% eco-luxury transport credentials. Let's arrange a pilot setup."
 
 ========================================================================
 AUDIT DECLARATION: This ledger constitutes an official compliance record.
 Approved for Release by: Super Admin / Chief Compliance Officer
-Khiam Green Security Operations Center (Frankfurt am Main)
+Grien Security Operations Center (Frankfurt am Main)
 ========================================================================`;
 
         const blob = new Blob([asciiBanner], { type: 'text/plain;charset=utf-8' });
@@ -1788,7 +1788,7 @@ Khiam Green Security Operations Center (Frankfurt am Main)
             doc.text('PLATTFORM-BETREIBER (AUSSTELLER):', 24, 62);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(30, 41, 59);
-            doc.text('Khiam Green Security Operations', 24, 68);
+            doc.text('Grien Security Operations', 24, 68);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(71, 85, 105);
             doc.text('Main Plaza, Frankfurt am Main, Germany', 24, 74);
@@ -1938,7 +1938,7 @@ Khiam Green Security Operations Center (Frankfurt am Main)
             doc.setTextColor(16, 185, 129);
             doc.text('PLATTFORM-BETREIBER:', 24, 63);
             doc.setTextColor(30, 41, 59);
-            doc.text('Khiam Green Security Operations', 24, 69);
+            doc.text('Grien Security Operations', 24, 69);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(71, 85, 105);
             doc.text('Main Plaza, Frankfurt am Main, Germany', 24, 75);
@@ -2176,7 +2176,7 @@ Khiam Green Security Operations Center (Frankfurt am Main)
             ]);
             setLiveSplitsLedger([
                 { id: 1, time: '21:02:44', tx: 'ch_3M4d99FKe821', partner: 'acct_fleet_102', partnerName: 'Hessen EcoFleet', client: 'Marcus G.', total: '24.50', prov: '3.00', fee: '0.59', tag: '🚗 Fleet Trip (Base Step)', status: 'INSTANT SPLIT ⚡', inv: 'INV-2026-0881', category: 'transport', date: '2026-05-23' },
-                { id: 2, time: '20:45:12', tx: 'ch_3M4d88FKe190', partner: 'acct_stadium_824', partnerName: 'Green Stadium Arena', client: 'Hansi M.', total: '150.00', prov: '7.50', fee: '2.35', tag: '🎟️ VIP Tickets (5% Commission)', status: 'INSTANT SPLIT ⚡', inv: 'INV-2026-0882', category: 'events', date: '2026-05-23' },
+                { id: 2, time: '20:45:12', tx: 'ch_3M4d88FKe190', partner: 'acct_stadium_824', partnerName: 'Grien Stadium Arena', client: 'Hansi M.', total: '150.00', prov: '7.50', fee: '2.35', tag: '🎟️ VIP Tickets (5% Commission)', status: 'INSTANT SPLIT ⚡', inv: 'INV-2026-0882', category: 'events', date: '2026-05-23' },
                 { id: 3, time: '19:12:05', tx: 'ch_3M4d77FKe402', partner: 'acct_hotel_913', partnerName: 'Grand Frankfurt Hotel', client: 'Sophie K.', total: '240.00', prov: '12.00', fee: '3.61', tag: '🏨 Hotel Suite (5% Commission)', status: 'INSTANT SPLIT ⚡', inv: 'INV-2026-0883', category: 'hotels', date: '2026-05-23' },
                 { id: 4, time: '18:55:30', tx: 'ch_3M4d66FKe331', partner: 'acct_restaurant_495', partnerName: 'Saffron Fine Dining', client: 'Elena V.', total: '85.00', prov: '0.00', fee: '1.44', tag: '🍔 Food & Drinks (0% Platform Fee)', status: 'VENUE PAYOUT 🍹', inv: 'N/A (Direct Sales)', category: 'clubs', date: '2026-05-23' }
             ]);
@@ -2184,7 +2184,7 @@ Khiam Green Security Operations Center (Frankfurt am Main)
                 { id: 'acct_fleet_102', name: 'Hessen EcoFleet', manager: 'Marcus G.', industry: 'Logistics', status: 'Active', balance: 4120.50, grossContribution: 38400.00, iban: 'DE44 5002 0000 1294 88', swift: 'HEFLEETDEM1X', commissionModel: 'Progressive Step (3€ Base + 2€ per 30€)', totalPaidOut: 34279.50 },
                 { id: 'acct_restaurant_495', name: 'Saffron Fine Dining', manager: 'Elena V.', industry: 'Restaurant', status: 'Active', balance: 1480.00, grossContribution: 22120.00, iban: 'DE91 2201 9922 4481 00', swift: 'SAFFRONDEM2X', commissionModel: '0% Restaurant Sales Policy', totalPaidOut: 20640.00 },
                 { id: 'acct_hotel_913', name: 'Grand Frankfurt Hotel', manager: 'Sophie K.', industry: 'Hospitality', status: 'Active', balance: 5800.00, grossContribution: 54300.00, iban: 'DE33 4004 1122 3344 55', swift: 'GRANDDEM3X', commissionModel: 'Flat 5.0% Platform Fee', totalPaidOut: 48500.00 },
-                { id: 'acct_stadium_824', name: 'Green Stadium Arena', manager: 'Hansi M.', industry: 'Events', status: 'Active', balance: 9200.00, grossContribution: 28020.00, iban: 'DE22 9009 5544 3322 11', swift: 'STADIUMDEM4X', commissionModel: 'Flat 5.0% Booking Fee', totalPaidOut: 18820.00 },
+                { id: 'acct_stadium_824', name: 'Grien Stadium Arena', manager: 'Hansi M.', industry: 'Events', status: 'Active', balance: 9200.00, grossContribution: 28020.00, iban: 'DE22 9009 5544 3322 11', swift: 'STADIUMDEM4X', commissionModel: 'Flat 5.0% Booking Fee', totalPaidOut: 18820.00 },
                 { id: 'acct_fleet_044', name: 'Berlin VIP Shuttle', manager: 'Sven Weber', industry: 'Logistics', status: 'Active', balance: 2940.00, grossContribution: 16120.00, iban: 'DE77 1001 8844 9922 11', swift: 'BERLINDEM5X', commissionModel: 'Progressive Step (3€ Base + 2€ per 30€)', totalPaidOut: 13180.00 }
             ]);
             setStaffList([
@@ -2217,7 +2217,7 @@ Khiam Green Security Operations Center (Frankfurt am Main)
         architect_sentinel: [{ role: 'agent', text: 'Architect Sentinel at your service. I can implement any code changes, feature expansions, or tactical UI updates you require for the platform. What shall we build next?' }],
         media_shield: [{ 
             role: 'agent', 
-            text: `### 🛡️ KHIAM MEDIA SHIELD SENTINEL ONLINE\n\nDirector, I am actively guarding your B2C social media streams, driver uploads, and hotel profile media directories.\n\n**Shield Protocol Directives:**\n- **Automated Censor Lock:** The system scans all uploaded files using multi-layer NSFW and violence recognition networks.\n- **Instant Scrubbing:** If a video or image features nudity or violence, it is immediately scrubbed from the CDN (deleted in under 120ms) to ensure GwG/BDSG compliance and brand protection.\n- **Offender Isolation:** The system identifies the uploading account, records their metadata, and flags them for immediate Super Admin suspension.\n- **Real-Time Logging:** See the intercepted violations below in the live Moderation Log Ledger. Ask me any case details (e.g. "Who posted nudity?" or "Explain the Commerzbank Arena incident").` 
+            text: `### 🛡️ GRIEN MEDIA SHIELD SENTINEL ONLINE\n\nDirector, I am actively guarding your B2C social media streams, driver uploads, and hotel profile media directories.\n\n**Shield Protocol Directives:**\n- **Automated Censor Lock:** The system scans all uploaded files using multi-layer NSFW and violence recognition networks.\n- **Instant Scrubbing:** If a video or image features nudity or violence, it is immediately scrubbed from the CDN (deleted in under 120ms) to ensure GwG/BDSG compliance and brand protection.\n- **Offender Isolation:** The system identifies the uploading account, records their metadata, and flags them for immediate Super Admin suspension.\n- **Real-Time Logging:** See the intercepted violations below in the live Moderation Log Ledger. Ask me any case details (e.g. "Who posted nudity?" or "Explain the Commerzbank Arena incident").` 
         }]
     });
     const [currentMessage, setCurrentMessage] = useState('');
@@ -2778,7 +2778,7 @@ Khiam Green Security Operations Center (Frankfurt am Main)
 
         setTimeout(() => {
             const query = msgText.toLowerCase();
-            let partner = 'Green Palace Hotel';
+            let partner = 'Grien Palace Hotel';
             let title = '30% Off Premium Suites';
             let discount = '30%';
 
@@ -2792,7 +2792,7 @@ Khiam Green Security Operations Center (Frankfurt am Main)
                 title = '50% Off All Cocktail Selections';
                 discount = '50%';
             } else if (query.includes('stadium') || query.includes('arena') || query.includes('ticket')) {
-                partner = 'Green Stadium Arena';
+                partner = 'Grien Stadium Arena';
                 title = '15% Off VIP Skybox Ticket';
                 discount = '15%';
 
@@ -2912,7 +2912,7 @@ Khiam Green Security Operations Center (Frankfurt am Main)
                             `    *   *Telemetry Trigger:* OCR text scanner detected highly offensive explicit wording. Confidence index: **99.0%**.\n` +
                             `    *   *Action:* scrubbed in 60ms. Partner ID mapped to \`[PARTNER_ANON_202]\`.`;
                 } else {
-                    reply = `### 🛡️ KHIAM MEDIA SHIELD SENTINEL REPORT\n` +
+                    reply = `### 🛡️ GRIEN MEDIA SHIELD SENTINEL REPORT\n` +
                             `Director, I am actively guarding all social media and media library streams for nudity and violence.\n\n` +
                             `*   **Active Monitoring Channels:** B2C Social Feeds, Driver Uploads, Mews PMS Galleries.\n` +
                             `*   **Automated Scrubbing Action:** Instant CDN deletion upon NSFW/combat model detection. Confirmed scrubbing time is under 120ms.\n\n` +
@@ -3877,7 +3877,7 @@ Khiam Green Security Operations Center (Frankfurt am Main)
                                             <Radio size={24} className="animate-pulse" />
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-black italic uppercase tracking-tighter">Khiam Autonomous <span className="text-brand">Campaign Dispatcher</span></h3>
+                                            <h3 className="text-xl font-black italic uppercase tracking-tighter">Grien Autonomous <span className="text-brand">Campaign Dispatcher</span></h3>
                                             <p className="text-[8px] md:text-[10px] lg:text-xs font-black text-gray-500 uppercase tracking-widest mt-0.5">Real-Time Space Sweep & Outreach Platform</p>
                                         </div>
                                         <div className="ml-auto w-2.5 h-2.5 rounded-full bg-brand shadow-[0_0_8px_var(--brand)] animate-pulse" />
@@ -5182,7 +5182,7 @@ Khiam Green Security Operations Center (Frankfurt am Main)
                                             </div>
                                         </div>
 
-                                        {/* KHIAM NEURAL INTELLIGENCE SCOUT TERMINAL */}
+                                        {/* GRIEN NEURAL INTELLIGENCE SCOUT TERMINAL */}
                                         <div className="bg-white/5 border border-white/10 rounded-[3.5rem] p-10 flex flex-col relative overflow-hidden backdrop-blur-md">
                                             {/* Status Header */}
                                             <div className="flex justify-between items-center mb-6">
@@ -5192,7 +5192,7 @@ Khiam Green Security Operations Center (Frankfurt am Main)
                                                         <div className="w-2.5 h-2.5 rounded-full bg-brand relative" />
                                                     </div>
                                                     <div>
-                                                        <h4 className="text-xs md:text-sm lg:text-base font-black italic uppercase text-white tracking-wider">KHIAM AI SCOUT</h4>
+                                                        <h4 className="text-xs md:text-sm lg:text-base font-black italic uppercase text-white tracking-wider">GRIEN AI SCOUT</h4>
                                                         <p className="text-[7px] font-mono text-gray-500 uppercase tracking-widest">Compliance & Sales Intelligence</p>
                                                     </div>
                                                 </div>
@@ -8375,7 +8375,7 @@ Khiam Green Security Operations Center (Frankfurt am Main)
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                             <div className="space-y-1 md:border-r border-slate-700/80 md:pr-4">
                                                                 <p className="font-black text-emerald-400 uppercase tracking-wider text-[10px]">ISSUER (PLATFORM):</p>
-                                                                <p className="text-white font-bold leading-relaxed">Khiam Green Security Operations</p>
+                                                                <p className="text-white font-bold leading-relaxed">Grien Security Operations</p>
                                                                 <p className="text-gray-300 leading-tight">Main Plaza, Frankfurt am Main</p>
                                                                 <p className="text-gray-300 leading-tight">USt-IdNr: DE88-129-44</p>
                                                             </div>

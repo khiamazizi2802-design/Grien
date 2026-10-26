@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DGrien</string>
+    <string name="title_activity_main">DGrien</string>
+    <string name="package_name">com.dgrien.driverapp</string>
+    <string name="custom_url_scheme">com.dgrien.driverapp</string>
+</resources>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green UX Lab - Triple Perspective</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #05080F;
+            --brand: #10B981;
+            --brand-glow: rgba(16, 185, 129, 0.2);
+            --border: rgba(255, 255, 255, 0.05);
+            --text: #F0F6FC;
+            --text-dim: #8B949E;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-y: hidden;
+            overflow-x: auto;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            padding: 1rem 3rem;
+            background: rgba(13, 20, 33, 0.8);
+            backdrop-blur: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            position: sticky;
+            top: 0;
+            left: 0;
+            width: 100vw;
+        }
+
+        .logo h1 {
+            font-size: 1.2rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-style: italic;
+            letter-spacing: -1px;
+        }
+
+        .logo h1 span { color: var(--brand); }
+
+        .main-stage {
+            flex: 1;
+            display: flex;
+            gap: 60px;
+            padding: 40px 80px;
+            justify-content: flex-start;
+            align-items: flex-start;
+            background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 70%);
+            min-width: fit-content;
+        }
+
+        .device-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .device-label {
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--brand);
+            background: rgba(16, 185, 129, 0.1);
+            padding: 6px 16px;
+            border-radius: 100px;
+            border: 1px solid var(--brand-glow);
+        }
+
+        .viewport-frame {
+            background: #111;
+            padding: 14px;
+            border-radius: 40px;
+            border: 4px solid #1a1a1a;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* High Fidelity Scaling for Precision Testing */
+        .phone { width: 390px; height: 844px; transform: scale(1.0); transform-origin: top center; }
+        .phone-wrapper { width: 390px; height: 844px; }
+
+        .tablet { width: 820px; height: 1180px; transform: scale(0.8); transform-origin: top center; }
+        .tablet-wrapper { width: calc(820px * 0.8); height: calc(1180px * 0.8); }
+
+        .desktop { width: 1440px; height: 900px; transform: scale(0.65); transform-origin: top center; }
+        .desktop-wrapper { width: calc(1440px * 0.65); height: calc(900px * 0.65); }
+
+        iframe {
+            border: none;
+            background: #000;
+            border-radius: 20px;
+            display: block;
+        }
+
+        .badge {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(13, 20, 33, 0.9);
+            backdrop-blur: 10px;
+            padding: 8px 20px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 9px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--brand);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--brand);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        .control-panel {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-mini {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 9px;
+            font-weight: 900;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .btn-mini:hover {
+            background: var(--brand);
+            color: #000;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <h1>GREEN <span>UX TRIAD</span></h1>
+        </div>
+        <div class="control-panel">
+            <button class="btn-mini" onclick="refreshAll()">Sync Engines</button>
+        </div>
+    </header>
+
+    <div class="main-stage">
+        <!-- Column 1: Customer (Rider) -->
+        <div class="device-column">
+            <span class="device-label">Customer Perspective</span>
+            <div class="viewport-frame phone-wrapper">
+                <iframe src="http://localhost:5173/signup?mode=passenger" id="rider-frame" class="phone"></iframe>
+            </div>
+        </div>
+
+        <!-- Column 2: Partner (Staff/Manager/Driver) -->
+        <div class="device-column">
+            <span class="device-label">Partner Perspective</span>
+            <div class="viewport-frame tablet-wrapper">
+                <iframe src="http://localhost:5173/signup?mode=partner" id="partner-frame" class="tablet"></iframe>
+            </div>
+        </div>
+
+        <!-- Column 3: Director (Admin) -->
+        <div class="device-column">
+            <span class="device-label">Director Command</span>
+            <div class="viewport-frame desktop-wrapper">
+                <iframe src="http://localhost:5173/admin?role=super_admin" id="admin-frame" class="desktop"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <div class="badge">
+        <div class="status-dot"></div>
+        Triple-Engine Simulation Active: Live Neural Feed
+    </div>
+
+    <script>
+        function refreshAll() {
+            document.getElementById('rider-frame').contentWindow.location.reload();
+            document.getElementById('partner-frame').contentWindow.location.reload();
+            document.getElementById('admin-frame').contentWindow.location.reload();
+        }
+    </script>
+</body>
+</html>

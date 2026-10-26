@@ -2203,7 +2203,7 @@ const DriverDashboard = () => {
                                                         </div>
                                                         {((m.passengerCount || 2) >= 5 || (m.bags || 3) >= 7) && (
                                                             <p className="text-[8px] font-bold text-red-400 uppercase tracking-tight">
-                                                                Partner-Fahrzeug 2 (Thomas K. - Flotte Khiam) führt Gepäck-Support.
+                                                                Partner-Fahrzeug 2 (Thomas K. - Flotte Grien) führt Gepäck-Support.
                                                             </p>
                                                         )}
                                                     </div>
@@ -3946,11 +3946,11 @@ const DriverDashboard = () => {
                             <p className="text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-widest text-secondary mb-1">Asset Verification Status</p>
                             {vehicleInfo?.status === 'approved' ? (
                                 <p className="text-[12px] font-black text-brand flex items-center gap-1.5 uppercase tracking-wider">
-                                    <ShieldCheck size={14} className="text-brand animate-bounce" /> Verified by Khiam Azizi
+                                    <ShieldCheck size={14} className="text-brand animate-bounce" /> Verified by Max Mustermann
                                 </p>
                             ) : vehicleInfo?.status === 'pending' ? (
                                 <p className="text-[12px] font-black text-amber-400 flex items-center gap-1.5 uppercase tracking-wider animate-pulse">
-                                    <Clock size={14} className="text-amber-400" /> Awaiting Approval by Khiam Azizi
+                                    <Clock size={14} className="text-amber-400" /> Awaiting Approval by Max Mustermann
                                 </p>
                             ) : (
                                 <p className="text-[12px] font-black text-white/50 flex items-center gap-1.5 uppercase tracking-wider">
@@ -4154,7 +4154,7 @@ const DriverDashboard = () => {
                                             }).catch(err => console.error("Error updating vehicle in Firestore:", err));
                                         }
                                         setVehicleSheetOpen(false);
-                                        alert("VEHICLE REGISTRATION INITIATED • Secure approval request dispatched to the GreenRide Admin Portal! Awaiting verification by Chief Director Khiam Azizi.");
+                                        alert("VEHICLE REGISTRATION INITIATED • Secure approval request dispatched to the GreenRide Admin Portal! Awaiting verification by Chief Director Max Mustermann.");
                                     }}
                                     className="flex-[2] py-5 bg-white text-black rounded-2xl font-black text-xs md:text-sm lg:text-base uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_30px_rgba(255,255,255,0.2)]"
                                 >
@@ -4310,7 +4310,7 @@ const DriverDashboard = () => {
                         ) : driverDocs.some(d => d.status === 'pending') ? (
                             <div className="p-4 bg-amber-400/5 border border-amber-400/20 rounded-2xl text-center animate-pulse">
                                 <p className="text-[10px] md:text-xs lg:text-sm font-bold text-amber-400 uppercase tracking-wider">⏳ MANUAL COMPLIANCE AUDIT ACTIVE</p>
-                                <p className="text-[8px] md:text-[10px] lg:text-xs font-semibold text-white/40 mt-1 uppercase">Director Khiam Azizi is reviewing pending documents</p>
+                                <p className="text-[8px] md:text-[10px] lg:text-xs font-semibold text-white/40 mt-1 uppercase">Director Max Mustermann is reviewing pending documents</p>
                             </div>
                         ) : (
                             <div className="p-4 bg-red-500/5 border border-red-500/20 rounded-2xl text-center">

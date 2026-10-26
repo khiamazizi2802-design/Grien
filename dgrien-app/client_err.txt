@@ -1,0 +1,1102 @@
+[2m10:17:40[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <button>. (2121:40)
+
+[0m [90m 2119 |[31m                                                 ))}
+ [90m 2120 |[31m                                             [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+[31m[1m>[22m[31m[90m 2121 |[31m                                         [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m      |[31m                                         [31m[1m^[22m[31m
+ [90m 2122 |[31m                                     [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m 2123 |[31m                                 [33m<[31m[33m/[31m[33mmotion[31m[33m.[31mdiv[33m>[31m
+ [90m 2124 |[31m                             )}[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2121:40
+[33m  2147 |                                                      <div className="space-y-1">
+  2148 |                                                          <h3 className="text-xl font-black italic uppercase tracking-t...
+  2149 |  ...                  <p className="text-[9px] font-bold text-secondary uppercase tracking-widest">Driver: {editingDri...
+       |                                                                 ^
+  2150 |                                                      </div>
+  2151 |                                                      <button onClick={() => setEditingDriver(null)} className="p-3 bg-...[39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOpBaseRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10986:34)
+      at JSXParserMixin.parseExprOpRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10981:21)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10947:27)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10953:21)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10953:21)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10908:17)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+[2m10:17:40[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <button>. (2121:40)
+
+[0m [90m 2119 |[31m                                                 ))}
+ [90m 2120 |[31m                                             [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+[31m[1m>[22m[31m[90m 2121 |[31m                                         [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m      |[31m                                         [31m[1m^[22m[31m
+ [90m 2122 |[31m                                     [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m 2123 |[31m                                 [33m<[31m[33m/[31m[33mmotion[31m[33m.[31mdiv[33m>[31m
+ [90m 2124 |[31m                             )}[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2121:40
+[33m  2147 |                                                      <div className="space-y-1">
+  2148 |                                                          <h3 className="text-xl font-black italic uppercase tracking-t...
+  2149 |  ...                  <p className="text-[9px] font-bold text-secondary uppercase tracking-widest">Driver: {editingDri...
+       |                                                                 ^
+  2150 |                                                      </div>
+  2151 |                                                      <button onClick={() => setEditingDriver(null)} className="p-3 bg-...[39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOpBaseRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10986:34)
+      at JSXParserMixin.parseExprOpRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10981:21)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10947:27)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10953:21)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10953:21)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10908:17)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+[2m10:17:40[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <button>. (2121:40)
+
+[0m [90m 2119 |[31m                                                 ))}
+ [90m 2120 |[31m                                             [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+[31m[1m>[22m[31m[90m 2121 |[31m                                         [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m      |[31m                                         [31m[1m^[22m[31m
+ [90m 2122 |[31m                                     [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m 2123 |[31m                                 [33m<[31m[33m/[31m[33mmotion[31m[33m.[31mdiv[33m>[31m
+ [90m 2124 |[31m                             )}[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2121:40
+[33m  2147 |                                                      <div className="space-y-1">
+  2148 |                                                          <h3 className="text-xl font-black italic uppercase tracking-t...
+  2149 |  ...                  <p className="text-[9px] font-bold text-secondary uppercase tracking-widest">Driver: {editingDri...
+       |                                                                 ^
+  2150 |                                                      </div>
+  2151 |                                                      <button onClick={() => setEditingDriver(null)} className="p-3 bg-...[39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOpBaseRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10986:34)
+      at JSXParserMixin.parseExprOpRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10981:21)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10947:27)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10953:21)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10953:21)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10908:17)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+[2m10:17:40[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <button>. (2121:40)
+
+[0m [90m 2119 |[31m                                                 ))}
+ [90m 2120 |[31m                                             [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+[31m[1m>[22m[31m[90m 2121 |[31m                                         [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m      |[31m                                         [31m[1m^[22m[31m
+ [90m 2122 |[31m                                     [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m 2123 |[31m                                 [33m<[31m[33m/[31m[33mmotion[31m[33m.[31mdiv[33m>[31m
+ [90m 2124 |[31m                             )}[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2121:40
+[33m  2147 |                                                      <div className="space-y-1">
+  2148 |                                                          <h3 className="text-xl font-black italic uppercase tracking-t...
+  2149 |  ...                  <p className="text-[9px] font-bold text-secondary uppercase tracking-widest">Driver: {editingDri...
+       |                                                                 ^
+  2150 |                                                      </div>
+  2151 |                                                      <button onClick={() => setEditingDriver(null)} className="p-3 bg-...[39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOpBaseRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10986:34)
+      at JSXParserMixin.parseExprOpRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10981:21)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10947:27)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10953:21)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10953:21)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10908:17)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+[2m10:17:40[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <button>. (2121:40)
+
+[0m [90m 2119 |[31m                                                 ))}
+ [90m 2120 |[31m                                             [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+[31m[1m>[22m[31m[90m 2121 |[31m                                         [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m      |[31m                                         [31m[1m^[22m[31m
+ [90m 2122 |[31m                                     [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m 2123 |[31m                                 [33m<[31m[33m/[31m[33mmotion[31m[33m.[31mdiv[33m>[31m
+ [90m 2124 |[31m                             )}[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2121:40
+[33m  2147 |                                                      <div className="space-y-1">
+  2148 |                                                          <h3 className="text-xl font-black italic uppercase tracking-t...
+  2149 |  ...                  <p className="text-[9px] font-bold text-secondary uppercase tracking-widest">Driver: {editingDri...
+       |                                                                 ^
+  2150 |                                                      </div>
+  2151 |                                                      <button onClick={() => setEditingDriver(null)} className="p-3 bg-...[39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOpBaseRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10986:34)
+      at JSXParserMixin.parseExprOpRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10981:21)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10947:27)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10953:21)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10953:21)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10908:17)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+[2m10:17:45[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <AnimatePresence>. (2232:70)
+
+[0m [90m 2230 |[31m                                     [33m<[31m[33m/[31m[33m>[31m
+ [90m 2231 |[31m                                 )}
+[31m[1m>[22m[31m[90m 2232 |[31m                             [33m<[31m[33m/[31m[33mAnimatePresence[31m[33m>[31m                        [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m      |[31m                                                                       [31m[1m^[22m[31m
+ [90m 2233 |[31m                                 [33m<[31m[33m/[31m[33mmotion[31m[33m.[31mdiv[33m>[31m
+ [90m 2234 |[31m                             )}
+ [90m 2235 |[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2232:70
+[33m  2258 |                                                          <p className="text-[9px] font-bold text-secondary uppercase t...
+  2259 |                                                      </div>
+  2260 |  ...                                  <button onClick={() => setIsAddingVehicle(false)} className="p-3 bg-btn-sec roun...
+       |                                                                 ^
+  2261 |                                                  </div>
+  2262 |  [39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10893:29)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10885:17)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+[2m10:17:45[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <AnimatePresence>. (2232:70)
+
+[0m [90m 2230 |[31m                                     [33m<[31m[33m/[31m[33m>[31m
+ [90m 2231 |[31m                                 )}
+[31m[1m>[22m[31m[90m 2232 |[31m                             [33m<[31m[33m/[31m[33mAnimatePresence[31m[33m>[31m                        [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m      |[31m                                                                       [31m[1m^[22m[31m
+ [90m 2233 |[31m                                 [33m<[31m[33m/[31m[33mmotion[31m[33m.[31mdiv[33m>[31m
+ [90m 2234 |[31m                             )}
+ [90m 2235 |[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2232:70
+[33m  2258 |                                                          <p className="text-[9px] font-bold text-secondary uppercase t...
+  2259 |                                                      </div>
+  2260 |  ...                                  <button onClick={() => setIsAddingVehicle(false)} className="p-3 bg-btn-sec roun...
+       |                                                                 ^
+  2261 |                                                  </div>
+  2262 |  [39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10893:29)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10885:17)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+[2m10:17:46[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <AnimatePresence>. (2232:70)
+
+[0m [90m 2230 |[31m                                     [33m<[31m[33m/[31m[33m>[31m
+ [90m 2231 |[31m                                 )}
+[31m[1m>[22m[31m[90m 2232 |[31m                             [33m<[31m[33m/[31m[33mAnimatePresence[31m[33m>[31m                        [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m      |[31m                                                                       [31m[1m^[22m[31m
+ [90m 2233 |[31m                                 [33m<[31m[33m/[31m[33mmotion[31m[33m.[31mdiv[33m>[31m
+ [90m 2234 |[31m                             )}
+ [90m 2235 |[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2232:70
+[33m  2258 |                                                          <p className="text-[9px] font-bold text-secondary uppercase t...
+  2259 |                                                      </div>
+  2260 |  ...                                  <button onClick={() => setIsAddingVehicle(false)} className="p-3 bg-btn-sec roun...
+       |                                                                 ^
+  2261 |                                                  </div>
+  2262 |  [39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10893:29)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10885:17)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+[2m10:17:46[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <AnimatePresence>. (2232:70)
+
+[0m [90m 2230 |[31m                                     [33m<[31m[33m/[31m[33m>[31m
+ [90m 2231 |[31m                                 )}
+[31m[1m>[22m[31m[90m 2232 |[31m                             [33m<[31m[33m/[31m[33mAnimatePresence[31m[33m>[31m                        [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m      |[31m                                                                       [31m[1m^[22m[31m
+ [90m 2233 |[31m                                 [33m<[31m[33m/[31m[33mmotion[31m[33m.[31mdiv[33m>[31m
+ [90m 2234 |[31m                             )}
+ [90m 2235 |[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2232:70
+[33m  2258 |                                                          <p className="text-[9px] font-bold text-secondary uppercase t...
+  2259 |                                                      </div>
+  2260 |  ...                                  <button onClick={() => setIsAddingVehicle(false)} className="p-3 bg-btn-sec roun...
+       |                                                                 ^
+  2261 |                                                  </div>
+  2262 |  [39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10893:29)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10885:17)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+[2m10:17:46[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <AnimatePresence>. (2232:70)
+
+[0m [90m 2230 |[31m                                     [33m<[31m[33m/[31m[33m>[31m
+ [90m 2231 |[31m                                 )}
+[31m[1m>[22m[31m[90m 2232 |[31m                             [33m<[31m[33m/[31m[33mAnimatePresence[31m[33m>[31m                        [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m      |[31m                                                                       [31m[1m^[22m[31m
+ [90m 2233 |[31m                                 [33m<[31m[33m/[31m[33mmotion[31m[33m.[31mdiv[33m>[31m
+ [90m 2234 |[31m                             )}
+ [90m 2235 |[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2232:70
+[33m  2258 |                                                          <p className="text-[9px] font-bold text-secondary uppercase t...
+  2259 |                                                      </div>
+  2260 |  ...                                  <button onClick={() => setIsAddingVehicle(false)} className="p-3 bg-btn-sec roun...
+       |                                                                 ^
+  2261 |                                                  </div>
+  2262 |  [39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10893:29)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10885:17)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+[2m10:18:11[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <AnimatePresence>. (2232:70)
+
+[0m [90m 2230 |[39m                                     [33m<[39m[33m/[39m[33m>[39m
+ [90m 2231 |[39m                                 )}
+[31m[1m>[22m[39m[90m 2232 |[39m                             [33m<[39m[33m/[39m[33mAnimatePresence[39m[33m>[39m                        [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m
+ [90m      |[39m                                                                       [31m[1m^[22m[39m
+ [90m 2233 |[39m                                 [33m<[39m[33m/[39m[33mmotion[39m[33m.[39mdiv[33m>[39m
+ [90m 2234 |[39m                             )}
+ [90m 2235 |[39m[0m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2232:70
+[33m  2258 |                                                          <p className="text-[9px] font-bold text-secondary uppercase t...
+  2259 |                                                      </div>
+  2260 |  ...                                  <button onClick={() => setIsAddingVehicle(false)} className="p-3 bg-btn-sec roun...
+       |                                                                 ^
+  2261 |                                                  </div>
+  2262 |  [39m
+[2m10:18:11[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <AnimatePresence>. (2232:70)
+
+[0m [90m 2230 |[31m                                     [33m<[31m[33m/[31m[33m>[31m
+ [90m 2231 |[31m                                 )}
+[31m[1m>[22m[31m[90m 2232 |[31m                             [33m<[31m[33m/[31m[33mAnimatePresence[31m[33m>[31m                        [33m<[31m[33m/[31m[33mdiv[31m[33m>[31m
+ [90m      |[31m                                                                       [31m[1m^[22m[31m
+ [90m 2233 |[31m                                 [33m<[31m[33m/[31m[33mmotion[31m[33m.[31mdiv[33m>[31m
+ [90m 2234 |[31m                             )}
+ [90m 2235 |[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2232:70
+[33m  2258 |                                                          <p className="text-[9px] font-bold text-secondary uppercase t...
+  2259 |                                                      </div>
+  2260 |  ...                                  <button onClick={() => setIsAddingVehicle(false)} className="p-3 bg-btn-sec roun...
+       |                                                                 ^
+  2261 |                                                  </div>
+  2262 |  [39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10893:29)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10885:17)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+[2m10:20:29[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <div>. (2168:28)
+
+[0m [90m 2166 |[31m                                                                 [33m<[31m[33mp[31m className[33m=[31m[32m"text-[8px] font-black text-brand uppercase tracking-widest"[31m[33m>[31m{editingDriver[33m.[31mstatus}[33m<[31m[33m/[31m[33mp[31m[33m>[31m
+ [90m 2167 |[31m                                 )}
+[31m[1m>[22m[31m[90m 2168 |[31m                             [33m<[31m[33m/[31m[33mAnimatePresence[31m[33m>[31m
+ [90m      |[31m                             [31m[1m^[22m[31m
+ [90m 2169 |[31m
+ [90m 2170 |[31m                             {[90m/* --- FLEET ADDITION MODAL --- */[31m}
+ [90m 2171 |[31m                             [33m<[31m[33mAnimatePresence[31m[33m>[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2168:28
+[33m  2192 |                                                          <p className="text-[9px] font-bold text-secondary uppercase t...
+  2193 |                                                      </div>
+  2194 |  ...                                 <button onClick={() => setIsAddingVehicle(false)} className="p-3 bg-btn-sec round...
+       |                                                                 ^
+  2195 |                                                  </div>
+  2196 |  [39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOpBaseRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10986:34)
+      at JSXParserMixin.parseExprOpRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10981:21)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10947:27)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10908:17)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+[2m10:20:29[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <div>. (2168:28)
+
+[0m [90m 2166 |[31m                                                                 [33m<[31m[33mp[31m className[33m=[31m[32m"text-[8px] font-black text-brand uppercase tracking-widest"[31m[33m>[31m{editingDriver[33m.[31mstatus}[33m<[31m[33m/[31m[33mp[31m[33m>[31m
+ [90m 2167 |[31m                                 )}
+[31m[1m>[22m[31m[90m 2168 |[31m                             [33m<[31m[33m/[31m[33mAnimatePresence[31m[33m>[31m
+ [90m      |[31m                             [31m[1m^[22m[31m
+ [90m 2169 |[31m
+ [90m 2170 |[31m                             {[90m/* --- FLEET ADDITION MODAL --- */[31m}
+ [90m 2171 |[31m                             [33m<[31m[33mAnimatePresence[31m[33m>[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2168:28
+[33m  2192 |                                                          <p className="text-[9px] font-bold text-secondary uppercase t...
+  2193 |                                                      </div>
+  2194 |  ...                                 <button onClick={() => setIsAddingVehicle(false)} className="p-3 bg-btn-sec round...
+       |                                                                 ^
+  2195 |                                                  </div>
+  2196 |  [39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOpBaseRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10986:34)
+      at JSXParserMixin.parseExprOpRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10981:21)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10947:27)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10908:17)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+[2m10:20:29[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <div>. (2168:28)
+
+[0m [90m 2166 |[31m                                                                 [33m<[31m[33mp[31m className[33m=[31m[32m"text-[8px] font-black text-brand uppercase tracking-widest"[31m[33m>[31m{editingDriver[33m.[31mstatus}[33m<[31m[33m/[31m[33mp[31m[33m>[31m
+ [90m 2167 |[31m                                 )}
+[31m[1m>[22m[31m[90m 2168 |[31m                             [33m<[31m[33m/[31m[33mAnimatePresence[31m[33m>[31m
+ [90m      |[31m                             [31m[1m^[22m[31m
+ [90m 2169 |[31m
+ [90m 2170 |[31m                             {[90m/* --- FLEET ADDITION MODAL --- */[31m}
+ [90m 2171 |[31m                             [33m<[31m[33mAnimatePresence[31m[33m>[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2168:28
+[33m  2192 |                                                          <p className="text-[9px] font-bold text-secondary uppercase t...
+  2193 |                                                      </div>
+  2194 |  ...                                 <button onClick={() => setIsAddingVehicle(false)} className="p-3 bg-btn-sec round...
+       |                                                                 ^
+  2195 |                                                  </div>
+  2196 |  [39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOpBaseRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10986:34)
+      at JSXParserMixin.parseExprOpRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10981:21)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10947:27)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10908:17)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+[2m10:20:29[22m [31m[1m[vite][22m[39m [31mInternal server error: C:\Users\AURUMPC\Desktop\radar-ride\client\src\pages\ManagerDashboard.jsx: Expected corresponding JSX closing tag for <div>. (2168:28)
+
+[0m [90m 2166 |[31m                                                                 [33m<[31m[33mp[31m className[33m=[31m[32m"text-[8px] font-black text-brand uppercase tracking-widest"[31m[33m>[31m{editingDriver[33m.[31mstatus}[33m<[31m[33m/[31m[33mp[31m[33m>[31m
+ [90m 2167 |[31m                                 )}
+[31m[1m>[22m[31m[90m 2168 |[31m                             [33m<[31m[33m/[31m[33mAnimatePresence[31m[33m>[31m
+ [90m      |[31m                             [31m[1m^[22m[31m
+ [90m 2169 |[31m
+ [90m 2170 |[31m                             {[90m/* --- FLEET ADDITION MODAL --- */[31m}
+ [90m 2171 |[31m                             [33m<[31m[33mAnimatePresence[31m[33m>[31m[0m[39m
+  Plugin: [35mvite:react-babel[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/ManagerDashboard.jsx[39m:2168:28
+[33m  2192 |                                                          <p className="text-[9px] font-bold text-secondary uppercase t...
+  2193 |                                                      </div>
+  2194 |  ...                                 <button onClick={() => setIsAddingVehicle(false)} className="p-3 bg-btn-sec round...
+       |                                                                 ^
+  2195 |                                                  </div>
+  2196 |  [39m
+      at constructor (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:365:19)
+      at JSXParserMixin.raise (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:6599:19)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4727:16)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseMaybeAssignAllowIn (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10800:17)
+      at JSXParserMixin.parseMaybeAssignAllowInOrVoidPattern (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12493:17)
+      at JSXParserMixin.parseParenAndDistinguishExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11675:28)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11331:23)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4764:20)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOpBaseRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10986:34)
+      at JSXParserMixin.parseExprOpRightExpr (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10981:21)
+      at JSXParserMixin.parseExprOp (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10947:27)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10908:17)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+      at JSXParserMixin.parseMaybeAssign (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10831:21)
+      at JSXParserMixin.parseExpressionBase (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10784:23)
+      at C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:39
+      at JSXParserMixin.allowInAnd (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:12426:12)
+      at JSXParserMixin.parseExpression (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10780:17)
+      at JSXParserMixin.jsxParseExpressionContainer (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4632:31)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4711:36)
+      at JSXParserMixin.jsxParseElementAt (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4698:32)
+      at JSXParserMixin.jsxParseElement (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4749:17)
+      at JSXParserMixin.parseExprAtom (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:4759:19)
+      at JSXParserMixin.parseExprSubscripts (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11081:23)
+      at JSXParserMixin.parseUpdate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11066:21)
+      at JSXParserMixin.parseMaybeUnary (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:11046:23)
+      at JSXParserMixin.parseMaybeUnaryOrPrivate (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10899:61)
+      at JSXParserMixin.parseExprOps (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10904:23)
+      at JSXParserMixin.parseMaybeConditional (C:\Users\AURUMPC\Desktop\radar-ride\client\node_modules\@babel\parser\lib\index.js:10881:23)
+[2m11:30:41[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate "className" attribute in JSX element[33m
+1337 |                                          <p className="text-[8px] text-center text-gray-500 uppercase font-black track...
+1338 |                                          <div className="flex gap-2">
+1339 |  ...hter flex items-center justify-center gap-2 transition-all" className="flex-1 py-3 rounded-xl text-[10px] font-bla...
+     |                                                                 ^
+1340 |                                                  <Mail size={12} style={{ color: 'var(--brand)' }} />
+1341 |                                                  Via Email
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/Home.jsx[39m
+[2m11:30:41[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate "className" attribute in JSX element[33m
+1341 |                                                  Via Email
+1342 |                                              </button>
+1343 |  ...hter flex items-center justify-center gap-2 transition-all" className="flex-1 py-3 rounded-xl text-[10px] font-bla...
+     |                                                                 ^
+1344 |                                                  <Phone size={12} style={{ color: 'var(--brand)' }} />
+1345 |                                                  Via Phone
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/Home.jsx[39m
+[2m11:30:41[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate "className" attribute in JSX element[33m
+1399 |  
+1400 |                      {/* Passenger Profile Card */}
+1401 |  ...sName="rounded-[2.5rem] p-6 relative overflow-hidden group" className="flex-1 py-3 rounded-xl text-[10px] font-bla...
+     |                                                                 ^
+1402 |                          <div className="absolute top-0 right-0 p-4">
+1403 |                              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-white" style={{ bac...
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/Home.jsx[39m
+[2m11:30:41[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate "className" attribute in JSX element[33m
+1426 |                                  {sharingMatch?.personality.map((p, i) =>
+1427 |                  <div key={i} className="flex flex-col items-center gap-1 group/p relative">
+1428 |  ...enter justify-center text-xl cursor-default transition-all" className="w-12 h-12 rounded-2xl flex items-center jus...
+     |                                                                 ^
+1429 |                                              {p.emoji}
+1430 |                                          </div>
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/Home.jsx[39m
+[2m11:34:12[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate "className" attribute in JSX element[33m
+1337 |                                          <p className="text-[8px] text-center text-gray-500 uppercase font-black track...
+1338 |                                          <div className="flex gap-2">
+1339 |  ...hter flex items-center justify-center gap-2 transition-all" className="flex-1 py-3 rounded-xl text-[10px] font-bla...
+     |                                                                 ^
+1340 |                                                  <Mail size={12} style={{ color: 'var(--brand)' }} />
+1341 |                                                  Via Email
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/Home.jsx[39m
+[2m11:34:12[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate "className" attribute in JSX element[33m
+1341 |                                                  Via Email
+1342 |                                              </button>
+1343 |  ...hter flex items-center justify-center gap-2 transition-all" className="flex-1 py-3 rounded-xl text-[10px] font-bla...
+     |                                                                 ^
+1344 |                                                  <Phone size={12} style={{ color: 'var(--brand)' }} />
+1345 |                                                  Via Phone
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/Home.jsx[39m
+[2m11:34:12[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate "className" attribute in JSX element[33m
+1399 |  
+1400 |                      {/* Passenger Profile Card */}
+1401 |  ...sName="rounded-[2.5rem] p-6 relative overflow-hidden group" className="flex-1 py-3 rounded-xl text-[10px] font-bla...
+     |                                                                 ^
+1402 |                          <div className="absolute top-0 right-0 p-4">
+1403 |                              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-white" style={{ bac...
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/Home.jsx[39m
+[2m11:34:12[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [33mwarning: [33mDuplicate "className" attribute in JSX element[33m
+1426 |                                  {sharingMatch?.personality.map((p, i) =>
+1427 |                  <div key={i} className="flex flex-col items-center gap-1 group/p relative">
+1428 |  ...enter justify-center text-xl cursor-default transition-all" className="w-12 h-12 rounded-2xl flex items-center jus...
+     |                                                                 ^
+1429 |                                              {p.emoji}
+1430 |                                          </div>
+[39m
+  Plugin: [35mvite:esbuild[39m
+  File: [36mC:/Users/AURUMPC/Desktop/radar-ride/client/src/pages/Home.jsx[39m

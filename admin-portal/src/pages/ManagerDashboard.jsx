@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { safeSetItem } from '../utils/storageHelper';
 import { db as fbDb, storage } from '../config/firebase';
 import { doc, getDoc, updateDoc, setDoc, deleteDoc, collection, query, where, getDocs, onSnapshot, orderBy } from 'firebase/firestore';
@@ -177,6 +177,7 @@ const ManagerDashboard = () => {
     const { theme, setTheme } = useTheme();
     const isLight = theme === 'light';
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { lang, setLang, t } = useLanguage();
     const [view, setView] = useState('overview');
     
@@ -211,10 +212,47 @@ const ManagerDashboard = () => {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [broadcastCaption, setBroadcastCaption] = useState('');
 
-    const [shuttleRequests, setShuttleRequests] = useState([
-        { id: 1, title: 'Airport FRA T1 Group Transfer', guests: 8, bags: 14, time: '14:00 - 14:30 Arrival', vehicle: '2x VIP Sprinter Vans', status: 'ACCEPTED', distanceKm: 14.5, pricePerPax: 13.00, totalPrice: 104.00 },
-        { id: 2, title: 'Airport MUC T2 Group Transfer', guests: 2, bags: 3, time: '16:15 - 16:45 Arrival', vehicle: '1x Executive Van', status: 'PENDING', distanceKm: 9.8, pricePerPax: 11.50, totalPrice: 23.00 }
-    ]);
+    // Real Partner Account Detection vs Demo/Preview Mode
+    const [currentPartner, setCurrentPartner] = useState(() => {
+        try {
+            const saved = localStorage.getItem('green_current_partner');
+            if (saved) return JSON.parse(saved);
+        } catch (e) {}
+        return null;
+    });
+    const isRealPartner = Boolean(currentPartner?.isRegisteredPartner);
+
+    const [shuttleRequests, setShuttleRequests] = useState(() => {
+        try {
+            const savedPartner = JSON.parse(localStorage.getItem('green_current_partner') || 'null');
+            if (savedPartner?.isRegisteredPartner) {
+                const partnerShuttles = localStorage.getItem(`green_shuttles_${savedPartner.id}`);
+                return partnerShuttles ? JSON.parse(partnerShuttles) : [];
+            }
+        } catch (e) {}
+        return [
+            { id: 1, title: 'Airport FRA T1 Group Transfer', guests: 8, bags: 14, time: '14:00 - 14:30 Arrival', vehicle: '2x VIP Sprinter Vans', status: 'PENDING', distanceKm: 14.5, pricePerPax: 13.00, totalPrice: 104.00 },
+            { id: 2, title: 'Airport MUC T2 Group Transfer', guests: 2, bags: 3, time: '16:15 - 16:45 Arrival', vehicle: '1x Executive Van', status: 'PENDING', distanceKm: 9.8, pricePerPax: 11.50, totalPrice: 23.00 }
+        ];
+    });
+
+    // Synchronize shuttleRequests strictly based on active partner account (DSGVO Isolation)
+    useEffect(() => {
+        if (currentPartner && currentPartner.isRegisteredPartner) {
+            try {
+                const partnerShuttles = localStorage.getItem(`green_shuttles_${currentPartner.id}`);
+                setShuttleRequests(partnerShuttles ? JSON.parse(partnerShuttles) : []);
+            } catch (e) {
+                setShuttleRequests([]);
+            }
+        } else {
+            // Demo mode: standard mock requests
+            setShuttleRequests([
+                { id: 1, title: 'Airport FRA T1 Group Transfer', guests: 8, bags: 14, time: '14:00 - 14:30 Arrival', vehicle: '2x VIP Sprinter Vans', status: 'PENDING', distanceKm: 14.5, pricePerPax: 13.00, totalPrice: 104.00 },
+                { id: 2, title: 'Airport MUC T2 Group Transfer', guests: 2, bags: 3, time: '16:15 - 16:45 Arrival', vehicle: '1x Executive Van', status: 'PENDING', distanceKm: 9.8, pricePerPax: 11.50, totalPrice: 23.00 }
+            ]);
+        }
+    }, [currentPartner]);
 
     const handleAcceptShuttle = (id) => {
         setShuttleRequests(prev => prev.map(req => req.id === id ? { ...req, status: 'ACCEPTED' } : req));
@@ -313,10 +351,10 @@ const ManagerDashboard = () => {
                 pax: 2,
                 bags: 2,
                 pickup: 'Frankfurt Hbf (Südausgang VIP Zone)',
-                destination: 'Green Stadium Arena (VIP Gate 2)',
+                destination: 'Grien Stadium Arena (VIP Gate 2)',
                 date: '05.10.2026',
                 time: '16:30 Uhr',
-                vehicleType: 'Green VIP Shuttle Van',
+                vehicleType: 'Grien VIP Shuttle Van',
                 pricePerPax: 16.00,
                 totalPrice: 32.00,
                 status: 'sold'
@@ -328,7 +366,7 @@ const ManagerDashboard = () => {
                 pax: 1,
                 bags: 1,
                 pickup: 'Flughafen FRA (Terminal 1 Ankunft B)',
-                destination: 'Green Stadium Arena (Haupteingang)',
+                destination: 'Grien Stadium Arena (Haupteingang)',
                 date: '05.10.2026',
                 time: '17:00 Uhr',
                 vehicleType: 'Executive EV Sedan',
@@ -343,10 +381,10 @@ const ManagerDashboard = () => {
                 pax: 2,
                 bags: 2,
                 pickup: 'Steigenberger Icon Frankfurter Hof',
-                destination: 'Green Stadium Arena (VIP Gate 1)',
+                destination: 'Grien Stadium Arena (VIP Gate 1)',
                 date: '12.10.2026',
                 time: '18:15 Uhr',
-                vehicleType: 'Green VIP Shuttle Van',
+                vehicleType: 'Grien VIP Shuttle Van',
                 pricePerPax: 16.00,
                 totalPrice: 32.00,
                 status: 'sold'
@@ -358,7 +396,7 @@ const ManagerDashboard = () => {
                 pax: 1,
                 bags: 1,
                 pickup: 'Hauptbahnhof Frankfurt (Nordseite)',
-                destination: 'Green Stadium Arena (Südtor)',
+                destination: 'Grien Stadium Arena (Südtor)',
                 date: '12.10.2026',
                 time: '18:30 Uhr',
                 vehicleType: 'Executive EV Sedan',
@@ -373,7 +411,7 @@ const ManagerDashboard = () => {
                 pax: 1,
                 bags: 0,
                 pickup: 'Königsallee / Grand Hotel',
-                destination: 'Green Stadium Arena (VIP Gate 2)',
+                destination: 'Grien Stadium Arena (VIP Gate 2)',
                 date: '12.10.2026',
                 time: '18:45 Uhr',
                 vehicleType: 'Executive EV Sedan',
@@ -388,10 +426,10 @@ const ManagerDashboard = () => {
                 pax: 2,
                 bags: 2,
                 pickup: 'Flughafen FRA (Terminal 2)',
-                destination: 'Green Stadium Arena (Konzerteinlass)',
+                destination: 'Grien Stadium Arena (Konzerteinlass)',
                 date: '18.10.2026',
                 time: '17:30 Uhr',
-                vehicleType: 'Green VIP Shuttle Van',
+                vehicleType: 'Grien VIP Shuttle Van',
                 pricePerPax: 16.00,
                 totalPrice: 32.00,
                 status: 'sold'
@@ -403,7 +441,7 @@ const ManagerDashboard = () => {
                 pax: 3,
                 bags: 4,
                 pickup: 'Privatjet Terminal FRA VIP Gate',
-                destination: 'Green Stadium Arena (Presidential Gate)',
+                destination: 'Grien Stadium Arena (Presidential Gate)',
                 date: '25.10.2026',
                 time: '19:00 Uhr',
                 vehicleType: 'VIP Sprinter Lounge Van',
@@ -418,10 +456,10 @@ const ManagerDashboard = () => {
                 pax: 2,
                 bags: 1,
                 pickup: 'Hotel Hilton Frankfurt City',
-                destination: 'Green Stadium Arena (Haupteingang)',
+                destination: 'Grien Stadium Arena (Haupteingang)',
                 date: '05.10.2026',
                 time: '17:45 Uhr',
-                vehicleType: 'Green VIP Shuttle Van',
+                vehicleType: 'Grien VIP Shuttle Van',
                 pricePerPax: 16.00,
                 totalPrice: 32.00,
                 status: 'reserved'
@@ -433,7 +471,7 @@ const ManagerDashboard = () => {
                 pax: 4,
                 bags: 3,
                 pickup: 'Maritim Hotel Frankfurt',
-                destination: 'Green Stadium Arena (VIP Gate 2)',
+                destination: 'Grien Stadium Arena (VIP Gate 2)',
                 date: '12.10.2026',
                 time: '18:00 Uhr',
                 vehicleType: 'VIP Sprinter Lounge Van',
@@ -448,7 +486,7 @@ const ManagerDashboard = () => {
                 pax: 2,
                 bags: 2,
                 pickup: 'InterContinental Frankfurt',
-                destination: 'Green Stadium Arena (VIP Gate 1)',
+                destination: 'Grien Stadium Arena (VIP Gate 1)',
                 date: '25.10.2026',
                 time: '18:30 Uhr',
                 vehicleType: 'Executive EV Sedan',
@@ -463,7 +501,7 @@ const ManagerDashboard = () => {
                 pax: 1,
                 bags: 1,
                 pickup: 'Frankfurt Hbf Vorplatz',
-                destination: 'Green Stadium Arena (Südtor)',
+                destination: 'Grien Stadium Arena (Südtor)',
                 date: '12.10.2026',
                 time: '17:15 Uhr',
                 vehicleType: 'Executive EV Sedan',
@@ -510,7 +548,7 @@ const ManagerDashboard = () => {
         }
 
         const todayStr = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        const bName = 'Green Stadium Arena';
+        const bName = 'Grien Stadium Arena';
 
         const rowsHtml = stadiumShuttleData.map(s => `
             <tr>
@@ -578,14 +616,14 @@ const ManagerDashboard = () => {
             <body>
                 <div class="header">
                     <div>
-                        <div class="logo-title">KHIAM GREEN VIP FLEET</div>
+                        <div class="logo-title">GRIEN VIP FLEET</div>
                         <div class="logo-sub">B2B Shuttle-Service Abrechnung & Kontingente</div>
                     </div>
                     <div class="meta-right">
                         <div><strong>Partner:</strong> ${bName}</div>
                         <div><strong>Datum:</strong> ${todayStr}</div>
                         <div><strong>Dokumenten-Nr.:</strong> SHT-${Date.now().toString().slice(-6)}</div>
-                        <div><strong>Tarif-Modell:</strong> Green B2B Staffeltarif (€16,00 / Pax)</div>
+                        <div><strong>Tarif-Modell:</strong> Grien B2B Staffeltarif (€16,00 / Pax)</div>
                     </div>
                 </div>
 
@@ -644,13 +682,13 @@ const ManagerDashboard = () => {
                         <strong style="color: #ef4444;">€${totalShuttleStats.cancelledTotal.toFixed(2)}</strong>
                     </div>
                     <div class="total-row final">
-                        <span>Abrechnungsbetrag Green:</span>
+                        <span>Abrechnungsbetrag Grien:</span>
                         <span>€${totalShuttleStats.soldTotal.toFixed(2)}</span>
                     </div>
                 </div>
 
                 <div class="footer">
-                    <div>Khiam Green Technologies GmbH &bull; B2B Fleet Clearing &bull; info@green.de</div>
+                    <div>Grien Technologies GmbH &bull; B2B Fleet Clearing &bull; info@grien.de</div>
                     <div>Automatisch erstellter Abrechnungsbericht &bull; Gültig ohne Unterschrift</div>
                 </div>
 
@@ -751,30 +789,30 @@ const ManagerDashboard = () => {
     // Hotel Shuttle Bookings Telemetry Data (14 sold @ €16,00 = €224,00)
     const hotelShuttleData = useMemo(() => {
         return [
-            { id: 'SH-H01', guestName: 'Dr. Martin Lindner', guestPhone: '+49 171 2891029', pax: 2, bags: 2, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Green Hotel & Spa (VIP Eingang)', date: '05.10.2026', time: '13:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
-            { id: 'SH-H02', guestName: 'Beate Kaufmann', guestPhone: '+49 152 7719203', pax: 1, bags: 1, pickup: 'Frankfurt Hbf (Südausgang)', destination: 'Green Hotel & Spa (Lobby)', date: '05.10.2026', time: '14:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
-            { id: 'SH-H03', guestName: 'Monika Wagner', guestPhone: '+43 664 882910', pax: 2, bags: 2, pickup: 'Flughafen FRA (Terminal 2)', destination: 'Green Hotel & Spa (Lobby)', date: '05.10.2026', time: '14:45 Uhr', vehicleType: 'Green VIP Shuttle Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
-            { id: 'SH-H04', guestName: 'Alexander Schulz', guestPhone: '+49 176 4492019', pax: 1, bags: 1, pickup: 'Messe Frankfurt (Tor Ost)', destination: 'Green Hotel & Spa (Haupteingang)', date: '05.10.2026', time: '15:15 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
-            { id: 'SH-H05', guestName: 'Frank Zimmermann', guestPhone: '+49 160 3381920', pax: 2, bags: 2, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Green Hotel & Spa (VIP Eingang)', date: '05.10.2026', time: '16:00 Uhr', vehicleType: 'Green VIP Shuttle Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
-            { id: 'SH-H06', guestName: 'Nadine Meier', guestPhone: '+49 173 9920182', pax: 1, bags: 1, pickup: 'Frankfurt Hbf (Vorplatz)', destination: 'Green Hotel & Spa (Lobby)', date: '06.10.2026', time: '11:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
-            { id: 'SH-H07', guestName: 'Elena Rostova', guestPhone: '+33 6 12345678', pax: 1, bags: 1, pickup: 'Flughafen FRA (Terminal 2)', destination: 'Green Hotel & Spa (Lobby)', date: '06.10.2026', time: '12:15 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
-            { id: 'SH-H08', guestName: 'Dr. Hans Müller', guestPhone: '+49 160 5549210', pax: 1, bags: 1, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Green Hotel & Spa (VIP Eingang)', date: '06.10.2026', time: '13:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
-            { id: 'SH-H09', guestName: 'Janina Beck', guestPhone: '+49 175 8839201', pax: 2, bags: 2, pickup: 'Alte Oper Frankfurt', destination: 'Green Hotel & Spa (Lobby)', date: '06.10.2026', time: '17:30 Uhr', vehicleType: 'Green VIP Shuttle Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
-            { id: 'SH-H10', guestName: 'Konsul E. Von Berg', guestPhone: '+41 79 3392019', pax: 2, bags: 3, pickup: 'Privatjet Terminal FRA Gate 1', destination: 'Green Hotel & Spa (Presidential Gate)', date: '06.10.2026', time: '18:45 Uhr', vehicleType: 'VIP Sprinter Lounge Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
-            { id: 'SH-H11', guestName: 'Maximilian Weber', guestPhone: '+49 171 4920192', pax: 1, bags: 1, pickup: 'Green Hotel & Spa', destination: 'Flughafen FRA (Terminal 1)', date: '07.10.2026', time: '07:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
-            { id: 'SH-H12', guestName: 'Laura Becker', guestPhone: '+49 152 8392011', pax: 1, bags: 1, pickup: 'Green Hotel & Spa', destination: 'Messe Frankfurt (Tor Süd)', date: '07.10.2026', time: '08:45 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
-            { id: 'SH-H13', guestName: 'Thomas Fischer', guestPhone: '+49 151 7739204', pax: 1, bags: 0, pickup: 'Green Hotel & Spa', destination: 'Frankfurt Hbf (Gleis 1)', date: '07.10.2026', time: '10:15 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
-            { id: 'SH-H14', guestName: 'Dennis Meyer', guestPhone: '+49 172 3391028', pax: 1, bags: 1, pickup: 'Green Hotel & Spa', destination: 'Flughafen FRA (Terminal 2)', date: '07.10.2026', time: '11:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H01', guestName: 'Dr. Martin Lindner', guestPhone: '+49 171 2891029', pax: 2, bags: 2, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Grien Palace & Spa (VIP Eingang)', date: '05.10.2026', time: '13:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H02', guestName: 'Beate Kaufmann', guestPhone: '+49 152 7719203', pax: 1, bags: 1, pickup: 'Frankfurt Hbf (Südausgang)', destination: 'Grien Palace & Spa (Lobby)', date: '05.10.2026', time: '14:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H03', guestName: 'Monika Wagner', guestPhone: '+43 664 882910', pax: 2, bags: 2, pickup: 'Flughafen FRA (Terminal 2)', destination: 'Grien Palace & Spa (Lobby)', date: '05.10.2026', time: '14:45 Uhr', vehicleType: 'Grien VIP Shuttle Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H04', guestName: 'Alexander Schulz', guestPhone: '+49 176 4492019', pax: 1, bags: 1, pickup: 'Messe Frankfurt (Tor Ost)', destination: 'Grien Palace & Spa (Haupteingang)', date: '05.10.2026', time: '15:15 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H05', guestName: 'Frank Zimmermann', guestPhone: '+49 160 3381920', pax: 2, bags: 2, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Grien Palace & Spa (VIP Eingang)', date: '05.10.2026', time: '16:00 Uhr', vehicleType: 'Grien VIP Shuttle Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H06', guestName: 'Nadine Meier', guestPhone: '+49 173 9920182', pax: 1, bags: 1, pickup: 'Frankfurt Hbf (Vorplatz)', destination: 'Grien Palace & Spa (Lobby)', date: '06.10.2026', time: '11:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H07', guestName: 'Elena Rostova', guestPhone: '+33 6 12345678', pax: 1, bags: 1, pickup: 'Flughafen FRA (Terminal 2)', destination: 'Grien Palace & Spa (Lobby)', date: '06.10.2026', time: '12:15 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H08', guestName: 'Dr. Hans Müller', guestPhone: '+49 160 5549210', pax: 1, bags: 1, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Grien Palace & Spa (VIP Eingang)', date: '06.10.2026', time: '13:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H09', guestName: 'Janina Beck', guestPhone: '+49 175 8839201', pax: 2, bags: 2, pickup: 'Alte Oper Frankfurt', destination: 'Grien Palace & Spa (Lobby)', date: '06.10.2026', time: '17:30 Uhr', vehicleType: 'Grien VIP Shuttle Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H10', guestName: 'Konsul E. Von Berg', guestPhone: '+41 79 3392019', pax: 2, bags: 3, pickup: 'Privatjet Terminal FRA Gate 1', destination: 'Grien Palace & Spa (Presidential Gate)', date: '06.10.2026', time: '18:45 Uhr', vehicleType: 'VIP Sprinter Lounge Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H11', guestName: 'Maximilian Weber', guestPhone: '+49 171 4920192', pax: 1, bags: 1, pickup: 'Grien Palace & Spa', destination: 'Flughafen FRA (Terminal 1)', date: '07.10.2026', time: '07:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H12', guestName: 'Laura Becker', guestPhone: '+49 152 8392011', pax: 1, bags: 1, pickup: 'Grien Palace & Spa', destination: 'Messe Frankfurt (Tor Süd)', date: '07.10.2026', time: '08:45 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H13', guestName: 'Thomas Fischer', guestPhone: '+49 151 7739204', pax: 1, bags: 0, pickup: 'Grien Palace & Spa', destination: 'Frankfurt Hbf (Gleis 1)', date: '07.10.2026', time: '10:15 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
+            { id: 'SH-H14', guestName: 'Dennis Meyer', guestPhone: '+49 172 3391028', pax: 1, bags: 1, pickup: 'Grien Palace & Spa', destination: 'Flughafen FRA (Terminal 2)', date: '07.10.2026', time: '11:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'sold' },
 
             // Reserved Shuttles (4 transfers)
-            { id: 'SH-H15', guestName: 'Christian Wolf', guestPhone: '+49 173 1198273', pax: 1, bags: 1, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Green Hotel & Spa (Lobby)', date: '08.10.2026', time: '14:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'reserved' },
-            { id: 'SH-H16', guestName: 'Svenja Otto', guestPhone: '+49 176 8839102', pax: 1, bags: 1, pickup: 'Frankfurt Hbf (Nordseite)', destination: 'Green Hotel & Spa (Lobby)', date: '09.10.2026', time: '15:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'reserved' },
-            { id: 'SH-H17', guestName: 'Marc Oster', guestPhone: '+49 175 4482910', pax: 2, bags: 2, pickup: 'Flughafen FRA (Terminal 2)', destination: 'Green Hotel & Spa (Lobby)', date: '08.10.2026', time: '16:15 Uhr', vehicleType: 'Green VIP Shuttle Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'reserved' },
-            { id: 'SH-H18', guestName: 'Andreas Lang', guestPhone: '+49 170 3381902', pax: 4, bags: 4, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Green Hotel & Spa (VIP Eingang)', date: '12.10.2026', time: '18:00 Uhr', vehicleType: 'VIP Sprinter Lounge Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'reserved' },
+            { id: 'SH-H15', guestName: 'Christian Wolf', guestPhone: '+49 173 1198273', pax: 1, bags: 1, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Grien Palace & Spa (Lobby)', date: '08.10.2026', time: '14:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'reserved' },
+            { id: 'SH-H16', guestName: 'Svenja Otto', guestPhone: '+49 176 8839102', pax: 1, bags: 1, pickup: 'Frankfurt Hbf (Nordseite)', destination: 'Grien Palace & Spa (Lobby)', date: '09.10.2026', time: '15:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'reserved' },
+            { id: 'SH-H17', guestName: 'Marc Oster', guestPhone: '+49 175 4482910', pax: 2, bags: 2, pickup: 'Flughafen FRA (Terminal 2)', destination: 'Grien Palace & Spa (Lobby)', date: '08.10.2026', time: '16:15 Uhr', vehicleType: 'Grien VIP Shuttle Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'reserved' },
+            { id: 'SH-H18', guestName: 'Andreas Lang', guestPhone: '+49 170 3381902', pax: 4, bags: 4, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Grien Palace & Spa (VIP Eingang)', date: '12.10.2026', time: '18:00 Uhr', vehicleType: 'VIP Sprinter Lounge Van', pricePerPax: 16.00, totalPrice: 16.00, status: 'reserved' },
 
             // Cancelled Shuttles (2 transfers)
-            { id: 'SH-H19', guestName: 'Jens Lehmann', guestPhone: '+49 171 5592019', pax: 1, bags: 1, pickup: 'Frankfurt Hbf (Südausgang)', destination: 'Green Hotel & Spa (Lobby)', date: '05.10.2026', time: '16:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'cancelled' },
-            { id: 'SH-H20', guestName: 'Lukas May', guestPhone: '+49 177 4482019', pax: 1, bags: 1, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Green Hotel & Spa (Lobby)', date: '05.10.2026', time: '17:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'cancelled' }
+            { id: 'SH-H19', guestName: 'Jens Lehmann', guestPhone: '+49 171 5592019', pax: 1, bags: 1, pickup: 'Frankfurt Hbf (Südausgang)', destination: 'Grien Palace & Spa (Lobby)', date: '05.10.2026', time: '16:30 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'cancelled' },
+            { id: 'SH-H20', guestName: 'Lukas May', guestPhone: '+49 177 4482019', pax: 1, bags: 1, pickup: 'Flughafen FRA (Terminal 1)', destination: 'Grien Palace & Spa (Lobby)', date: '05.10.2026', time: '17:00 Uhr', vehicleType: 'Executive EV Sedan', pricePerPax: 16.00, totalPrice: 16.00, status: 'cancelled' }
         ];
     }, []);
 
@@ -882,14 +920,14 @@ const ManagerDashboard = () => {
             <body>
                 <div class="header">
                     <div>
-                        <div class="logo-title">KHIAM GREEN HOTEL CONCIERGE & FLEET</div>
+                        <div class="logo-title">GRIEN HOTEL CONCIERGE & FLEET</div>
                         <div class="logo-sub">B2B Hotel Zimmer & Shuttle Abrechnung</div>
                     </div>
                     <div class="meta-right">
                         <div><strong>Hotel Partner:</strong> ${hName}</div>
                         <div><strong>Datum:</strong> ${todayStr}</div>
                         <div><strong>Dokumenten-Nr.:</strong> HTL-SHT-${Date.now().toString().slice(-6)}</div>
-                        <div><strong>Tarif-Modell:</strong> Green B2B Hotel-Staffeltarif (€16,00 / Fahrt)</div>
+                        <div><strong>Tarif-Modell:</strong> Grien B2B Hotel-Staffeltarif (€16,00 / Fahrt)</div>
                     </div>
                 </div>
 
@@ -948,13 +986,13 @@ const ManagerDashboard = () => {
                         <strong style="color: #ef4444;">€${totalHotelShuttleStats.cancelledTotal.toFixed(2)}</strong>
                     </div>
                     <div class="total-row final">
-                        <span>Abrechnungsbetrag Green:</span>
+                        <span>Abrechnungsbetrag Grien:</span>
                         <span>€${totalHotelShuttleStats.soldTotal.toFixed(2)}</span>
                     </div>
                 </div>
 
                 <div class="footer">
-                    <div>Khiam Green Technologies GmbH &bull; B2B Fleet Clearing &bull; info@green.de</div>
+                    <div>Grien Technologies GmbH &bull; B2B Fleet Clearing &bull; info@grien.de</div>
                     <div>Automatisch erstellter Abrechnungsbericht Hotel &bull; Gültig ohne Unterschrift</div>
                 </div>
 
@@ -1000,8 +1038,10 @@ const ManagerDashboard = () => {
         }
         return false;
     };
-    const userEmailKey = user?.email ? user.email.replace(/[^a-zA-Z0-9]/g, '_') : 'default';
-    const isDemo = ['manager@green.de', 'restaurant@green.de', 'club@green.de', 'hotel@green.de', 'stadium@green.de'].includes(user?.email?.toLowerCase());
+    const userEmailKey = currentPartner?.email 
+        ? currentPartner.email.replace(/[^a-zA-Z0-9]/g, '_') 
+        : (user?.email ? user.email.replace(/[^a-zA-Z0-9]/g, '_') : 'demo');
+    const isDemo = ['manager@grien.de', 'restaurant@green.de', 'club@green.de', 'hotel@green.de', 'stadium@green.de'].includes(user?.email?.toLowerCase());
 
     const [staffList, setStaffList] = useState(() => {
         const saved = localStorage.getItem(`green_staff_list_${userEmailKey}`);
@@ -1015,24 +1055,57 @@ const ManagerDashboard = () => {
         return [];
     });
     
-    // Determine the initial context based on manager email/identity
+    // Determine the initial context based on URL search param, saved preference or manager identity
     const getInitialContext = () => {
+        const rawMode = searchParams.get('mode');
+        if (rawMode) {
+            const m = rawMode.toLowerCase();
+            if (m === 'hotel' || m === 'hm') return 'HM';
+            if (m === 'stadium' || m === 'sm') return 'SM';
+            if (m === 'fleet' || m === 'fm') return 'FM';
+            if (m === 'restaurant' || m === 'rm') return 'RM';
+            if (m === 'club' || m === 'cm') return 'CM';
+            if (m === 'bar' || m === 'bm') return 'BM';
+        }
+        const demoSaved = localStorage.getItem('green_manager_context_demo');
+        if (demoSaved) return demoSaved;
+        const saved = localStorage.getItem(`green_manager_context_${userEmailKey}`);
+        if (saved) return saved;
         if (user?.businessType && user?.businessType !== 'ALL') return user.businessType;
         if (user?.email?.includes('bar')) return 'BM';
         if (user?.email?.includes('restaurant') || user?.email?.includes('food')) return 'RM';
         if (user?.email?.includes('hotel') || user?.email?.includes('palace')) return 'HM';
         if (user?.email?.includes('club') || user?.email?.includes('party')) return 'CM';
         if (user?.email?.includes('stadium')) return 'SM';
-        return 'FM'; // Default to Fleet Manager
+        return 'HM'; // Default to Hotel Manager for preview
     };
 
     const [managerContext, setManagerContext] = useState(() => {
-        const saved = localStorage.getItem(`green_manager_context_${userEmailKey}`);
-        if (saved) return saved;
         const ctx = getInitialContext();
         localStorage.setItem(`green_manager_context_${userEmailKey}`, ctx);
         return ctx;
     });
+
+    // Dynamic reaction to URL ?mode= changes
+    useEffect(() => {
+        const rawMode = searchParams.get('mode');
+        if (rawMode) {
+            const m = rawMode.toLowerCase();
+            let target = null;
+            if (m === 'hotel' || m === 'hm') target = 'HM';
+            else if (m === 'stadium' || m === 'sm') target = 'SM';
+            else if (m === 'fleet' || m === 'fm') target = 'FM';
+            else if (m === 'restaurant' || m === 'rm') target = 'RM';
+            else if (m === 'club' || m === 'cm') target = 'CM';
+            else if (m === 'bar' || m === 'bm') target = 'BM';
+
+            if (target && target !== managerContext) {
+                setManagerContext(target);
+                localStorage.setItem(`green_manager_context_${userEmailKey}`, target);
+                localStorage.setItem('green_manager_context_demo', target);
+            }
+        }
+    }, [searchParams, userEmailKey, managerContext]);
 
     // Fleet Manager Drivers State (NUR FÜR FLOTTEN MANAGER)
     const [driversList, setDriversList] = useState(() => {
@@ -1045,7 +1118,7 @@ const ManagerDashboard = () => {
                 id: 'drv_1',
                 name: 'Sami Rahimi',
                 phone: '+49 176 8829 1029',
-                email: 'sami.rahimi@green-fleet.de',
+                email: 'sami.rahimi@grien-fleet.de',
                 licenseNumber: 'B0892019382',
                 vehicleAssigned: 'Tesla Model S Plaid (F-GR 777E)',
                 status: 'Aktiv',
@@ -1062,7 +1135,7 @@ const ManagerDashboard = () => {
                 id: 'drv_2',
                 name: 'Darius Meier',
                 phone: '+49 172 4432 9911',
-                email: 'darius.m@green-fleet.de',
+                email: 'darius.m@grien-fleet.de',
                 licenseNumber: 'B0441920311',
                 vehicleAssigned: 'Mercedes-Benz EQS (F-GR 888E)',
                 status: 'Aktiv',
@@ -1079,7 +1152,7 @@ const ManagerDashboard = () => {
                 id: 'drv_3',
                 name: 'Elena Rostova',
                 phone: '+49 151 8877 6655',
-                email: 'elena.r@green-fleet.de',
+                email: 'elena.r@grien-fleet.de',
                 licenseNumber: 'B0993021948',
                 vehicleAssigned: 'Porsche Taycan (F-GR 999E)',
                 status: 'Pause',
@@ -1236,22 +1309,53 @@ const ManagerDashboard = () => {
     ];
 
     const [profileForm, setProfileForm] = useState(() => {
-        const saved = localStorage.getItem(`green_manager_profile_${userEmailKey}`);
+        let savedPartner = null;
+        try {
+            savedPartner = JSON.parse(localStorage.getItem('green_current_partner') || 'null');
+        } catch(e) {}
+
+        // 1. ISOLIERTER DEMO-MODUS: Absolut neutral, niemals fremde oder reale Kontodaten laden!
+        if (!savedPartner || !savedPartner.isRegisteredPartner) {
+            return {
+                firstName: 'Max',
+                lastName: 'Mustermann',
+                email: managerContext === 'HM' ? 'hotel.manager@grien.de' : 'stadium.manager@grien.de',
+                phone: '+49 176 12345678',
+                businessName: managerContext === 'HM' ? 'Grien Palace & Spa Hotel' : 'Grien Stadium Arena',
+                address: 'Königsallee 42',
+                zip: '40212',
+                city: 'Düsseldorf',
+                country: 'Deutschland',
+                avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MaxMustermann',
+                documents: {
+                    gewerbe: null,
+                    konzession: null,
+                    unternehmerschein: null,
+                    versicherung: null
+                }
+            };
+        }
+
+        // 2. ECHTER PARTNER: Lade ausschließlich die exakten Daten des eingeloggten Partners
+        const partnerEmailKey = savedPartner.email ? savedPartner.email.replace(/[^a-zA-Z0-9]/g, '_') : '';
+        const saved = partnerEmailKey ? localStorage.getItem(`green_manager_profile_${partnerEmailKey}`) : null;
         let parsed = null;
         if (saved) {
             try { parsed = JSON.parse(saved); } catch (e) {}
         }
+
+        const nameParts = (savedPartner.name || '').trim().split(' ');
         return {
-            firstName: parsed?.firstName || user?.firstName || user?.name?.split(' ')[0] || 'Khiam',
-            lastName: parsed?.lastName || user?.lastName || user?.name?.split(' ').slice(1).join(' ') || 'Azizi',
-            email: parsed?.email || user?.email || 'manager@hotel.de',
-            phone: parsed?.phone || user?.phone || '+49 176 12345678',
-            businessName: parsed?.businessName || user?.businessName || (managerContext === 'HM' ? 'Green Palace & Spa Hotel' : 'Green Stadium Arena'),
-            address: parsed?.address || user?.address || 'Königsallee 42',
-            zip: parsed?.zip || user?.zip || '40212',
-            city: parsed?.city || user?.city || 'Düsseldorf',
-            country: parsed?.country || user?.country || 'Deutschland',
-            avatarUrl: parsed?.avatarUrl || user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&fit=crop',
+            firstName: parsed?.firstName || nameParts[0] || savedPartner.name || '',
+            lastName: parsed?.lastName || nameParts.slice(1).join(' ') || '',
+            email: parsed?.email || savedPartner.email || '',
+            phone: parsed?.phone || savedPartner.phone || '',
+            businessName: parsed?.businessName || savedPartner.businessName || savedPartner.hotelName || '',
+            address: parsed?.address || savedPartner.street || '',
+            zip: parsed?.zip || savedPartner.zip || '',
+            city: parsed?.city || savedPartner.city || '',
+            country: parsed?.country || 'Deutschland',
+            avatarUrl: parsed?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(savedPartner.name || 'Manager')}`,
             documents: parsed?.documents || {
                 gewerbe: null,
                 konzession: null,
@@ -1260,6 +1364,57 @@ const ManagerDashboard = () => {
             }
         };
     });
+
+    // Synchronize profileForm strictly: reset on demo, load on real partner
+    useEffect(() => {
+        if (!currentPartner || !currentPartner.isRegisteredPartner) {
+            setProfileForm({
+                firstName: 'Max',
+                lastName: 'Mustermann',
+                email: managerContext === 'HM' ? 'hotel.manager@grien.de' : 'stadium.manager@grien.de',
+                phone: '+49 176 12345678',
+                businessName: managerContext === 'HM' ? 'Grien Palace & Spa Hotel' : 'Grien Stadium Arena',
+                address: 'Königsallee 42',
+                zip: '40212',
+                city: 'Düsseldorf',
+                country: 'Deutschland',
+                avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=MaxMustermann',
+                documents: {
+                    gewerbe: null,
+                    konzession: null,
+                    unternehmerschein: null,
+                    versicherung: null
+                }
+            });
+            return;
+        }
+
+        const partnerEmailKey = currentPartner.email ? currentPartner.email.replace(/[^a-zA-Z0-9]/g, '_') : '';
+        const saved = partnerEmailKey ? localStorage.getItem(`green_manager_profile_${partnerEmailKey}`) : null;
+        let parsed = null;
+        if (saved) {
+            try { parsed = JSON.parse(saved); } catch (e) {}
+        }
+        const nameParts = (currentPartner.name || '').trim().split(' ');
+        setProfileForm({
+            firstName: parsed?.firstName || nameParts[0] || currentPartner.name || '',
+            lastName: parsed?.lastName || nameParts.slice(1).join(' ') || '',
+            email: parsed?.email || currentPartner.email || '',
+            phone: parsed?.phone || currentPartner.phone || '',
+            businessName: parsed?.businessName || currentPartner.businessName || currentPartner.hotelName || '',
+            address: parsed?.address || currentPartner.street || '',
+            zip: parsed?.zip || currentPartner.zip || '',
+            city: parsed?.city || currentPartner.city || '',
+            country: parsed?.country || 'Deutschland',
+            avatarUrl: parsed?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(currentPartner.name || 'Manager')}`,
+            documents: parsed?.documents || {
+                gewerbe: null,
+                konzession: null,
+                unternehmerschein: null,
+                versicherung: null
+            }
+        });
+    }, [currentPartner, managerContext]);
     const [profileSaveSuccess, setProfileSaveSuccess] = useState(false);
 
     const handleManagerDocUpload = (docKey, file) => {
@@ -1292,7 +1447,9 @@ const ManagerDashboard = () => {
                     [docKey]: newDoc
                 };
                 const nextState = { ...prev, documents: nextDocs };
-                localStorage.setItem(`green_manager_profile_${userEmailKey}`, JSON.stringify(nextState));
+                if (isRealPartner) {
+                    localStorage.setItem(`green_manager_profile_${userEmailKey}`, JSON.stringify(nextState));
+                }
                 return nextState;
             });
 
@@ -1341,7 +1498,9 @@ const ManagerDashboard = () => {
                 [docKey]: updatedDoc
             };
             const nextState = { ...prev, documents: nextDocs };
-            localStorage.setItem(`green_manager_profile_${userEmailKey}`, JSON.stringify(nextState));
+            if (isRealPartner) {
+                localStorage.setItem(`green_manager_profile_${userEmailKey}`, JSON.stringify(nextState));
+            }
             return nextState;
         });
     };
@@ -1352,7 +1511,9 @@ const ManagerDashboard = () => {
             const nextDocs = { ...(prev.documents || {}) };
             delete nextDocs[docKey];
             const nextState = { ...prev, documents: nextDocs };
-            localStorage.setItem(`green_manager_profile_${userEmailKey}`, JSON.stringify(nextState));
+            if (isRealPartner) {
+                localStorage.setItem(`green_manager_profile_${userEmailKey}`, JSON.stringify(nextState));
+            }
             return nextState;
         });
         triggerNotification('info', 'Dokument entfernt 🗑️', 'Das Dokument wurde aus dem Profil gelöscht.');
@@ -1362,7 +1523,7 @@ const ManagerDashboard = () => {
         if (!docObj || !docObj.dataUrl) return;
         const newWindow = window.open();
         if (newWindow) {
-            newWindow.document.title = `${docObj.name || 'Dokument'} - Khiam Green Compliance`;
+            newWindow.document.title = `${docObj.name || 'Dokument'} - Grien Compliance`;
             if (docObj.type === 'pdf' || docObj.name?.toLowerCase().endsWith('.pdf')) {
                 newWindow.document.body.style.margin = '0';
                 newWindow.document.body.innerHTML = `
@@ -1381,7 +1542,7 @@ const ManagerDashboard = () => {
                 newWindow.document.body.style.fontFamily = 'system-ui, sans-serif';
                 newWindow.document.body.innerHTML = `
                     <div style="padding:12px 24px; background:rgba(255,255,255,0.06); border-radius:12px; color:#10b981; font-weight:bold; margin-bottom:16px;">
-                        📄 ${docObj.name} (${docObj.size || ''}) - Khiam Green Verifikation
+                        📄 ${docObj.name} (${docObj.size || ''}) - Grien Verifikation
                     </div>
                     <img src="${docObj.dataUrl}" style="max-width:92vw; max-height:85vh; border-radius:16px; box-shadow:0 25px 60px rgba(0,0,0,0.8); border:1px solid rgba(255,255,255,0.1);" alt="Dokumentenvorschau" />
                 `;
@@ -1840,11 +2001,11 @@ const ManagerDashboard = () => {
         switch(ctx) {
             case 'BM': return "The Blue Velvet Bar";
             case 'RM': return "Saffron Fine Dining";
-            case 'HM': return "Green Palace & Spa";
+            case 'HM': return "Grien Palace & Spa";
             case 'CM': return "Midnight Club & Lounge";
             case 'VM': return "Veranstaltung: Gala 2026";
-            case 'SM': return "Green Stadium Arena";
-            default: return "Green Fleet Operations";
+            case 'SM': return "Grien Stadium Arena";
+            default: return "Grien Fleet Operations";
         }
     };
 
@@ -1973,7 +2134,7 @@ const ManagerDashboard = () => {
     const handleOnboardStaff = async () => {
         if (!foundStaff) return;
 
-        const managerId = user?.email || 'manager@green.de';
+        const managerId = user?.email || 'manager@grien.de';
         const businessName = getBusinessName();
         const onboardedAt = new Date().toISOString();
         const permissions = Object.keys(staffPermissions).filter(k => staffPermissions[k]);
@@ -2213,7 +2374,7 @@ const ManagerDashboard = () => {
                     dispatchId: "dsp_" + Math.random().toString(36).substring(2, 10),
                     details: {
                         smtpStatus: "Delivered",
-                        relayHost: "smtp.green-stadium.com",
+                        relayHost: "smtp.grien-stadium.com",
                         timestamp: new Date().toISOString()
                     }
                 };
@@ -2684,7 +2845,7 @@ const ManagerDashboard = () => {
 
     const [personalInfo, setPersonalInfo] = useState({
         name: user?.name || 'Authorized Manager',
-        email: user?.email || 'admin@green-nightlife.com',
+        email: user?.email || 'admin@grien-nightlife.com',
         phone: '+49 152 9821 004',
         address: 'Hauptstraße 12',
         zip: '60311',
@@ -2692,7 +2853,7 @@ const ManagerDashboard = () => {
     });
 
     const [businessInfo, setBusinessInfo] = useState({
-        legalName: isDemo ? getBusinessName() : (user?.name ? `${user.name} Operations` : 'My Fleet Ops'),
+        legalName: currentPartner?.businessName || profileForm?.businessName || user?.businessName || (isDemo ? getBusinessName() : ''),
         address: isDemo ? 'Zeil 106' : '',
         zip: isDemo ? '60313' : '',
         city: isDemo ? 'Frankfurt' : '',
@@ -2746,7 +2907,7 @@ const ManagerDashboard = () => {
         if (user) {
             setPersonalInfo({
                 name: user.name || 'Authorized Manager',
-                email: user.email || 'admin@green-nightlife.com',
+                email: user.email || 'admin@grien-nightlife.com',
                 phone: user.phone || '+49 152 9821 004',
                 address: user.address || 'Hauptstraße 12',
                 zip: user.zip || '60311',
@@ -2762,7 +2923,7 @@ const ManagerDashboard = () => {
                 });
             } else {
                 setBusinessInfo({
-                    legalName: user.businessName || (user.name ? `${user.name} Operations` : 'My Fleet Ops'),
+                    legalName: currentPartner?.businessName || profileForm?.businessName || user.businessName || '',
                     address: user.businessAddress || (isDemo ? 'Zeil 106' : ''),
                     zip: user.businessZip || (isDemo ? '60313' : ''),
                     city: user.businessCity || (isDemo ? 'Frankfurt' : ''),
@@ -3001,7 +3162,7 @@ const ManagerDashboard = () => {
             </head>
             <body>
                 <div class="header">
-                    <div class="logo">GREEN Fleet Operations</div>
+                    <div class="logo">GRIEN Fleet Operations</div>
                     <div class="title">Monthly Performance Statement</div>
                 </div>
                 <div class="meta-grid">
@@ -3037,7 +3198,7 @@ const ManagerDashboard = () => {
                     </tbody>
                 </table>
                 <div class="footer">
-                    Generated via Green Partner Portal Security Protocol v4.0. Confirmed for Settlement.
+                    Generated via Grien Partner Portal Security Protocol v4.0. Confirmed for Settlement.
                 </div>
                 <script>
                     window.onload = function() {
@@ -3522,7 +3683,7 @@ const ManagerDashboard = () => {
                     { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
                     { 
                         id: 'menu', 
-                        label: managerContext === 'HM' ? 'Zimmer Angebote Hub' : managerContext === 'SM' ? 'Ticket Angebote Hub' : 'Angebote Hub', 
+                        label: managerContext === 'HM' ? 'Zimmer & Suiten' : managerContext === 'SM' ? 'Tickets & Tribünen' : 'Angebote Hub', 
                         icon: managerContext === 'SM' ? Ticket : BedDouble, 
                         badge: 'Live'
                     },
@@ -3531,6 +3692,12 @@ const ManagerDashboard = () => {
                         label: 'Social Hub', 
                         icon: Activity, 
                         badge: 'Promo' 
+                    },
+                    { 
+                        id: 'shuttle', 
+                        label: managerContext === 'HM' ? 'Gäste Shuttles' : managerContext === 'SM' ? 'Event Transfers' : 'Shuttle Service', 
+                        icon: Bus, 
+                        badge: 'Transfer' 
                     },
                     { 
                         id: 'finance', 
@@ -3622,8 +3789,12 @@ const ManagerDashboard = () => {
                 {/* Exit Portal Button */}
                 <button 
                     onClick={() => {
+                        try {
+                            localStorage.removeItem('green_current_partner');
+                            sessionStorage.removeItem('simulator_active_role');
+                        } catch (e) {}
                         logout();
-                        navigate('/login');
+                        navigate('/');
                     }}
                     className="w-full flex flex-col items-center justify-center p-2.5 rounded-xl bg-btn-sec text-secondary hover:text-red-400 hover:bg-red-500/10 transition-all border border-main cursor-pointer"
                 >
@@ -3721,7 +3892,7 @@ const ManagerDashboard = () => {
                                     <Menu size={20} />
                                 </button>
                             )}
-                            <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">Good Evening, {simRole === 'staff' ? 'Staff' : 'Manager'} {user?.name || 'Alex'}</h2>
+                            <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">Good Evening, {simRole === 'staff' ? 'Staff' : 'Manager'} {profileForm?.firstName || currentPartner?.name?.split(' ')[0] || user?.name || ''}</h2>
                         </div>
                         <div className="text-[11px] md:text-sm lg:text-base font-medium text-gray-400 mt-1 flex items-center gap-2">
                             <span>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
@@ -3747,7 +3918,7 @@ const ManagerDashboard = () => {
                         <div className="flex items-center gap-3">
                             <img src={profileForm?.avatarUrl || user?.profilePicture || user?.avatarUrl || user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name}`} alt="Avatar" className="w-10 h-10 rounded-full border-2 border-white/10 object-cover" />
                             <div className="hidden md:block text-left">
-                                <p className="text-sm font-bold text-white">{user?.name || 'Alex P.'}</p>
+                                <p className="text-sm font-bold text-white">{profileForm?.firstName ? `${profileForm.firstName} ${profileForm.lastName}` : (currentPartner?.name || user?.name || 'Manager')}</p>
                                 <p className="text-[10px] md:text-xs lg:text-sm text-gray-400">{simRole === 'staff' ? 'Staff Member' : 'Manager'}</p>
                             </div>
                         </div>
@@ -3760,14 +3931,298 @@ const ManagerDashboard = () => {
                     </div>
 
                     <div className="relative z-10 max-w-7xl mx-auto py-6">
+                        {/* Top Status Banner: Interactive Demo vs Live Partner */}
+                        {!isRealPartner ? (
+                            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg backdrop-blur-md">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                                        <Sparkles size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-black uppercase tracking-wider text-amber-400">
+                                                {managerContext === 'SM' ? 'Interaktive Vorschau (Stadion Beispieldaten)' : 'Interaktive Vorschau (Hotel Beispieldaten)'}
+                                            </span>
+                                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold uppercase tracking-widest border border-amber-500/30">
+                                                Demo-Modus
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-300 mt-0.5">
+                                            {managerContext === 'SM'
+                                                ? 'Sie erkunden das Stadion-Management im Testmodus. Registrieren Sie Ihre eigene Arena, um reale Buchungen, Ticketverkäufe und Gate-Shuttles live zu verwalten.'
+                                                : 'Sie erkunden das Hotel-Management im Testmodus. Registrieren Sie Ihr Hotel oder Resort, um reale VIP-Shuttle-Transfers, Zimmerservice und Einnahmen live zu verwalten.'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => navigate(managerContext === 'SM' ? '/signup?mode=partner&industry=Events' : '/signup?mode=partner&industry=Hotel')}
+                                    className="shrink-0 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-amber-500/20 flex items-center gap-2 cursor-pointer"
+                                >
+                                    <Sparkles size={14} />
+                                    <span>{managerContext === 'SM' ? '🚀 Jetzt als Stadion-Partner registrieren' : '🚀 Jetzt als Hotel-Partner registrieren'}</span>
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="mb-6 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-4 shadow-lg backdrop-blur-md">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                                        <CheckCircle2 size={18} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-black uppercase tracking-wider text-emerald-400">Live Partner-Konto: {currentPartner?.name || businessName}</span>
+                                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold uppercase tracking-widest border border-emerald-500/30">
+                                                🟢 Live-Betrieb
+                                            </span>
+                                        </div>
+                                        <p className="text-[11px] text-gray-300">Alle Aktionen, Buchungen und Abrechnungen sind für Ihr verifiziertes Unternehmen aktiv geschaltet.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {!hasPermission(view) ? (
                             <AccessDenied feature={view} />
                         ) : (
                             <AnimatePresence mode="wait">
                                 {view === 'overview' && (
                                     <motion.div key="overview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-10">
-                                    {/* DYNAMIC STATS GRID */}
-                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {managerContext === 'SM' ? (
+                                        /* ==================== STADIUM MANAGER OVERVIEW ==================== */
+                                        <div className="space-y-10">
+                                            {/* STADIUM STATS GRID */}
+                                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                                {/* STAT 1: Ticket-Auslastung */}
+                                                <div className="glass-panel-subtle p-5 rounded-2xl border border-white/5 hover:border-brand/30 transition-all relative flex flex-col justify-between h-[110px]">
+                                                    <div className="flex justify-between items-start">
+                                                        <span className="text-[11px] md:text-sm lg:text-base font-medium text-gray-300">Ticket-Auslastung</span>
+                                                        <span className="text-[9px] md:text-[11px] lg:text-xs bg-brand/10 text-brand px-1 py-0.5 rounded flex items-center border border-brand/20"><Ticket size={12} className="mr-0.5"/> 92%</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-end mt-2">
+                                                        <div className="flex items-baseline gap-1.5">
+                                                            <span className="text-2xl font-bold text-white">{isRealPartner ? '0' : '8.280'}</span>
+                                                            <span className="text-[10px] md:text-xs lg:text-sm text-gray-400 font-medium">{isRealPartner ? '/ 0 Plätze' : '/ 9.000 Plätze'}</span>
+                                                        </div>
+                                                        <div className="w-14 h-8 opacity-70">
+                                                            <svg viewBox="0 0 100 30" className="w-full h-full stroke-emerald-400" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                                <path d="M0,25 Q20,15 40,25 T80,10 T100,5" />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* STAT 2: VIP Logen */}
+                                                <div className="glass-panel-subtle p-5 rounded-2xl border border-white/5 hover:border-brand/30 transition-all relative flex flex-col justify-between h-[110px]">
+                                                    <div className="flex justify-between items-start">
+                                                        <span className="text-[11px] md:text-sm lg:text-base font-medium text-gray-300">VIP Logen besetzt</span>
+                                                        <span className="text-[9px] md:text-[11px] lg:text-xs bg-purple-500/10 text-purple-400 px-1 py-0.5 rounded flex items-center border border-purple-500/20"><Trophy size={10} className="mr-0.5"/> 90%</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-end mt-2">
+                                                        <div className="flex items-baseline gap-1.5">
+                                                            <span className="text-2xl font-bold text-white">{isRealPartner ? '0 / 0' : '18 / 20'}</span>
+                                                            <span className="text-[10px] md:text-xs lg:text-sm text-gray-400 font-medium">Logen</span>
+                                                        </div>
+                                                        <div className="w-14 h-8">
+                                                            <svg viewBox="0 0 100 30" className="w-full h-full stroke-purple-400" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                                <path d="M0,20 L20,25 L40,15 L60,20 L80,5 L100,10" />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* STAT 3: Einlass-Durchlauf */}
+                                                <div className="glass-panel-subtle p-5 rounded-2xl border border-white/5 hover:border-brand/30 transition-all relative flex flex-col justify-between h-[110px]">
+                                                    <div className="flex justify-between items-start">
+                                                        <span className="text-[11px] md:text-sm lg:text-base font-medium text-gray-300">Einlass-Durchlauf</span>
+                                                        <span className="text-[9px] md:text-[11px] lg:text-xs bg-cyan-500/10 text-cyan-400 px-1 py-0.5 rounded flex items-center border border-cyan-500/20"><Activity size={10} className="mr-0.5"/> Live</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-end mt-2">
+                                                        <div className="flex items-baseline gap-1.5">
+                                                            <span className="text-2xl font-bold text-white">{isRealPartner ? '0' : '1.420'}</span>
+                                                            <span className="text-[10px] md:text-xs lg:text-sm text-gray-400 font-medium">/ min</span>
+                                                        </div>
+                                                        <div className="w-14 h-8">
+                                                            <svg viewBox="0 0 100 30" className="w-full h-full stroke-cyan-400" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                                <path d="M0,15 Q20,25 40,10 T80,20 T100,5" />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* STAT 4: Ticket-Umsatz */}
+                                                <div className="glass-panel-subtle p-5 rounded-2xl border border-white/5 hover:border-brand/30 transition-all relative flex flex-col justify-between h-[110px]">
+                                                    <div className="flex justify-between items-start">
+                                                        <span className="text-[11px] md:text-sm lg:text-base font-medium text-gray-300">Ticket-Umsatz Heute</span>
+                                                        <span className="text-[9px] md:text-[11px] lg:text-xs bg-brand/10 text-brand px-1 py-0.5 rounded flex items-center border border-brand/20"><TrendingUp size={10} className="mr-0.5"/> +18.4%</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-end mt-2">
+                                                        <div className="flex items-baseline gap-1.5">
+                                                            <span className="text-2xl font-bold text-white">{isRealPartner ? '€0,00' : '€142.500'}</span>
+                                                        </div>
+                                                        <div className="w-14 h-8">
+                                                            <svg viewBox="0 0 100 30" className="w-full h-full stroke-brand drop-shadow-[0_0_5px_rgba(52,211,153,0.5)]" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                                <path d="M0,25 L30,20 L50,10 L70,15 L100,0" />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* STADIUM PANELS: SEKTOR STATUS + GATE CONTROL + ACTIONS */}
+                                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                                {/* Panel 1: Tribünen & Sektor-Status */}
+                                                <div className="glass-panel-subtle p-6 rounded-3xl border border-white/5 space-y-5">
+                                                    <div className="flex items-center justify-between">
+                                                        <h3 className="text-base font-black italic uppercase tracking-wider text-white flex items-center gap-2">
+                                                            <Ticket size={18} className="text-brand" /> Tribünen & Sektoren
+                                                        </h3>
+                                                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">92% Gesamt</span>
+                                                    </div>
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <div className="flex justify-between text-xs font-semibold mb-1">
+                                                                <span className="text-gray-300">Nordtribüne (Stehplatz Heim)</span>
+                                                                <span className="text-emerald-400 font-bold">3.200 / 3.200 (100%)</span>
+                                                            </div>
+                                                            <div className="w-full bg-white/5 rounded-full h-2">
+                                                                <div className="bg-emerald-400 h-2 rounded-full" style={{ width: '100%' }}></div>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex justify-between text-xs font-semibold mb-1">
+                                                                <span className="text-gray-300">Haupttribüne (Sitzplatz & VIP)</span>
+                                                                <span className="text-cyan-400 font-bold">2.450 / 2.500 (98%)</span>
+                                                            </div>
+                                                            <div className="w-full bg-white/5 rounded-full h-2">
+                                                                <div className="bg-cyan-400 h-2 rounded-full" style={{ width: '98%' }}></div>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex justify-between text-xs font-semibold mb-1">
+                                                                <span className="text-gray-300">Südtribüne (Gäste-Sektor)</span>
+                                                                <span className="text-brand font-bold">1.650 / 1.800 (91%)</span>
+                                                            </div>
+                                                            <div className="w-full bg-white/5 rounded-full h-2">
+                                                                <div className="bg-brand h-2 rounded-full" style={{ width: '91%' }}></div>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex justify-between text-xs font-semibold mb-1">
+                                                                <span className="text-gray-300">Gegengerade (Familienblock)</span>
+                                                                <span className="text-amber-400 font-bold">980 / 1.500 (65%)</span>
+                                                            </div>
+                                                            <div className="w-full bg-white/5 rounded-full h-2">
+                                                                <div className="bg-amber-400 h-2 rounded-full" style={{ width: '65%' }}></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Panel 2: Einlass- & Shuttle-Gate Control */}
+                                                <div className="glass-panel-subtle p-6 rounded-3xl border border-white/5 space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <h3 className="text-base font-black italic uppercase tracking-wider text-white flex items-center gap-2">
+                                                            <DoorOpen size={18} className="text-cyan-400" /> Gate & Shuttle Control
+                                                        </h3>
+                                                        <span className="text-[10px] font-bold text-brand bg-brand/10 px-2 py-0.5 rounded border border-brand/20">Alle Gates Aktiv</span>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <div className="p-3 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                                                                <div>
+                                                                    <p className="text-xs font-bold text-white">Gate A • VIP Shuttle Gate</p>
+                                                                    <p className="text-[10px] text-gray-400">14 Grien VIP Shuttle Vans im Umlauf</p>
+                                                                </div>
+                                                            </div>
+                                                            <span className="text-[10px] font-bold text-emerald-400">Frei</span>
+                                                        </div>
+                                                        <div className="p-3 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
+                                                                <div>
+                                                                    <p className="text-xs font-bold text-white">Gate B • Gästebus & Sektor Süd</p>
+                                                                    <p className="text-[10px] text-gray-400">4 Großraum-Shuttles im Anflug</p>
+                                                                </div>
+                                                            </div>
+                                                            <span className="text-[10px] font-bold text-emerald-400">Planmäßig</span>
+                                                        </div>
+                                                        <div className="p-3 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
+                                                                <div>
+                                                                    <p className="text-xs font-bold text-white">Gate C • Haupttribüne Ost</p>
+                                                                    <p className="text-[10px] text-gray-400">12 Drehkreuze online (0 Min Wartezeit)</p>
+                                                                </div>
+                                                            </div>
+                                                            <span className="text-[10px] font-bold text-emerald-400">Optimal</span>
+                                                        </div>
+                                                        <div className="p-3 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
+                                                                <div>
+                                                                    <p className="text-xs font-bold text-white">Gate D • Nordkurve Einlass</p>
+                                                                    <p className="text-[10px] text-gray-400">Hoher Andrang • QR-Scanrate 99.8%</p>
+                                                                </div>
+                                                            </div>
+                                                            <span className="text-[10px] font-bold text-amber-400">Flüssig</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Panel 3: Event & Schnellaktionen */}
+                                                <div className="glass-panel-subtle p-6 rounded-3xl border border-white/5 space-y-4 flex flex-col justify-between">
+                                                    <div>
+                                                        <div className="flex items-center justify-between mb-4">
+                                                            <h3 className="text-base font-black italic uppercase tracking-wider text-white flex items-center gap-2">
+                                                                <Sparkles size={18} className="text-amber-400" /> Schnellaktionen
+                                                            </h3>
+                                                            <span className="text-[10px] font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">Stadion-Ops</span>
+                                                        </div>
+                                                        <div className="space-y-2.5">
+                                                            <button
+                                                                onClick={() => setView('tables')}
+                                                                className="w-full text-left p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-brand/30 transition-all flex items-center justify-between group cursor-pointer"
+                                                            >
+                                                                <div>
+                                                                    <p className="text-xs font-bold text-white group-hover:text-brand transition-colors">VIP Logen & Kontingente verwalten</p>
+                                                                    <p className="text-[10px] text-gray-400">Plätze freigeben oder reservieren</p>
+                                                                </div>
+                                                                <ChevronRight size={14} className="text-gray-400 group-hover:text-brand transition-colors" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setView('shuttle')}
+                                                                className="w-full text-left p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-cyan-400/30 transition-all flex items-center justify-between group cursor-pointer"
+                                                            >
+                                                                <div>
+                                                                    <p className="text-xs font-bold text-white group-hover:text-cyan-400 transition-colors">Gate-Shuttle-Flotte anpassen</p>
+                                                                    <p className="text-[10px] text-gray-400">Taktung und VIP-Abholungen koordinieren</p>
+                                                                </div>
+                                                                <ChevronRight size={14} className="text-gray-400 group-hover:text-cyan-400 transition-colors" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setView('history')}
+                                                                className="w-full text-left p-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-amber-400/30 transition-all flex items-center justify-between group cursor-pointer"
+                                                            >
+                                                                <div>
+                                                                    <p className="text-xs font-bold text-white group-hover:text-amber-400 transition-colors">Einlass- & Finanzbericht exportieren</p>
+                                                                    <p className="text-[10px] text-gray-400">PDF Abrechnung für Arena-Betrieb</p>
+                                                                </div>
+                                                                <ChevronRight size={14} className="text-gray-400 group-hover:text-amber-400 transition-colors" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div className="p-3.5 rounded-2xl bg-gradient-to-r from-brand/10 to-cyan-500/10 border border-brand/20 text-center">
+                                                        <p className="text-[11px] font-bold text-white">Nächstes Großevent: UEFA Champions Match</p>
+                                                        <p className="text-[10px] text-gray-400 mt-0.5">Heute ab 20:45 Uhr • Einlass öffnet um 18:30 Uhr</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-10">
+                                            {/* DYNAMIC STATS GRID */}
+                                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                         {/* STAT 1 */}
                                         <div className="glass-panel-subtle p-5 rounded-2xl border border-white/5 hover:border-brand/30 transition-all relative flex flex-col justify-between h-[110px]">
                                             <div className="flex justify-between items-start">
@@ -3776,8 +4231,8 @@ const ManagerDashboard = () => {
                                             </div>
                                             <div className="flex justify-between items-end mt-2">
                                                 <div className="flex items-baseline gap-1.5">
-                                                    <span className="text-2xl font-bold text-white">88%</span>
-                                                    <span className="text-[10px] md:text-xs lg:text-sm text-gray-400 font-medium">booked</span>
+                                                    <span className="text-2xl font-bold text-white">{isRealPartner ? '0%' : '88%'}</span>
+                                                    <span className="text-[10px] md:text-xs lg:text-sm text-gray-400 font-medium">{isRealPartner ? 'belegt' : 'booked'}</span>
                                                 </div>
                                                 <div className="w-14 h-8 opacity-70">
                                                     <svg viewBox="0 0 100 30" className="w-full h-full stroke-gray-400" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -3794,7 +4249,7 @@ const ManagerDashboard = () => {
                                             </div>
                                             <div className="flex justify-between items-end mt-2">
                                                 <div className="flex items-baseline gap-1.5">
-                                                    <span className="text-2xl font-bold text-white">32/40</span>
+                                                    <span className="text-2xl font-bold text-white">{isRealPartner ? '0/0' : '32/40'}</span>
                                                 </div>
                                                 <div className="w-14 h-8">
                                                     <svg viewBox="0 0 100 30" className="w-full h-full stroke-brand" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -3813,7 +4268,7 @@ const ManagerDashboard = () => {
                                             </div>
                                             <div className="flex justify-between items-end mt-2">
                                                 <div className="flex items-baseline gap-1.5">
-                                                    <span className="text-2xl font-bold text-white">12</span>
+                                                    <span className="text-2xl font-bold text-white">{isRealPartner ? '0' : '12'}</span>
                                                 </div>
                                                 <div className="w-14 h-8">
                                                     <svg viewBox="0 0 100 30" className="w-full h-full stroke-purple-500 drop-shadow-[0_0_5px_rgba(168,85,247,0.5)]" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -3830,7 +4285,7 @@ const ManagerDashboard = () => {
                                             </div>
                                             <div className="flex justify-between items-end mt-2">
                                                 <div className="flex items-baseline gap-1.5">
-                                                    <span className="text-2xl font-bold text-white">$7,450</span>
+                                                    <span className="text-2xl font-bold text-white">{isRealPartner ? '€0,00' : '€7.450'}</span>
                                                 </div>
                                                 <div className="w-14 h-8">
                                                     <svg viewBox="0 0 100 30" className="w-full h-full stroke-brand drop-shadow-[0_0_5px_rgba(52,211,153,0.5)]" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -3849,40 +4304,52 @@ const ManagerDashboard = () => {
                                                 <h3 className="text-[13px] font-bold text-white">Room & Suite Status</h3>
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 cursor-pointer"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                                             </div>
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <span className="text-[10px] md:text-xs lg:text-sm text-gray-400">Wing A & B</span>
-                                                <span className="text-[10px] md:text-xs lg:text-sm text-gray-500">Floors 1 - 4</span>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-3 mb-6">
-                                                <div className="bg-[#0B121E]/50 border border-brand/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-[0_0_15px_rgba(52,211,153,0.15)] relative overflow-hidden">
-                                                    <div className="absolute top-0 left-0 w-full h-full bg-brand/5"></div>
-                                                    <span className="text-xl font-bold text-white relative z-10">Suite 101</span>
-                                                    <span className="text-[9px] md:text-[11px] lg:text-xs font-bold text-brand relative z-10">Reserved</span>
-                                                    <span className="text-[8px] md:text-[10px] lg:text-xs text-gray-400 mt-1 relative z-10">8 PM Arrival</span>
+                                            {isRealPartner ? (
+                                                <div className="py-8 px-4 text-center space-y-3">
+                                                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-gray-400">
+                                                        <BedDouble size={24} />
+                                                    </div>
+                                                    <p className="text-xs font-bold text-white">Noch keine aktiven Zimmer-Buchungen</p>
+                                                    <p className="text-[10px] text-gray-400 max-w-[200px] mx-auto">Neue Gästereservierungen erscheinen hier in Echtzeit mit Zimmernummer und Check-in-Status.</p>
                                                 </div>
-                                                <div className="bg-[#0B121E]/50 border border-white/10 rounded-xl p-3 flex flex-col items-center justify-center text-center">
-                                                    <span className="text-xl font-bold text-white">Room 102</span>
-                                                    <span className="text-[9px] md:text-[11px] lg:text-xs text-gray-400 mt-1">Superior</span>
-                                                    <span className="text-[8px] md:text-[10px] lg:text-xs text-emerald-400">Available</span>
-                                                </div>
-                                                <div className="bg-[#0B121E]/50 border border-brand/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-[0_0_15px_rgba(52,211,153,0.15)] relative overflow-hidden">
-                                                    <div className="absolute top-0 left-0 w-full h-full bg-brand/5"></div>
-                                                    <span className="text-xl font-bold text-white relative z-10">Suite 103</span>
-                                                    <span className="text-[9px] md:text-[11px] lg:text-xs font-bold text-brand relative z-10">Checked In</span>
-                                                    <span className="text-[8px] md:text-[10px] lg:text-xs text-gray-400 mt-1 relative z-10">2 Guests</span>
-                                                </div>
-                                                <div className="bg-[#0B121E]/50 border border-purple-500/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-[0_0_15px_rgba(168,85,247,0.15)] relative overflow-hidden">
-                                                    <div className="absolute top-0 left-0 w-full h-full bg-purple-500/5"></div>
-                                                    <span className="text-xl font-bold text-white relative z-10">Suite 104</span>
-                                                    <span className="text-[9px] md:text-[11px] lg:text-xs font-bold text-purple-400 relative z-10">VIP Suite</span>
-                                                    <span className="text-[8px] md:text-[10px] lg:text-xs text-gray-400 mt-1 relative z-10">8:30 PM</span>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <h4 className="text-[11px] md:text-sm lg:text-base font-bold text-white mb-2">Upcoming Arrivals:</h4>
-                                                <p className="text-[10px] md:text-xs lg:text-sm text-gray-400 mb-1">8:00 PM - Davis (Suite 101)</p>
-                                                <p className="text-[10px] md:text-xs lg:text-sm text-gray-400">8:15 PM - Chen (Room 102)</p>
-                                            </div>
+                                            ) : (
+                                                <>
+                                                    <div className="flex items-center gap-2 mb-4">
+                                                        <span className="text-[10px] md:text-xs lg:text-sm text-gray-400">Wing A & B</span>
+                                                        <span className="text-[10px] md:text-xs lg:text-sm text-gray-500">Floors 1 - 4</span>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-3 mb-6">
+                                                        <div className="bg-[#0B121E]/50 border border-brand/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-[0_0_15px_rgba(52,211,153,0.15)] relative overflow-hidden">
+                                                            <div className="absolute top-0 left-0 w-full h-full bg-brand/5"></div>
+                                                            <span className="text-xl font-bold text-white relative z-10">Suite 101</span>
+                                                            <span className="text-[9px] md:text-[11px] lg:text-xs font-bold text-brand relative z-10">Reserved</span>
+                                                            <span className="text-[8px] md:text-[10px] lg:text-xs text-gray-400 mt-1 relative z-10">8 PM Arrival</span>
+                                                        </div>
+                                                        <div className="bg-[#0B121E]/50 border border-white/10 rounded-xl p-3 flex flex-col items-center justify-center text-center">
+                                                            <span className="text-xl font-bold text-white">Room 102</span>
+                                                            <span className="text-[9px] md:text-[11px] lg:text-xs text-gray-400 mt-1">Superior</span>
+                                                            <span className="text-[8px] md:text-[10px] lg:text-xs text-emerald-400">Available</span>
+                                                        </div>
+                                                        <div className="bg-[#0B121E]/50 border border-brand/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-[0_0_15px_rgba(52,211,153,0.15)] relative overflow-hidden">
+                                                            <div className="absolute top-0 left-0 w-full h-full bg-brand/5"></div>
+                                                            <span className="text-xl font-bold text-white relative z-10">Suite 103</span>
+                                                            <span className="text-[9px] md:text-[11px] lg:text-xs font-bold text-brand relative z-10">Checked In</span>
+                                                            <span className="text-[8px] md:text-[10px] lg:text-xs text-gray-400 mt-1 relative z-10">2 Guests</span>
+                                                        </div>
+                                                        <div className="bg-[#0B121E]/50 border border-purple-500/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-[0_0_15px_rgba(168,85,247,0.15)] relative overflow-hidden">
+                                                            <div className="absolute top-0 left-0 w-full h-full bg-purple-500/5"></div>
+                                                            <span className="text-xl font-bold text-white relative z-10">Suite 104</span>
+                                                            <span className="text-[9px] md:text-[11px] lg:text-xs font-bold text-purple-400 relative z-10">VIP Suite</span>
+                                                            <span className="text-[8px] md:text-[10px] lg:text-xs text-gray-400 mt-1 relative z-10">8:30 PM</span>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-[11px] md:text-sm lg:text-base font-bold text-white mb-2">Upcoming Arrivals:</h4>
+                                                        <p className="text-[10px] md:text-xs lg:text-sm text-gray-400 mb-1">8:00 PM - Davis (Suite 101)</p>
+                                                        <p className="text-[10px] md:text-xs lg:text-sm text-gray-400">8:15 PM - Chen (Room 102)</p>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
 
                                         {/* COL 2: Front Desk & Service Control */}
@@ -3892,51 +4359,61 @@ const ManagerDashboard = () => {
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 cursor-pointer"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                                             </div>
                                             
-                                            <div className="space-y-4">
-                                                {/* Request 1 */}
-                                                <div className="bg-[#0B121E]/50 border border-purple-500/30 rounded-xl p-4 shadow-[0_0_15px_rgba(168,85,247,0.1)] relative">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <h4 className="text-[11px] md:text-sm lg:text-base text-white">Booking #142 <span className="text-gray-400">(Suite 103)</span></h4>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                                            {isRealPartner ? (
+                                                <div className="py-8 px-4 text-center space-y-3">
+                                                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-gray-400">
+                                                        <Clock size={24} />
                                                     </div>
-                                                    <div className="flex justify-between items-start mb-4">
-                                                        <div className="text-[10px] md:text-xs lg:text-sm text-gray-400 leading-relaxed">
-                                                            <p>Airport VIP Shuttle</p>
-                                                            <p>Late Check-out (14:00)</p>
-                                                        </div>
-                                                        <span className="text-[9px] md:text-[11px] lg:text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30">In Progress</span>
-                                                    </div>
-                                                    <div className="h-1 w-full bg-white/5 rounded-full mb-3 overflow-hidden">
-                                                        <div className="h-full w-[60%] bg-purple-500"></div>
-                                                    </div>
-                                                    <div className="flex justify-between items-center text-[9px] md:text-[11px] lg:text-xs text-gray-500">
-                                                        <span>Booked at 7:45 PM</span>
-                                                        <span className="flex items-center gap-1"><Users size={10} /> 2 Guests</span>
-                                                    </div>
+                                                    <p className="text-xs font-bold text-white">Keine offenen Service-Anfragen</p>
+                                                    <p className="text-[10px] text-gray-400 max-w-[200px] mx-auto">Zimmerservice-, Shuttle- und Gepäckaufträge von Gästen werden hier zur Bearbeitung angezeigt.</p>
                                                 </div>
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    {/* Request 1 */}
+                                                    <div className="bg-[#0B121E]/50 border border-purple-500/30 rounded-xl p-4 shadow-[0_0_15px_rgba(168,85,247,0.1)] relative">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <h4 className="text-[11px] md:text-sm lg:text-base text-white">Booking #142 <span className="text-gray-400">(Suite 103)</span></h4>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                                                        </div>
+                                                        <div className="flex justify-between items-start mb-4">
+                                                            <div className="text-[10px] md:text-xs lg:text-sm text-gray-400 leading-relaxed">
+                                                                <p>Airport VIP Shuttle</p>
+                                                                <p>Late Check-out (14:00)</p>
+                                                            </div>
+                                                            <span className="text-[9px] md:text-[11px] lg:text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30">In Progress</span>
+                                                        </div>
+                                                        <div className="h-1 w-full bg-white/5 rounded-full mb-3 overflow-hidden">
+                                                            <div className="h-full w-[60%] bg-purple-500"></div>
+                                                        </div>
+                                                        <div className="flex justify-between items-center text-[9px] md:text-[11px] lg:text-xs text-gray-500">
+                                                            <span>Booked at 7:45 PM</span>
+                                                            <span className="flex items-center gap-1"><Users size={10} /> 2 Guests</span>
+                                                        </div>
+                                                    </div>
 
-                                                {/* Request 2 */}
-                                                <div className="bg-[#0B121E]/50 border border-brand/30 rounded-xl p-4 shadow-[0_0_15px_rgba(52,211,153,0.1)] relative">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <h4 className="text-[11px] md:text-sm lg:text-base text-white">Booking #143 <span className="text-gray-400">(Room 105)</span></h4>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
-                                                    </div>
-                                                    <div className="flex justify-between items-start mb-4">
-                                                        <div className="text-[10px] md:text-xs lg:text-sm text-gray-400 leading-relaxed">
-                                                            <p>Breakfast in Room</p>
-                                                            <p>Extra Pillow Set</p>
+                                                    {/* Request 2 */}
+                                                    <div className="bg-[#0B121E]/50 border border-brand/30 rounded-xl p-4 shadow-[0_0_15px_rgba(52,211,153,0.1)] relative">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <h4 className="text-[11px] md:text-sm lg:text-base text-white">Booking #143 <span className="text-gray-400">(Room 105)</span></h4>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                                                         </div>
-                                                        <span className="text-[9px] md:text-[11px] lg:text-xs bg-brand/20 text-brand px-2 py-0.5 rounded-full border border-brand/30">Confirmed</span>
-                                                    </div>
-                                                    <div className="h-1 w-full bg-white/5 rounded-full mb-3 overflow-hidden">
-                                                        <div className="h-full w-[100%] bg-brand"></div>
-                                                    </div>
-                                                    <div className="flex justify-between items-center text-[9px] md:text-[11px] lg:text-xs text-gray-500">
-                                                        <span>Booked at 7:35 PM</span>
-                                                        <span className="flex items-center gap-1"><Users size={10} /> 3 Guests</span>
+                                                        <div className="flex justify-between items-start mb-4">
+                                                            <div className="text-[10px] md:text-xs lg:text-sm text-gray-400 leading-relaxed">
+                                                                <p>Breakfast in Room</p>
+                                                                <p>Extra Pillow Set</p>
+                                                            </div>
+                                                            <span className="text-[9px] md:text-[11px] lg:text-xs bg-brand/20 text-brand px-2 py-0.5 rounded-full border border-brand/30">Confirmed</span>
+                                                        </div>
+                                                        <div className="h-1 w-full bg-white/5 rounded-full mb-3 overflow-hidden">
+                                                            <div className="h-full w-[100%] bg-brand"></div>
+                                                        </div>
+                                                        <div className="flex justify-between items-center text-[9px] md:text-[11px] lg:text-xs text-gray-500">
+                                                            <span>Booked at 7:35 PM</span>
+                                                            <span className="flex items-center gap-1"><Users size={10} /> 3 Guests</span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            )}
                                         </div>
 
                                         {/* COL 3: Suite & Room Catalog */}
@@ -3946,74 +4423,93 @@ const ManagerDashboard = () => {
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 cursor-pointer"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                                             </div>
 
-                                            <div className="space-y-3">
-                                                {/* Item 1 */}
-                                                <div className="bg-[#0B121E]/50 border border-white/5 rounded-xl p-3 flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                                                        <BedDouble size={16} className="text-emerald-400" />
+                                            {isRealPartner ? (
+                                                <div className="py-8 px-4 text-center space-y-3">
+                                                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-emerald-400">
+                                                        <Sparkles size={24} />
                                                     </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between items-start">
-                                                            <div>
-                                                                <h4 className="text-[11px] md:text-sm lg:text-base text-white">Deluxe Ocean Suite</h4>
-                                                                <p className="text-[10px] md:text-xs lg:text-sm text-gray-400">(€180 / Night)</p>
-                                                            </div>
-                                                        </div>
-                                                        <p className="text-[8px] md:text-[10px] lg:text-xs text-gray-500 mt-1 line-clamp-1">King Bed, Balcony, Spa Access</p>
-                                                        <div className="flex justify-between items-center mt-2">
-                                                            <span className="text-[9px] md:text-[11px] lg:text-xs text-brand">Active</span>
-                                                            <div className="w-7 h-4 bg-brand rounded-full relative">
-                                                                <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                    <p className="text-xs font-bold text-white">Eigene Zimmerkategorien anlegen</p>
+                                                    <p className="text-[10px] text-gray-400 max-w-[220px] mx-auto mb-3">Definieren Sie Suiten, Preise und Verfügbarkeiten in Ihrem Zimmer-Katalog.</p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setView('menu')}
+                                                        className="px-4 py-2 rounded-xl bg-brand/10 hover:bg-brand/20 border border-brand/30 text-brand text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                                                    >
+                                                        Zu Zimmer & Suiten →
+                                                    </button>
                                                 </div>
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    {/* Item 1 */}
+                                                    <div className="bg-[#0B121E]/50 border border-white/5 rounded-xl p-3 flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                                                            <BedDouble size={16} className="text-emerald-400" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex justify-between items-start">
+                                                                <div>
+                                                                    <h4 className="text-[11px] md:text-sm lg:text-base text-white">Deluxe Ocean Suite</h4>
+                                                                    <p className="text-[10px] md:text-xs lg:text-sm text-gray-400">(€180 / Night)</p>
+                                                                </div>
+                                                            </div>
+                                                            <p className="text-[8px] md:text-[10px] lg:text-xs text-gray-500 mt-1 line-clamp-1">King Bed, Balcony, Spa Access</p>
+                                                            <div className="flex justify-between items-center mt-2">
+                                                                <span className="text-[9px] md:text-[11px] lg:text-xs text-brand">Active</span>
+                                                                <div className="w-7 h-4 bg-brand rounded-full relative">
+                                                                    <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
 
-                                                {/* Item 2 */}
-                                                <div className="bg-[#0B121E]/50 border border-white/5 rounded-xl p-3 flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                                                        <BedDouble size={16} className="text-emerald-400" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between items-start">
-                                                            <div>
-                                                                <h4 className="text-[11px] md:text-sm lg:text-base text-white">Executive Panorama</h4>
-                                                                <p className="text-[10px] md:text-xs lg:text-sm text-gray-400">(€350 / Night)</p>
+                                                    {/* Item 2 */}
+                                                    <div className="bg-[#0B121E]/50 border border-white/5 rounded-xl p-3 flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                                                            <BedDouble size={16} className="text-emerald-400" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex justify-between items-start">
+                                                                <div>
+                                                                    <h4 className="text-[11px] md:text-sm lg:text-base text-white">Executive Panorama</h4>
+                                                                    <p className="text-[10px] md:text-xs lg:text-sm text-gray-400">(€350 / Night)</p>
+                                                                </div>
+                                                            </div>
+                                                            <p className="text-[8px] md:text-[10px] lg:text-xs text-gray-500 mt-1 line-clamp-1">2 Bedrooms, Lounge & VIP Transfer</p>
+                                                            <div className="flex justify-between items-center mt-2">
+                                                                <span className="text-[9px] md:text-[11px] lg:text-xs text-brand">Active</span>
+                                                                <div className="w-7 h-4 bg-brand rounded-full relative">
+                                                                    <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        <p className="text-[8px] md:text-[10px] lg:text-xs text-gray-500 mt-1 line-clamp-1">2 Bedrooms, Lounge & VIP Transfer</p>
-                                                        <div className="flex justify-between items-center mt-2">
-                                                            <span className="text-[9px] md:text-[11px] lg:text-xs text-brand">Active</span>
-                                                            <div className="w-7 h-4 bg-brand rounded-full relative">
-                                                                <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
-                                                            </div>
-                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                {/* Item 3 */}
-                                                <div className="bg-[#0B121E]/50 border border-white/5 rounded-xl p-3 flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                                                        <BedDouble size={16} className="text-emerald-400" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between items-start">
-                                                            <div>
-                                                                <h4 className="text-[11px] md:text-sm lg:text-base text-white">Presidential Penthouse</h4>
-                                                                <p className="text-[10px] md:text-xs lg:text-sm text-gray-400">(€750 / Night)</p>
-                                                            </div>
+                                                    {/* Item 3 */}
+                                                    <div className="bg-[#0B121E]/50 border border-white/5 rounded-xl p-3 flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                                                            <BedDouble size={16} className="text-emerald-400" />
                                                         </div>
-                                                        <div className="flex justify-between items-center mt-2">
-                                                            <span className="text-[9px] md:text-[11px] lg:text-xs text-brand">Active</span>
-                                                            <div className="w-7 h-4 bg-brand rounded-full relative">
-                                                                <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
+                                                        <div className="flex-1">
+                                                            <div className="flex justify-between items-start">
+                                                                <div>
+                                                                    <h4 className="text-[11px] md:text-sm lg:text-base text-white">Presidential Penthouse</h4>
+                                                                    <p className="text-[10px] md:text-xs lg:text-sm text-gray-400">(€750 / Night)</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex justify-between items-center mt-2">
+                                                                <span className="text-[9px] md:text-[11px] lg:text-xs text-brand">Active</span>
+                                                                <div className="w-7 h-4 bg-brand rounded-full relative">
+                                                                    <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            )}
                                         </div>
                                     </div>
+                                    </div>
+                                    )}
                                 </motion.div>
                             )}
 
@@ -4134,7 +4630,7 @@ const ManagerDashboard = () => {
                                                         type="text"
                                                         value={profileForm.businessName}
                                                         onChange={(e) => setProfileForm({ ...profileForm, businessName: e.target.value })}
-                                                        placeholder={managerContext === 'FM' ? 'z.B. Green Fleet GmbH' : managerContext === 'HM' ? 'z.B. Grand Hyatt & Spa' : 'z.B. Green Stadium Arena'}
+                                                        placeholder={managerContext === 'FM' ? 'z.B. Grien Fleet GmbH' : managerContext === 'HM' ? 'z.B. Grand Hyatt & Spa' : 'z.B. Grien Stadium Arena'}
                                                         className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:outline-none focus:border-brand/40"
                                                     />
                                                 </div>
@@ -4372,7 +4868,9 @@ const ManagerDashboard = () => {
                                             <button 
                                                 type="button"
                                                 onClick={() => {
-                                                    localStorage.setItem(`green_manager_profile_${userEmailKey}`, JSON.stringify(profileForm));
+                                                    if (isRealPartner) {
+                                                        localStorage.setItem(`green_manager_profile_${userEmailKey}`, JSON.stringify(profileForm));
+                                                    }
                                                     if (user && setUser) {
                                                         setUser({ ...user, ...profileForm, name: `${profileForm.firstName} ${profileForm.lastName}` });
                                                     }
@@ -4849,7 +5347,7 @@ const ManagerDashboard = () => {
                                                 <p className="text-xs text-gray-400">Erreichen Sie tausende aktive Kunden & VIP Shuttle Passagiere.</p>
                                             </div>
                                             <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-[10px] text-gray-300 font-bold uppercase tracking-widest text-center">
-                                                Status: 100% Aktiv auf Green Grid
+                                                Status: 100% Aktiv auf Grien Grid
                                             </div>
                                         </div>
                                     </div>
@@ -5025,7 +5523,7 @@ const ManagerDashboard = () => {
                                                                             setSelectedGuest({ 
                                                                                 ...order, 
                                                                                 phone: '+49 176 4421 8892', 
-                                                                                email: order.guest.toLowerCase().replace(/\s+/g, '.') + '@green-social.com', 
+                                                                                email: order.guest.toLowerCase().replace(/\s+/g, '.') + '@grien-social.com', 
                                                                                 loyalty: 'Pioneer Tier 1', 
                                                                                 visits: '12', 
                                                                                 lastStay: 'April 2026',
@@ -5391,11 +5889,15 @@ const ManagerDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-6 bg-glass border border-main rounded-[2rem] space-y-2">
                 <p className="text-[9px] md:text-xs font-black text-secondary uppercase tracking-widest">Expected Guests Today</p>
-                <p className="text-3xl font-black italic text-brand">10 Guests ({shuttleRequests.filter(r => r.status === 'ACCEPTED').reduce((acc, curr) => acc + curr.guests, 0)} Confirmed)</p>
+                <p className="text-3xl font-black italic text-brand">
+                    {shuttleRequests.reduce((acc, curr) => acc + curr.guests, 0)} Guests ({shuttleRequests.filter(r => r.status === 'ACCEPTED').reduce((acc, curr) => acc + curr.guests, 0)} Confirmed / {shuttleRequests.filter(r => r.status === 'PENDING').reduce((acc, curr) => acc + curr.guests, 0)} Pending)
+                </p>
             </div>
             <div className="p-6 bg-glass border border-main rounded-[2rem] space-y-2">
                 <p className="text-[9px] md:text-xs font-black text-secondary uppercase tracking-widest">Assigned Shuttle Fleet</p>
-                <p className="text-3xl font-black italic text-cyan-400">2x VIP Sprinters (Auto-Split)</p>
+                <p className="text-3xl font-black italic text-cyan-400">
+                    {shuttleRequests.length > 0 ? '2x VIP Sprinters (Auto-Split)' : 'Keine Zuweisung'}
+                </p>
             </div>
             <div className="p-6 bg-glass border border-main rounded-[2rem] space-y-2">
                 <p className="text-[9px] md:text-xs font-black text-secondary uppercase tracking-widest">Total Luggage Volume</p>
@@ -5415,7 +5917,28 @@ const ManagerDashboard = () => {
             </div>
 
             <div className="space-y-4">
-                {shuttleRequests.map((s) => {
+                {shuttleRequests.length === 0 ? (
+                    <div className="py-12 px-6 text-center rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col items-center justify-center space-y-4">
+                        <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                            <Bus className="w-8 h-8 opacity-80" />
+                        </div>
+                        <div className="max-w-md space-y-1">
+                            <h4 className="text-base font-bold text-white">Keine aktiven Shuttle-Anfragen</h4>
+                            <p className="text-xs text-slate-400 leading-relaxed">
+                                {isRealPartner
+                                    ? `Für Ihr Partner-Konto (${currentPartner?.businessName || currentPartner?.name || 'Ihr Betrieb'}) liegen aktuell keine Transfer-Buchungen vor. Alle Fahrgastdaten sind DSGVO-geschützt und strikt von anderen Betrieben isoliert.`
+                                    : 'Sobald Fahrten für Gäste gebucht werden, erscheinen die Details und der Flottenstatus hier in Echtzeit.'}
+                            </p>
+                        </div>
+                        {isRealPartner && (
+                            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                <span>DSGVO- & Mandantenschutz Aktiv</span>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    shuttleRequests.map((s) => {
                     const pricePerPax = s.pricePerPax || calculateShuttleFare(s.distanceKm || 12);
                     const totalPrice = s.totalPrice || (s.guests * pricePerPax);
 
@@ -5448,22 +5971,21 @@ const ManagerDashboard = () => {
 
                                 <div>
                                     {s.status === 'ACCEPTED' ? (
-                                        <span className="w-full md:w-auto px-5 py-3.5 bg-brand/20 text-brand border border-brand/30 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                                            <CheckCircle size={16} /> Accepted & Confirmed
+                                        <span className="w-full md:w-auto px-5 py-3.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm">
+                                            <CheckCircle size={16} className="text-emerald-400" />
+                                            <span>Bestätigt durch Flotte</span>
                                         </span>
                                     ) : (
-                                        <button
-                                            onClick={() => handleAcceptShuttle(s.id)}
-                                            className="w-full md:w-auto px-6 py-3.5 bg-brand text-dark-900 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-brand/20 flex items-center justify-center gap-2"
-                                        >
-                                            <CheckCircle size={16} /> Accept Request
-                                        </button>
+                                        <span className="w-full md:w-auto px-5 py-3.5 bg-amber-500/15 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm">
+                                            <Clock size={16} className="text-amber-400 animate-pulse" />
+                                            <span>Ausstehend (Wartet auf Flotte)</span>
+                                        </span>
                                     )}
                                 </div>
                             </div>
                         </div>
                     );
-                })}
+                }))}
             </div>
         </div>
     </motion.div>
@@ -5497,7 +6019,7 @@ const ManagerDashboard = () => {
                                                     </div>
                                                     <div>
                                                         <h3 className="text-2xl font-black italic uppercase text-white tracking-tighter">B2B Ticket & Shuttle Abrechnung</h3>
-                                                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Automatische Aufschlüsselung: Ticket-Verkauf, Shuttle-Service & Green Provision</p>
+                                                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Automatische Aufschlüsselung: Ticket-Verkauf, Shuttle-Service & Grien Provision</p>
                                                     </div>
                                                 </div>
                                                 <span className="bg-emerald-500/20 text-emerald-400 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-wider border border-emerald-500/30">
@@ -5519,35 +6041,37 @@ const ManagerDashboard = () => {
                                                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Brutto Ticket-Umsatz</span>
                                                         <span className="text-[9px] font-black uppercase text-[#00e5ff] tracking-wider opacity-75 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">Details ↗</span>
                                                     </div>
-                                                    <span className="text-2xl font-black italic text-white block">€2.400,00</span>
-                                                    <span className="text-[9px] text-gray-500 block">12 VIP & Sektor Tickets verkauft</span>
+                                                    <span className="text-2xl font-black italic text-white block">{isRealPartner ? '€0,00' : '€2.400,00'}</span>
+                                                    <span className="text-[9px] text-gray-500 block">{isRealPartner ? '0 Tickets verkauft' : '12 VIP & Sektor Tickets verkauft'}</span>
                                                 </div>
 
                                                 <div 
                                                     onClick={() => {
-                                                        setShuttleStatusFilter('all');
-                                                        setIsShuttleServiceModalOpen(true);
+                                                        if (!isRealPartner) {
+                                                            setShuttleStatusFilter('all');
+                                                            setIsShuttleServiceModalOpen(true);
+                                                        }
                                                     }}
                                                     className="bg-black/50 border border-white/10 hover:border-amber-400 hover:bg-white/[0.04] cursor-pointer transition-all rounded-2xl p-6 space-y-2 group shadow-lg active:scale-98"
                                                     title="Klicken für Shuttle-Service Aufschlüsselung & PDF-Download"
                                                 >
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">- Shuttle-Service an Green</span>
+                                                        <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">- Shuttle-Service an Grien</span>
                                                         <span className="text-[9px] font-black uppercase text-amber-400 tracking-wider opacity-75 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">Details ↗</span>
                                                     </div>
-                                                    <span className="text-2xl font-black italic text-amber-400 block">-€192,00</span>
-                                                    <span className="text-[9px] text-gray-500 block">12 Passagiere @ €16,00 Staffeltarif</span>
+                                                    <span className="text-2xl font-black italic text-amber-400 block">{isRealPartner ? '-€0,00' : '-€192,00'}</span>
+                                                    <span className="text-[9px] text-gray-500 block">{isRealPartner ? '0 Passagiere' : '12 Passagiere @ €16,00 Staffeltarif'}</span>
                                                 </div>
 
                                                 <div className="bg-black/50 border border-white/10 rounded-2xl p-6 space-y-2">
-                                                    <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest block">- Green Ticket-Provision</span>
-                                                    <span className="text-2xl font-black italic text-purple-400 block">-€120,00</span>
-                                                    <span className="text-[9px] text-gray-500">5% Verkaufs-Provision an Plattform</span>
+                                                    <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest block">- Grien Ticket-Provision</span>
+                                                    <span className="text-2xl font-black italic text-purple-400 block">{isRealPartner ? '-€0,00' : '-€120,00'}</span>
+                                                    <span className="text-[9px] text-gray-500">{isRealPartner ? '0% Verkaufs-Provision' : '5% Verkaufs-Provision an Plattform'}</span>
                                                 </div>
 
                                                 <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6 space-y-2">
                                                     <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block">= Netto-Auszahlung an Stadion</span>
-                                                    <span className="text-2xl font-black italic text-emerald-400 block">€2.088,00</span>
+                                                    <span className="text-2xl font-black italic text-emerald-400 block">{isRealPartner ? '€0,00' : '€2.088,00'}</span>
                                                     <span className="text-[9px] text-emerald-400/80 font-bold">Auszahlungskonto DE77...9922</span>
                                                 </div>
                                             </div>
@@ -5564,7 +6088,7 @@ const ManagerDashboard = () => {
                                                     </div>
                                                     <div>
                                                         <h3 className="text-2xl font-black italic uppercase text-white tracking-tighter">B2B Hotel Zimmer & Shuttle Abrechnung</h3>
-                                                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Automatische Aufschlüsselung: Zimmer-Umsatz, Shuttle-Service & Green Provision</p>
+                                                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Automatische Aufschlüsselung: Zimmer-Umsatz, Shuttle-Service & Grien Provision</p>
                                                     </div>
                                                 </div>
                                                 <span className="bg-emerald-500/20 text-emerald-400 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-wider border border-emerald-500/30">
@@ -5586,14 +6110,16 @@ const ManagerDashboard = () => {
                                                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Brutto Zimmer-Umsatz</span>
                                                         <span className="text-[9px] font-black uppercase text-[#00e5ff] tracking-wider opacity-75 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">Details ↗</span>
                                                     </div>
-                                                    <span className="text-2xl font-black italic text-white block">€3.500,00</span>
-                                                    <span className="text-[9px] text-gray-500 block">14 Zimmer-Nächte gebucht</span>
+                                                    <span className="text-2xl font-black italic text-white block">{isRealPartner ? '€0,00' : '€3.500,00'}</span>
+                                                    <span className="text-[9px] text-gray-500 block">{isRealPartner ? '0 Zimmer gebucht' : '14 Zimmer-Nächte gebucht'}</span>
                                                 </div>
 
                                                 <div 
                                                     onClick={() => {
-                                                        setHotelShuttleStatusFilter('all');
-                                                        setIsHotelShuttleModalOpen(true);
+                                                        if (!isRealPartner) {
+                                                            setHotelShuttleStatusFilter('all');
+                                                            setIsHotelShuttleModalOpen(true);
+                                                        }
                                                     }}
                                                     className="bg-black/50 border border-white/10 hover:border-amber-400 hover:bg-white/[0.04] cursor-pointer transition-all rounded-2xl p-6 space-y-2 group shadow-lg active:scale-98"
                                                     title="Klicken für Hotel Shuttle-Service Aufschlüsselung & PDF-Download"
@@ -5602,19 +6128,19 @@ const ManagerDashboard = () => {
                                                         <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest block">- Hotel Shuttle-Service</span>
                                                         <span className="text-[9px] font-black uppercase text-amber-400 tracking-wider opacity-75 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">Details ↗</span>
                                                     </div>
-                                                    <span className="text-2xl font-black italic text-amber-400 block">-€224,00</span>
-                                                    <span className="text-[9px] text-gray-500 block">14 Shuttle-Fahrten @ €16,00 Staffeltarif</span>
+                                                    <span className="text-2xl font-black italic text-amber-400 block">{isRealPartner ? '-€0,00' : '-€224,00'}</span>
+                                                    <span className="text-[9px] text-gray-500 block">{isRealPartner ? '0 Shuttle-Fahrten' : '14 Shuttle-Fahrten @ €16,00 Staffeltarif'}</span>
                                                 </div>
 
                                                 <div className="bg-black/50 border border-white/10 rounded-2xl p-6 space-y-2">
-                                                    <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest block">- Green Hotel-Provision</span>
-                                                    <span className="text-2xl font-black italic text-purple-400 block">-€175,00</span>
-                                                    <span className="text-[9px] text-gray-500">5% Verkaufs-Provision an Plattform</span>
+                                                    <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest block">- Grien Hotel-Provision</span>
+                                                    <span className="text-2xl font-black italic text-purple-400 block">{isRealPartner ? '-€0,00' : '-€175,00'}</span>
+                                                    <span className="text-[9px] text-gray-500">{isRealPartner ? '0% Verkaufs-Provision' : '5% Verkaufs-Provision an Plattform'}</span>
                                                 </div>
 
                                                 <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6 space-y-2">
                                                     <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block">= Netto-Auszahlung an Hotel</span>
-                                                    <span className="text-2xl font-black italic text-emerald-400 block">€3.101,00</span>
+                                                    <span className="text-2xl font-black italic text-emerald-400 block">{isRealPartner ? '€0,00' : '€3.101,00'}</span>
                                                     <span className="text-[9px] text-emerald-400/80 font-bold">Auszahlungskonto DE89...4411</span>
                                                 </div>
                                             </div>
@@ -5852,12 +6378,12 @@ const ManagerDashboard = () => {
                                                                 </div>
                                                             </div>
 
-                                                            {/* 3. Green Provision & Bar-Offset */}
+                                                            {/* 3. Grien Provision & Bar-Offset */}
                                                             <div className={`p-4 md:p-5 rounded-2xl border flex flex-col justify-between transition-all ${
                                                                 isLight ? 'bg-slate-50 border-slate-200/90 shadow-sm' : 'bg-black/40 border-white/10'
                                                             }`}>
                                                                 <div className="flex items-center justify-between">
-                                                                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Green Provision (15%)</span>
+                                                                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Grien Provision (15%)</span>
                                                                     <BadgePercent size={15} className="text-purple-400" />
                                                                 </div>
                                                                 <div className="my-3">
@@ -5877,7 +6403,7 @@ const ManagerDashboard = () => {
                                                                 </div>
                                                                 <div className={`text-[9px] font-extrabold flex items-center justify-between pt-2 border-t ${isLight ? 'border-slate-200 text-slate-500' : 'border-white/10 text-slate-400'}`}>
                                                                     <span>Stripe-Gebühr: 0 €</span>
-                                                                    <span className="text-emerald-500 font-bold">Von Green bezahlt</span>
+                                                                    <span className="text-emerald-500 font-bold">Von Grien bezahlt</span>
                                                                 </div>
                                                             </div>
 
@@ -6109,7 +6635,7 @@ const ManagerDashboard = () => {
                                                                                         <span>+€{(Math.max(0, Math.round(activeWeekMetrics.stornos * 0.78) - Math.round(activeWeekMetrics.stornos * 0.55)) * 4.5).toFixed(2).replace('.', ',')} an Flotte</span>
                                                                                     </div>
                                                                                     <div className="flex items-center justify-between text-slate-500 font-bold">
-                                                                                        <span>Green Plattformanteil (25%):</span>
+                                                                                        <span>Grien Plattformanteil (25%):</span>
                                                                                         <span>€{(Math.max(0, Math.round(activeWeekMetrics.stornos * 0.78) - Math.round(activeWeekMetrics.stornos * 0.55)) * 1.5).toFixed(2).replace('.', ',')}</span>
                                                                                     </div>
                                                                                 </div>
@@ -6117,7 +6643,7 @@ const ManagerDashboard = () => {
                                                                         </div>
 
                                                                         <p className={`text-[10px] leading-relaxed ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
-                                                                            ℹ️ Bei Stornos nach 2 Minuten schützt Green Ihre Fahrer: Die Stornogebühr wird dem Kunden automatisch belastet und als Aufwandsentschädigung für Akkuladung und Fahrtzeit Ihrer Flotte gutgeschrieben.
+                                                                            ℹ️ Bei Stornos nach 2 Minuten schützt Grien Ihre Fahrer: Die Stornogebühr wird dem Kunden automatisch belastet und als Aufwandsentschädigung für Akkuladung und Fahrtzeit Ihrer Flotte gutgeschrieben.
                                                                         </p>
                                                                     </div>
 
@@ -6272,7 +6798,7 @@ const ManagerDashboard = () => {
                                                                             passenger: 'Thomas K. (Fahrgast)',
                                                                             route: 'Medienhafen ➔ Hyatt Regency',
                                                                             gross: '€6,00 Gebühr',
-                                                                            commission: '-€1,50 Green',
+                                                                            commission: '-€1,50 Grien',
                                                                             net: '+€4,50 Entschädigung',
                                                                             status: 'Flotten-Entschädigung gutgeschrieben'
                                                                         },
@@ -6300,7 +6826,7 @@ const ManagerDashboard = () => {
                                                                             passenger: 'Maximilian B. (Fahrgast)',
                                                                             route: 'Rheinterrasse ➔ Breidenbacher Hof',
                                                                             gross: '€6,00 Gebühr',
-                                                                            commission: '-€1,50 Green',
+                                                                            commission: '-€1,50 Grien',
                                                                             net: '+€4,50 Entschädigung',
                                                                             status: 'Wartezeit No-Show vergütet'
                                                                         },
@@ -8131,11 +8657,11 @@ const ManagerDashboard = () => {
 
                                         <div className="flex gap-3 bg-btn-sec border border-main p-3 rounded-2xl items-center justify-between">
                                             <span className="text-[10px] md:text-xs lg:text-sm font-mono text-secondary truncate flex-1 px-2 select-all">
-                                                {`${window.location.origin}/signup?mode=partner&invite=${encodeURIComponent(user?.email || 'manager@green.de')}`}
+                                                {`${window.location.origin}/signup?mode=partner&invite=${encodeURIComponent(user?.email || 'manager@grien.de')}`}
                                             </span>
                                             <button 
                                                 onClick={() => {
-                                                    const link = `${window.location.origin}/signup?mode=partner&invite=${encodeURIComponent(user?.email || 'manager@green.de')}`;
+                                                    const link = `${window.location.origin}/signup?mode=partner&invite=${encodeURIComponent(user?.email || 'manager@grien.de')}`;
                                                     navigator.clipboard.writeText(link);
                                                     alert("📋 Invite Link Copied to Clipboard!\n\nShare this link with your drivers and staff so they can register and link to your fleet automatically.");
                                                 }}
@@ -9247,7 +9773,7 @@ const ManagerDashboard = () => {
                                                     </div>
                                                     <div className="flex justify-between items-center p-5 bg-dark-900 rounded-2xl border border-main">
                                                         <span className="text-[10px] md:text-xs lg:text-sm font-bold text-secondary uppercase tracking-widest">Email</span>
-                                                        <span className="text-sm font-black text-primary">{selectedGuest.email || 'guest@green-social.com'}</span>
+                                                        <span className="text-sm font-black text-primary">{selectedGuest.email || 'guest@grien-social.com'}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -9627,7 +10153,7 @@ const ManagerDashboard = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-xs font-black uppercase text-cyan-200 block mb-1">E-Mail Adresse *</label>
-                                        <input type="email" value={newDriverForm.email} onChange={(e) => setNewDriverForm({ ...newDriverForm, email: e.target.value })} placeholder="alex@green-fleet.de" className="w-full bg-white/10 border border-cyan-500/30 rounded-xl p-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400" />
+                                        <input type="email" value={newDriverForm.email} onChange={(e) => setNewDriverForm({ ...newDriverForm, email: e.target.value })} placeholder="alex@grien-fleet.de" className="w-full bg-white/10 border border-cyan-500/30 rounded-xl p-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400" />
                                     </div>
                                     <div>
                                         <label className="text-xs font-black uppercase text-cyan-200 block mb-1">Handynummer *</label>
@@ -10541,7 +11067,7 @@ const ManagerDashboard = () => {
                                             <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
                                                 isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                                             }`}>
-                                                Green Mobility
+                                                Grien Mobility
                                             </span>
                                         </div>
                                         <p className="text-xs text-slate-400 font-semibold mt-0.5">
@@ -10621,7 +11147,7 @@ const ManagerDashboard = () => {
                                 }`}>
                                     <div className="flex items-center justify-between">
                                         <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">🚍 Transfers</span>
-                                        <span className="text-[10px] font-bold text-amber-400">Green Fleet</span>
+                                        <span className="text-[10px] font-bold text-amber-400">Grien Fleet</span>
                                     </div>
                                     <div className={`text-xl font-black italic mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                                         {totalShuttleStats.totalTrips} Fahrten <span className="text-xs font-bold font-sans not-italic">gesamt</span>
@@ -10758,7 +11284,7 @@ const ManagerDashboard = () => {
                                 isLight ? 'border-slate-200' : 'border-white/5'
                             }`}>
                                 <div className="text-xs font-bold text-slate-500">
-                                    Abrechnungspartner: <strong className={isLight ? 'text-slate-900' : 'text-white'}>Green Fleet Logistics & Mobility</strong>
+                                    Abrechnungspartner: <strong className={isLight ? 'text-slate-900' : 'text-white'}>Grien Fleet Logistics & Mobility</strong>
                                 </div>
                                 <div className="flex items-center gap-2.5 w-full sm:w-auto">
                                     <button
@@ -11194,7 +11720,7 @@ const ManagerDashboard = () => {
                                             <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
                                                 isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
                                             }`}>
-                                                Green Mobility
+                                                Grien Mobility
                                             </span>
                                         </div>
                                         <p className="text-xs text-slate-400 font-semibold mt-0.5">
@@ -11411,7 +11937,7 @@ const ManagerDashboard = () => {
                                 isLight ? 'border-slate-200' : 'border-white/5'
                             }`}>
                                 <div className="text-xs font-bold text-slate-500">
-                                    Abrechnungspartner: <strong className={isLight ? 'text-slate-900' : 'text-white'}>Green Fleet Logistics & Mobility</strong>
+                                    Abrechnungspartner: <strong className={isLight ? 'text-slate-900' : 'text-white'}>Grien Fleet Logistics & Mobility</strong>
                                 </div>
                                 <div className="flex items-center gap-2.5 w-full sm:w-auto">
                                     <button

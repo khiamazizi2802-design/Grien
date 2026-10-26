@@ -38,9 +38,32 @@ const Login = () => {
         setSuccessMsg('');
         setIsAuthenticating(true);
 
+        const cleanEmail = email.trim().toLowerCase();
+        const cleanPassword = password.trim();
+
         setTimeout(async () => {
             try {
-                const res = await login(email, password);
+                // 1. Prüfen, ob es ein registrierter Partner (Hotel- oder Stadion-Manager) ist
+                const registeredPartners = JSON.parse(localStorage.getItem('green_registered_partners') || '[]');
+                const matchedPartner = registeredPartners.find(
+                    p => p.email?.toLowerCase() === cleanEmail && (!p.password || p.password === cleanPassword)
+                );
+
+                if (matchedPartner) {
+                    localStorage.setItem('green_current_partner', JSON.stringify(matchedPartner));
+                    sessionStorage.setItem('simulator_active_role', 'manager');
+                    setSuccessMsg(`Willkommen, ${matchedPartner.name || matchedPartner.businessName}! Ihr Live-Dashboard wird geladen...`);
+                    setIsAuthenticating(false);
+
+                    setTimeout(() => {
+                        const targetMode = matchedPartner.partnerType === 'SM' ? 'stadium' : 'hotel';
+                        navigate(`/manager?mode=${targetMode}`);
+                    }, 800);
+                    return;
+                }
+
+                // 2. Ansonsten normale Authentifizierung
+                const res = await login(cleanEmail, cleanPassword);
                 if (!res.success) {
                     const newAttempts = attempts + 1;
                     setAttempts(newAttempts);

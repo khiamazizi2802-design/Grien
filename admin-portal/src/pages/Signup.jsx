@@ -43,9 +43,9 @@ const Signup = () => {
     ];
 
     const verifiedCompanies = [
-        { id: 'HM', name: 'Green Palace & Spa', industry: 'Hotel' },
-        { id: 'FM', name: 'Green Fleet Ops', industry: 'Logistics' },
-        { id: 'SM', name: 'Green Stadium Arena', industry: 'Events' }
+        { id: 'HM', name: 'Grien Palace & Spa', industry: 'Hotel' },
+        { id: 'FM', name: 'Grien Fleet Ops', industry: 'Logistics' },
+        { id: 'SM', name: 'Grien Stadium Arena', industry: 'Events' }
     ];
 
     const filteredCompanies = verifiedCompanies.filter(c => 

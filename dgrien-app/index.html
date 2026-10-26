@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <title>DGrien - Driver & Fleet Operations</title>
+  </head>
+  <body>
+    <!-- Intro/Splash Screen Overlay -->
+    <div class="intro" id="intro-overlay">
+      <div class="brand">DGrien</div>
+      <div class="bar-wrap"><div class="bar-fill"></div></div>
+    </div>
+
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Fade out splash screen after intro animations are finished
+      window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+          const overlay = document.getElementById('intro-overlay');
+          if (overlay) {
+            overlay.classList.add('exit-fade');
+          }
+        }, 1500);
+      });
+    </script>
+  </body>
+</html>

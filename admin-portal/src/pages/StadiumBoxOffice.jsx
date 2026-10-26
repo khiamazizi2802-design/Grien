@@ -36,7 +36,7 @@ const StadiumBoxOffice = () => {
                 title: 'Champions League Final',
                 date: 'MAY 24, 2024',
                 time: '20:45',
-                venue: 'Green Stadium Arena',
+                venue: 'Grien Stadium Arena',
                 image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=800',
                 status: 'HIGH DEMAND',
                 tiers: [
@@ -50,7 +50,7 @@ const StadiumBoxOffice = () => {
                 title: 'World Tour: Midnight Neon',
                 date: 'JUNE 12, 2024',
                 time: '19:30',
-                venue: 'Green Stadium Arena',
+                venue: 'Grien Stadium Arena',
                 image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&q=80&w=800',
                 status: 'SELLING FAST',
                 tiers: [
@@ -67,7 +67,7 @@ const StadiumBoxOffice = () => {
                 title: e.name,
                 date: e.date,
                 time: e.time,
-                venue: 'Green Stadium Arena',
+                venue: 'Grien Stadium Arena',
                 image: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=800',
                 status: 'LIVE',
                 tiers: e.tiers.map(t => ({

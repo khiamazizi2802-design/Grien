@@ -1678,7 +1678,7 @@ const VenueMenuPage = () => {
                                                                     <div className="space-y-1">
                                                                         <label className="text-[8px] md:text-[10px] lg:text-xs font-black uppercase tracking-widest text-gray-500">Firmenname / Company Name</label>
                                                                         <input 
-                                                                            type="text" placeholder="Green Corp Ltd."
+                                                                            type="text" placeholder="Grien Corp Ltd."
                                                                             className="w-full py-4 px-6 bg-[var(--bg-secondary)] border border-[var(--border-main)] rounded-2xl text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-widest text-[var(--text-primary)] placeholder:text-gray-400/40 focus:border-brand/50 outline-none transition-all"
                                                                             value={guestDetails.companyName}
                                                                             onChange={(e) => setGuestDetails({...guestDetails, companyName: e.target.value})}
@@ -1926,8 +1926,8 @@ const VenueMenuPage = () => {
                                                     }
                                                 }
                                             }}
-                                            disabled={(isHotel || isBooking) ? (!guestDetails.firstName || !guestDetails.lastName || !guestDetails.email || !guestDetails.phone || !guestDetails.address || !guestDetails.zip || !guestDetails.city || !guestDetails.idNumber || !guestDetails.dob || !guestDetails.checkIn || !guestDetails.checkOut || (guestDetails.bookingType === 'business' && (!guestDetails.companyName || !guestDetails.companyAddress || !guestDetails.ccNumber || !guestDetails.ccExpiry || !guestDetails.ccCvv))) : (hasTicketsInCart ? (!guestName || !guestDetails.email || !guestDetails.address || !guestDetails.zip || !guestDetails.city || !guestDetails.dob) : !guestName)}
-                                            className={`w-full py-6 rounded-[2.5rem] text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-[0.2em] transition-all shadow-xl ${((isHotel || isBooking) ? (guestDetails.firstName && guestDetails.lastName && guestDetails.email && guestDetails.phone && guestDetails.address && guestDetails.zip && guestDetails.city && guestDetails.idNumber && guestDetails.dob && guestDetails.checkIn && guestDetails.checkOut && (guestDetails.bookingType !== 'business' || (guestDetails.companyName && guestDetails.companyAddress && guestDetails.ccNumber && guestDetails.ccExpiry && guestDetails.ccCvv))) : (hasTicketsInCart ? (guestName && guestDetails.email && guestDetails.address && guestDetails.zip && guestDetails.city && guestDetails.dob) : guestName)) ? 'bg-brand text-white shadow-brand/20' : 'bg-[var(--bg-secondary)] border border-[var(--border-main)] text-[var(--text-secondary)]/50'}`}
+                                            disabled={(isHotel || isBooking) ? (!guestDetails.firstName || !guestDetails.lastName || !guestDetails.email || !guestDetails.phone || !guestDetails.address || !guestDetails.zip || !guestDetails.city || (guestDetails.bookingType === 'business' && (!guestDetails.companyName || !guestDetails.companyAddress || !guestDetails.ccNumber || !guestDetails.ccExpiry || !guestDetails.ccCvv))) : (hasTicketsInCart ? (!guestName || !guestDetails.email || !guestDetails.address || !guestDetails.zip || !guestDetails.city) : !guestName)}
+                                            className={`w-full py-6 rounded-[2.5rem] text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-[0.2em] transition-all shadow-xl ${((isHotel || isBooking) ? (guestDetails.firstName && guestDetails.lastName && guestDetails.email && guestDetails.phone && guestDetails.address && guestDetails.zip && guestDetails.city && (guestDetails.bookingType !== 'business' || (guestDetails.companyName && guestDetails.companyAddress && guestDetails.ccNumber && guestDetails.ccExpiry && guestDetails.ccCvv))) : (hasTicketsInCart ? (guestName && guestDetails.email && guestDetails.address && guestDetails.zip && guestDetails.city) : guestName)) ? 'bg-brand text-white shadow-brand/20' : 'bg-[var(--bg-secondary)] border border-[var(--border-main)] text-[var(--text-secondary)]/50'}`}
                                         >
                                             {(isHotel || isBooking) ? 'Complete Registration' : (isStadium || isClub || hasTicketsInCart) ? `Authorize Tickets` : 'Continue to Settlement'}
                                         </button>
@@ -2149,6 +2149,8 @@ const VenueMenuPage = () => {
                                                             paymentMethod: ticket.paymentMethod, 
                                                             paymentStatus: ticket.paymentStatus, 
                                                             orderStatus: ticket.orderStatus,
+                                                            orderType: ticket.type,
+                                                            isStadiumTicket: ticket.type === 'stadium_ticket' || ticket.type === 'club_ticket',
                                                             guestName: ticket.guestName,
                                                             guestEmail: ticket.guestDetails?.email,
                                                             guestPhone: ticket.guestDetails?.phone,

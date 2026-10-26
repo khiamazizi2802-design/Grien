@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     Plus, Trash2, ArrowLeft, Loader2, ChevronRight,
-    Utensils, PlusCircle, Sparkles, Upload, BedDouble, Ticket, Check, Bus
+    Utensils, PlusCircle, Sparkles, Upload, BedDouble, Ticket, Check, Bus,
+    CheckCircle2, Clock, X, Calendar, User, Mail, Phone, ShieldCheck,
+    CheckSquare, Square, Bell, Search, ChevronDown, Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../config/firebase';
@@ -188,7 +190,75 @@ const getAIAssignedImage = (name, category, bizType) => {
     return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=60';
 };
 
-const MenuManagement = () => {
+const initialHotelReservations = [
+    {
+        id: 'RES-8841',
+        guestName: 'Maximilian von Berg',
+        guestEmail: 'm.vonberg@holding.de',
+        guestPhone: '+49 171 4529810',
+        roomType: 'Deluxe Suite mit Rheinblick',
+        dates: '25. Okt - 28. Okt 2026 (3 Nächte)',
+        checkInDate: '25.10.2026, 15:00 Uhr',
+        guests: 2,
+        totalPrice: 890,
+        shuttleRequested: true,
+        shuttleDetails: 'DGrien VIP Sprinter (Flughafen FRA)',
+        bookingTimestamp: 'Heute, 10:45 Uhr',
+        status: 'PENDING',
+        notice24hSent: false,
+    },
+    {
+        id: 'RES-8842',
+        guestName: 'Dr. Sarah Lindemann',
+        guestEmail: 'dr.lindemann@charite-alumni.de',
+        guestPhone: '+49 160 8821944',
+        roomType: 'Executive Suite',
+        dates: '26. Okt - 29. Okt 2026 (3 Nächte)',
+        checkInDate: '26.10.2026, 14:00 Uhr',
+        guests: 1,
+        totalPrice: 660,
+        shuttleRequested: true,
+        shuttleDetails: 'Business Shuttle ab Hauptbahnhof',
+        bookingTimestamp: 'Heute, 09:12 Uhr',
+        status: 'PENDING',
+        notice24hSent: false,
+    },
+    {
+        id: 'RES-8843',
+        guestName: 'Thomas & Elena Weber',
+        guestEmail: 't.weber@architekten-partner.com',
+        guestPhone: '+49 176 3391028',
+        roomType: 'Doppelzimmer / Comfort Suite',
+        dates: '27. Okt - 31. Okt 2026 (4 Nächte)',
+        checkInDate: '27.10.2026, 15:00 Uhr',
+        guests: 2,
+        totalPrice: 620,
+        shuttleRequested: false,
+        shuttleDetails: null,
+        bookingTimestamp: 'Gestern, 18:30 Uhr',
+        status: 'PENDING',
+        notice24hSent: false,
+    },
+    {
+        id: 'RES-8840',
+        guestName: 'Sophie Laurent (VIP)',
+        guestEmail: 'sophie.laurent@luxury-paris.fr',
+        guestPhone: '+33 6 12 34 56 78',
+        roomType: 'Presidential Penthouse',
+        dates: '24. Okt - 27. Okt 2026 (3 Nächte)',
+        checkInDate: '24.10.2026, 12:00 Uhr',
+        guests: 3,
+        totalPrice: 1950,
+        shuttleRequested: true,
+        shuttleDetails: 'DGrien VIP Sprinter (Flughafen FRA)',
+        bookingTimestamp: '23. Okt, 14:15 Uhr',
+        status: 'CONFIRMED',
+        notice24hSent: true,
+        confirmedAt: '23. Okt 2026, 16:00 Uhr'
+    }
+];
+
+const MenuManagement = ({ managerContext: propContext }) => {
     const navigate = useNavigate();
     const { user, loading } = useAuth();
     const [manualItems, setManualItems] = useState([]);
@@ -197,6 +267,123 @@ const MenuManagement = () => {
     const [stadiumSeatMapLink, setStadiumSeatMapLink] = useState('');
     const [shuttleBasePrice, setShuttleBasePrice] = useState(() => getShuttleFareConfig().basePrice);
     const [isPublishing, setIsPublishing] = useState(false);
+
+    // Real Partner Account Detection vs Demo/Preview Mode
+    const currentPartner = useMemo(() => {
+        try {
+            const saved = localStorage.getItem('green_current_partner');
+            if (saved) return JSON.parse(saved);
+        } catch (e) {}
+        return null;
+    }, []);
+    const isRealPartner = Boolean(currentPartner?.isRegisteredPartner);
+
+    // Hotel Reservations & Bottom Sheet State
+    const [isReservationSheetOpen, setIsReservationSheetOpen] = useState(false);
+    const [reservations, setReservations] = useState(() => {
+        try {
+            const savedPartner = JSON.parse(localStorage.getItem('green_current_partner') || 'null');
+            if (savedPartner?.isRegisteredPartner) {
+                const partnerRes = localStorage.getItem(`grien_hotel_reservations_${savedPartner.id}`);
+                return partnerRes ? JSON.parse(partnerRes) : [];
+            }
+            const saved = localStorage.getItem('grien_hotel_reservations');
+            if (saved) return JSON.parse(saved);
+        } catch (e) {}
+        return initialHotelReservations;
+    });
+    const [selectedReservationIds, setSelectedReservationIds] = useState([]);
+    const [reservationFilter, setReservationFilter] = useState('ALL'); // 'ALL' | 'PENDING' | 'CONFIRMED'
+    const [reservationSearchQuery, setReservationSearchQuery] = useState('');
+    const [reservationToast, setReservationToast] = useState(null);
+
+    const pendingReservations = useMemo(() => {
+        return reservations.filter(r => r.status === 'PENDING');
+    }, [reservations]);
+
+    const confirmedReservations = useMemo(() => {
+        return reservations.filter(r => r.status === 'CONFIRMED');
+    }, [reservations]);
+
+    const filteredReservations = useMemo(() => {
+        return reservations.filter(r => {
+            if (reservationFilter === 'PENDING') return r.status === 'PENDING';
+            if (reservationFilter === 'CONFIRMED') return r.status === 'CONFIRMED';
+            return true;
+        }).filter(r => {
+            if (!reservationSearchQuery) return true;
+            const q = reservationSearchQuery.toLowerCase();
+            return (
+                r.guestName.toLowerCase().includes(q) ||
+                r.id.toLowerCase().includes(q) ||
+                r.roomType.toLowerCase().includes(q) ||
+                r.guestEmail.toLowerCase().includes(q)
+            );
+        });
+    }, [reservations, reservationFilter, reservationSearchQuery]);
+
+    const saveReservations = (newRes) => {
+        setReservations(newRes);
+        try {
+            if (isRealPartner && currentPartner?.id) {
+                localStorage.setItem(`grien_hotel_reservations_${currentPartner.id}`, JSON.stringify(newRes));
+            } else {
+                localStorage.setItem('grien_hotel_reservations', JSON.stringify(newRes));
+            }
+        } catch (e) {}
+    };
+
+    const showReservationToast = (msg) => {
+        setReservationToast(msg);
+        setTimeout(() => {
+            setReservationToast(null);
+        }, 5000);
+    };
+
+    const handleConfirmSelected = () => {
+        if (selectedReservationIds.length === 0) return;
+        const nowStr = new Date().toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const updated = reservations.map(r => {
+            if (selectedReservationIds.includes(r.id)) {
+                return { ...r, status: 'CONFIRMED', notice24hSent: true, confirmedAt: nowStr };
+            }
+            return r;
+        });
+        saveReservations(updated);
+        const count = selectedReservationIds.length;
+        setSelectedReservationIds([]);
+        showReservationToast(`✓ ${count} Reservierung(en) verbindlich bestätigt! Automatische 24h-Vorab-Nachricht wurde für die Gäste aktiviert.`);
+    };
+
+    const handleConfirmSingle = (id) => {
+        const nowStr = new Date().toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const updated = reservations.map(r => {
+            if (r.id === id) {
+                return { ...r, status: 'CONFIRMED', notice24hSent: true, confirmedAt: nowStr };
+            }
+            return r;
+        });
+        saveReservations(updated);
+        showReservationToast(`✓ Reservierung #${id} verbindlich bestätigt! Der Gast erhält 24h vor Anreise die Vorab-Begrüßung.`);
+    };
+
+    const handleToggleSelectAll = () => {
+        const pendingInView = filteredReservations.filter(r => r.status === 'PENDING');
+        const allPendingSelected = pendingInView.length > 0 && pendingInView.every(r => selectedReservationIds.includes(r.id));
+        if (allPendingSelected) {
+            setSelectedReservationIds(prev => prev.filter(id => !pendingInView.some(r => r.id === id)));
+        } else {
+            const newIds = new Set([...selectedReservationIds, ...pendingInView.map(r => r.id)]);
+            setSelectedReservationIds(Array.from(newIds));
+        }
+    };
+
+    const handleToggleSelectOne = (id) => {
+        setSelectedReservationIds(prev => {
+            if (prev.includes(id)) return prev.filter(item => item !== id);
+            return [...prev, id];
+        });
+    };
 
     useEffect(() => {
         const updatePrice = () => setShuttleBasePrice(getShuttleFareConfig().basePrice);
@@ -209,7 +396,26 @@ const MenuManagement = () => {
     }, []);
     
     const userEmailKey = user?.email ? user.email.replace(/[^a-zA-Z0-9]/g, '_') : 'default';
-    const [managerContext, setManagerContext] = useState(() => localStorage.getItem(`green_manager_context_${userEmailKey}`) || 'RM');
+
+    const getActiveContext = () => {
+        if (propContext) return propContext;
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryMode = urlParams.get('mode');
+            if (queryMode === 'hotel' || queryMode === 'HM') return 'HM';
+            if (queryMode === 'stadium' || queryMode === 'SM') return 'SM';
+        } catch (e) {}
+        const saved = localStorage.getItem(`green_manager_context_${userEmailKey}`);
+        if (saved && saved !== 'FM') return saved;
+        return 'HM'; // Default to Hotel Manager!
+    };
+
+    const [managerContext, setManagerContext] = useState(getActiveContext);
+
+    useEffect(() => {
+        const ctx = getActiveContext();
+        setManagerContext(ctx);
+    }, [propContext, window.location.search]);
 
     const getCategoryOptions = () => getCategoryOptionsForContext(managerContext);
     const getTicketTypeOptions = () => getTicketTypeOptionsForContext(managerContext);
@@ -219,7 +425,7 @@ const MenuManagement = () => {
         const loadExistingMenu = async () => {
             if (loading || !user) return;
             
-            const ctx = localStorage.getItem(`green_manager_context_${userEmailKey}`) || 'RM';
+            const ctx = getActiveContext();
             setManagerContext(ctx);
             
             const categories = getCategoryOptionsForContext(ctx);
@@ -265,7 +471,9 @@ const MenuManagement = () => {
                 }
             }
 
-            if (!savedEmail && loadedItems.length > 0) {
+            if (isRealPartner && currentPartner?.receptionEmail) {
+                savedEmail = currentPartner.receptionEmail;
+            } else if (!savedEmail && loadedItems.length > 0) {
                 savedEmail = loadedItems.find(i => i.reservationEmail)?.reservationEmail || '';
             }
             setHotelReservationEmail(savedEmail);
@@ -704,6 +912,54 @@ const MenuManagement = () => {
                                 </div>
                             )}
 
+                            {/* Hotel Reservations Management Button (Triggers Bottom Sheet) */}
+                            {managerContext === 'HM' && (
+                                <div className="mt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsReservationSheetOpen(true)}
+                                        className="w-full p-4 md:p-5 bg-gradient-to-r from-emerald-950/50 via-cyan-950/30 to-black/70 border border-emerald-500/40 hover:border-emerald-400 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-300 shadow-xl hover:shadow-emerald-500/10 group cursor-pointer"
+                                    >
+                                        <div className="flex items-center gap-3.5">
+                                            <div className="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-110 transition-transform shadow-md">
+                                                <BedDouble size={22} />
+                                            </div>
+                                            <div className="text-left space-y-1">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="text-xs md:text-sm font-black uppercase text-white tracking-wider">
+                                                        Gäste-Reservierungen annehmen & bestätigen
+                                                    </span>
+                                                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-black rounded-full uppercase tracking-wider">
+                                                        Bottom Sheet Drawer
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] md:text-xs text-slate-300 font-normal">
+                                                    Öffnet das Kontrollzentrum: Alle auf einmal bestätigen, einzeln auswählen & automatische 24h-Gäste-Garantie
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                                            {pendingReservations.length > 0 ? (
+                                                <div className="px-3.5 py-1.5 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-300 text-xs font-black uppercase tracking-wider flex items-center gap-2 animate-pulse">
+                                                    <Clock size={14} />
+                                                    <span>{pendingReservations.length} Ausstehend</span>
+                                                </div>
+                                            ) : (
+                                                <div className="px-3.5 py-1.5 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-300 text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                                                    <CheckCircle2 size={14} />
+                                                    <span>Alle {confirmedReservations.length} Bestätigt</span>
+                                                </div>
+                                            )}
+                                            <div className="px-4 py-2 bg-emerald-500 text-black font-black text-xs uppercase tracking-wider rounded-xl shadow-md group-hover:bg-emerald-400 flex items-center gap-1.5 transition-colors">
+                                                <span>Öffnen</span>
+                                                <ChevronDown size={14} className="rotate-180" />
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+                            )}
+
                             {/* Stadion Hybrid Ticket-API & Sitzplatz-Wahl Gateway */}
                             {managerContext === 'SM' && (
                                 <div className="mt-4 p-4 md:p-5 bg-[#ffffff05] border border-[#00e5ff33] rounded-2xl flex flex-col gap-4 shadow-lg">
@@ -768,6 +1024,346 @@ const MenuManagement = () => {
                         </button>
                     </div>
             </div>
+
+            {/* BOTTOM SHEET: Hotel Reservierungen Verwalten */}
+            <AnimatePresence>
+                {isReservationSheetOpen && (
+                    <div className="fixed inset-0 z-[200] flex flex-col justify-end overflow-hidden">
+                        {/* Backdrop overlay (Leicht & performant ohne Render-Lag) */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={() => setIsReservationSheetOpen(false)}
+                            className="fixed inset-0 bg-black/85 backdrop-blur-sm cursor-pointer"
+                        />
+
+                        {/* Bottom Sheet Container (Zentriert, GPU-beschleunigt, flüssige 60FPS-Animation) */}
+                        <motion.div
+                            initial={{ y: '100%' }}
+                            animate={{ y: 0 }}
+                            exit={{ y: '100%' }}
+                            transition={{ type: 'tween', ease: [0.16, 1, 0.3, 1], duration: 0.3 }}
+                            className="relative w-full max-w-5xl mx-auto max-h-[86vh] bg-gradient-to-b from-[#0f172a] via-[#090d16] to-[#040711] border-t-2 md:border-x-2 border-emerald-500/40 rounded-t-[2.5rem] shadow-[0_-25px_60px_rgba(0,0,0,0.9)] z-10 flex flex-col overflow-hidden will-change-transform transform-gpu"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Drag handle */}
+                            <div className="pt-3 pb-1 flex justify-center">
+                                <div className="w-14 h-1.5 bg-white/20 hover:bg-white/40 transition-colors rounded-full cursor-pointer" onClick={() => setIsReservationSheetOpen(false)} />
+                            </div>
+
+                            {/* Header */}
+                            <div className="px-5 md:px-8 py-3.5 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                <div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                                            <BedDouble size={20} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg md:text-xl font-black italic uppercase tracking-wider text-white">
+                                                Gäste-Reservierungen <span className="text-emerald-400">Management</span>
+                                            </h2>
+                                            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                                                Verbindliche Zimmerfreigabe • Automatischer 24h-Vorab-Gästeservice
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3 self-end md:self-auto">
+                                    <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-300 text-xs font-black uppercase">
+                                        {pendingReservations.length} Offen / {reservations.length} Gesamt
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsReservationSheetOpen(false)}
+                                        className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Toast Notification inside Bottom Sheet */}
+                            <AnimatePresence>
+                                {reservationToast && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className="mx-5 md:mx-8 mt-3 p-3 bg-emerald-500/20 border border-emerald-500/50 rounded-2xl flex items-center gap-3 text-emerald-300 text-xs md:text-sm font-black shadow-lg"
+                                    >
+                                        <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                                        <span>{reservationToast}</span>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            {/* 24h-Vorab-Garantie Info Banner */}
+                            <div className="px-5 md:px-8 pt-3 pb-2">
+                                <div className="p-3.5 bg-gradient-to-r from-blue-950/40 via-emerald-950/25 to-black/50 border border-blue-500/30 rounded-2xl flex items-start gap-3 shadow-md">
+                                    <div className="w-7 h-7 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 mt-0.5">
+                                        <Bell size={15} />
+                                    </div>
+                                    <div className="space-y-0.5">
+                                        <h4 className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-2">
+                                            <span>Automatische 24h-Vorab-Garantie an Ihre Hotelgäste</span>
+                                            <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30 font-bold">100% Gäste-Sicherheit</span>
+                                        </h4>
+                                        <p className="text-[11px] text-slate-300 leading-relaxed font-normal">
+                                            Sobald Sie eine Buchung bestätigen, ist das Zimmer für den Kunden garantiert reserviert. Exakt <strong>24 Stunden vor Check-in</strong> erhält der Gast eine automatische Vorab-Begrüßung: <em>„Ihr Zimmer ist verbindlich für Sie reserviert und bereit – das Hotel freut sich auf Ihren Besuch!“</em>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Control Bar: Filter Tabs, Search & Multi-Select Actions */}
+                            <div className="px-5 md:px-8 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2.5 border-b border-white/5">
+                                {/* Filter Tabs */}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <button
+                                        type="button"
+                                        onClick={() => setReservationFilter('ALL')}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                            reservationFilter === 'ALL'
+                                                ? 'bg-emerald-500 text-black shadow-md'
+                                                : 'bg-white/5 text-slate-400 hover:text-white border border-white/10'
+                                        }`}
+                                    >
+                                        Alle ({reservations.length})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setReservationFilter('PENDING')}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+                                            reservationFilter === 'PENDING'
+                                                ? 'bg-amber-500 text-black shadow-md'
+                                                : 'bg-white/5 text-slate-400 hover:text-amber-400 border border-white/10'
+                                        }`}
+                                    >
+                                        <Clock size={12} />
+                                        <span>Ausstehend ({pendingReservations.length})</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setReservationFilter('CONFIRMED')}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+                                            reservationFilter === 'CONFIRMED'
+                                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-md'
+                                                : 'bg-white/5 text-slate-400 hover:text-emerald-400 border border-white/10'
+                                        }`}
+                                    >
+                                        <CheckCircle2 size={12} />
+                                        <span>Bestätigt ({confirmedReservations.length})</span>
+                                    </button>
+                                </div>
+
+                                {/* Search Bar */}
+                                <div className="relative w-full md:w-60">
+                                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Gast, ID oder Zimmer..."
+                                        value={reservationSearchQuery}
+                                        onChange={(e) => setReservationSearchQuery(e.target.value)}
+                                        className="w-full pl-8 pr-7 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                                    />
+                                    {reservationSearchQuery && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setReservationSearchQuery('')}
+                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Batch Selection Action Bar */}
+                            <div className="px-5 md:px-8 py-2.5 bg-white/[0.02] border-b border-white/5 flex flex-wrap items-center justify-between gap-3 text-xs">
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={handleToggleSelectAll}
+                                        className="flex items-center gap-2 text-slate-300 hover:text-white font-bold cursor-pointer"
+                                    >
+                                        {filteredReservations.filter(r => r.status === 'PENDING').length > 0 &&
+                                        filteredReservations.filter(r => r.status === 'PENDING').every(r => selectedReservationIds.includes(r.id)) ? (
+                                            <CheckSquare size={16} className="text-emerald-400" />
+                                        ) : (
+                                            <Square size={16} className="text-slate-500" />
+                                        )}
+                                        <span>Alle offenen auswählen</span>
+                                    </button>
+                                    {selectedReservationIds.length > 0 && (
+                                        <span className="text-slate-400">
+                                            ({selectedReservationIds.length} ausgewählt)
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        disabled={selectedReservationIds.length === 0}
+                                        onClick={handleConfirmSelected}
+                                        className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-black text-xs uppercase tracking-wider rounded-xl shadow-lg hover:shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                                    >
+                                        <CheckCircle2 size={15} />
+                                        <span>Ausgewählte bestätigen ({selectedReservationIds.length})</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Scrollable Reservations List */}
+                            <div className="px-5 md:px-8 py-3.5 overflow-y-auto space-y-3 max-h-[46vh]">
+                                {filteredReservations.length === 0 ? (
+                                    <div className="text-center py-12 text-slate-500 space-y-2">
+                                        <BedDouble size={36} className="mx-auto opacity-30" />
+                                        <p className="text-sm font-bold">Keine Reservierungen in dieser Ansicht gefunden.</p>
+                                    </div>
+                                ) : (
+                                    filteredReservations.map((res) => {
+                                        const isSelected = selectedReservationIds.includes(res.id);
+                                        const isConfirmed = res.status === 'CONFIRMED';
+
+                                        return (
+                                            <div
+                                                key={res.id}
+                                                className={`p-3.5 md:p-4 rounded-2xl border transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 ${
+                                                    isConfirmed
+                                                        ? 'bg-emerald-950/15 border-emerald-500/30'
+                                                        : isSelected
+                                                        ? 'bg-blue-950/30 border-blue-500/50 shadow-md'
+                                                        : 'bg-white/[0.03] border-white/10 hover:border-white/20'
+                                                }`}
+                                            >
+                                                <div className="flex items-start gap-3 w-full md:w-auto">
+                                                    {/* Selection Checkbox */}
+                                                    {!isConfirmed ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleToggleSelectOne(res.id)}
+                                                            className="mt-0.5 cursor-pointer text-slate-400 hover:text-emerald-400 shrink-0"
+                                                        >
+                                                            {isSelected ? (
+                                                                <CheckSquare size={18} className="text-emerald-400" />
+                                                            ) : (
+                                                                <Square size={18} className="text-slate-500" />
+                                                            )}
+                                                        </button>
+                                                    ) : (
+                                                        <div className="mt-0.5 w-4.5 h-4.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                                                            <Check size={12} />
+                                                        </div>
+                                                    )}
+
+                                                    {/* Reservation Info */}
+                                                    <div className="space-y-1 flex-1">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="text-sm font-black text-white">
+                                                                {res.guestName}
+                                                            </span>
+                                                            <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-mono text-cyan-400 font-bold">
+                                                                {res.id}
+                                                            </span>
+                                                            <span className="text-[10px] text-slate-400">
+                                                                Gebucht: {res.bookingTimestamp}
+                                                            </span>
+                                                        </div>
+
+                                                        <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-300">
+                                                            <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-lg text-emerald-300 font-black flex items-center gap-1.5">
+                                                                <BedDouble size={12} className="text-emerald-400" />
+                                                                {res.roomType}
+                                                            </span>
+                                                            <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-lg flex items-center gap-1.5 text-slate-300">
+                                                                <Calendar size={12} className="text-cyan-400" />
+                                                                {res.dates}
+                                                            </span>
+                                                            <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-lg flex items-center gap-1.5 text-slate-300">
+                                                                <User size={12} className="text-amber-400" />
+                                                                {res.guests} {res.guests === 1 ? 'Gast' : 'Gäste'}
+                                                            </span>
+                                                            <span className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-lg flex items-center gap-1.5 text-slate-300">
+                                                                <Mail size={12} className="text-blue-400" />
+                                                                {res.guestEmail}
+                                                            </span>
+                                                        </div>
+
+                                                        {/* VIP Shuttle Info */}
+                                                        {res.shuttleRequested && (
+                                                            <div className="flex items-center gap-1.5 text-[10px] text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-lg w-fit font-bold">
+                                                                <Bus size={12} className="text-cyan-400" />
+                                                                <span>VIP Shuttle gebucht: {res.shuttleDetails}</span>
+                                                            </div>
+                                                        )}
+
+                                                        {/* 24h Notice Status when confirmed */}
+                                                        {isConfirmed && (
+                                                            <div className="flex items-center gap-1.5 text-[10px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-lg w-fit font-bold">
+                                                                <ShieldCheck size={12} className="text-emerald-400" />
+                                                                <span>24h-Vorab-Garantie aktiv • Kunde erhält am Vortag die Vorab-Begrüßung</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Price & Action Button */}
+                                                <div className="flex items-center gap-3.5 shrink-0 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-2.5 md:pt-0 border-white/5">
+                                                    <div className="text-right">
+                                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider block">
+                                                            Gesamtbetrag
+                                                        </span>
+                                                        <span className="text-base font-black italic text-emerald-400 block">
+                                                            €{res.totalPrice.toFixed(2)}
+                                                        </span>
+                                                    </div>
+
+                                                    <div>
+                                                        {isConfirmed ? (
+                                                            <div className="px-3.5 py-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                                                                <CheckCircle2 size={14} className="text-emerald-400" />
+                                                                <span>Bestätigt</span>
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleConfirmSingle(res.id)}
+                                                                className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                                                            >
+                                                                <Check size={13} />
+                                                                <span>Bestätigen</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+
+                            {/* Bottom Sheet Footer */}
+                            <div className="px-5 md:px-8 py-3 bg-black/70 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                                <div className="text-slate-400 flex items-center gap-2">
+                                    <ShieldCheck size={14} className="text-emerald-400" />
+                                    <span>Gäste-Garantie: Automatische Synchronisation mit der DGrien Buchungs-Cloud</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsReservationSheetOpen(false)}
+                                    className="w-full sm:w-auto px-5 py-2 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl uppercase tracking-wider transition-colors cursor-pointer"
+                                >
+                                    Schließen
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

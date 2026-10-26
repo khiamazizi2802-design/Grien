@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Green App - High Fidelity Device Preview</title>
+  <style>
+    :root {
+      --bg: #030406;
+      --card-bg: #0D1117;
+      --accent: #10B981;
+      --accent-glow: rgba(16, 185, 129, 0.15);
+      --border: rgba(255, 255, 255, 0.08);
+      --text-main: #F0F6FC;
+      --text-dim: #8B949E;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: auto; /* Allow horizontal scroll for large previews */
+    }
+
+    header {
+      width: 100%;
+      padding: 3rem 2rem;
+      text-align: center;
+      background: linear-gradient(to bottom, #0D1117, #030406);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      left: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2.8rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      background: linear-gradient(135deg, #34D399, #10B981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: var(--text-dim);
+      margin-top: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .preview-canvas {
+      display: flex;
+      flex-direction: column;
+      gap: 100px;
+      padding: 4rem 2rem;
+      width: max-content; /* Force containers to stay horizontal if desired, or use min-width */
+      min-width: 100%;
+      align-items: flex-start;
+    }
+
+    .row {
+      display: flex;
+      gap: 60px;
+      padding: 0 40px;
+    }
+
+    .device-box {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 10px;
+    }
+
+    .device-name {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .resolution {
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: var(--accent);
+      background: var(--accent-glow);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    /* Device Container with Scale Logic */
+    .viewport-wrapper {
+      background: #161B22;
+      border-radius: 24px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .viewport-wrapper iframe {
+      border: none;
+      background: #000;
+      border-radius: 12px;
+      display: block;
+      transform-origin: 0 0;
+    }
+
+    /* SPECIFIC SIZING (Increased Scale) */
+    
+    /* MOBILE: 100% Scale */
+    .box-mobile .viewport-wrapper { width: 390px; height: 844px; }
+    .box-mobile iframe { width: 390px; height: 844px; }
+
+    /* TABLET: 85% Scale */
+    .box-tablet .viewport-wrapper { width: calc(820px * 0.85); height: calc(1180px * 0.85); }
+    .box-tablet iframe { width: 820px; height: 1180px; transform: scale(0.85); }
+
+    /* LAPTOP: 75% Scale */
+    .box-laptop .viewport-wrapper { width: calc(1366px * 0.75); height: calc(768px * 0.75); }
+    .box-laptop iframe { width: 1366px; height: 768px; transform: scale(0.75); }
+
+    /* DESKTOP: 60% Scale */
+    .box-desktop .viewport-wrapper { width: calc(1920px * 0.6); height: calc(1080px * 0.6); }
+    .box-desktop iframe { width: 1920px; height: 1080px; transform: scale(0.6); }
+
+    .bottom-bar {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      gap: 12px;
+      z-index: 1000;
+    }
+
+    .btn {
+      background: #238636;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: background 0.2s;
+    }
+
+    .btn:hover { background: #2ea043; }
+
+    .btn-outline {
+      background: #21262d;
+      border: 1px solid var(--border);
+      color: #c9d1d9;
+    }
+    .btn-outline:hover { background: #30363d; }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Green App - UX Lab</h1>
+    <p class="subtitle">High-Fidelity Preview & Responsive Stress Test</p>
+  </header>
+
+  <div class="preview-canvas">
+    
+    <!-- Mobile & Tablet Row -->
+    <div class="row">
+      <div class="device-box box-mobile">
+        <div class="meta">
+          <div class="device-name">iPhone 14 Pro</div>
+          <div class="resolution">390 x 844</div>
+        </div>
+        <div class="viewport-wrapper">
+          <iframe src="http://localhost:5173/" title="Mobile"></iframe>
+        </div>
+      </div>
+
+      <div class="device-box box-tablet">
+        <div class="meta">
+          <div class="device-name">iPad Air</div>
+          <div class="resolution">820 x 1180</div>
+        </div>
+        <div class="viewport-wrapper">
+          <iframe src="http://localhost:5173/" title="Tablet"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- Laptop Row -->
+    <div class="row">
+      <div class="device-box box-laptop">
+        <div class="meta">
+          <div class="device-name">MacBook Air</div>
+          <div class="resolution">1366 x 768</div>
+        </div>
+        <div class="viewport-wrapper">
+          <iframe src="http://localhost:5173/" title="Laptop"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop Row -->
+    <div class="row">
+      <div class="device-box box-desktop">
+        <div class="meta">
+          <div class="device-name">UltraWide Desktop</div>
+          <div class="resolution">1920 x 1080</div>
+        </div>
+        <div class="viewport-wrapper">
+          <iframe src="http://localhost:5173/" title="Desktop"></iframe>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom-bar">
+    <button class="btn btn-outline" onclick="window.location.reload()">Refresh Page</button>
+    <button class="btn" onclick="openFull()">Open Full Server</button>
+  </div>
+
+  <script>
+    function openFull() {
+      window.open('http://localhost:5173/', '_blank');
+    }
+  </script>
+
+</body>
+</html>

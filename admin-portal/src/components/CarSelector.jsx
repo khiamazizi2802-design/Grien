@@ -3,9 +3,9 @@ import clsx from 'clsx';
 import { Car, Zap, ShieldCheck } from 'lucide-react';
 
 const cars = [
-    { id: 'standard', name: 'Green Basic', icon: Car, price: '€12.50', time: '4 min' },
-    { id: 'premium', name: 'Green Premium', icon: ShieldCheck, price: '€18.00', time: '6 min' },
-    { id: 'electric', name: 'Green Electric', icon: Zap, price: '€14.20', time: '5 min' },
+    { id: 'standard', name: 'Grien Basic', icon: Car, price: '€12.50', time: '4 min' },
+    { id: 'premium', name: 'Grien Premium', icon: ShieldCheck, price: '€18.00', time: '6 min' },
+    { id: 'electric', name: 'Grien Electric', icon: Zap, price: '€14.20', time: '5 min' },
 ];
 
 const CarSelector = ({ selected, onSelect }) => {

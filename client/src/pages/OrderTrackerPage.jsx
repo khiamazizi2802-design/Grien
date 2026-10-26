@@ -43,32 +43,56 @@ const OrderTrackerPage = () => {
     const venueName = location.state?.venueName || "The Skyline Club";
     const venueOffer = location.state?.venueOffer || "Free Entry + 1 Drink";
     const orderId = location.state?.orderId;
+    const tableId = location.state?.tableId || "Unknown";
     
-    const isWashHub = venueName.toLowerCase().includes('wash') || cart.some(item => item.tags?.includes('Service'));
-    const isHotel = location.state?.orderType === 'hotel' || 
-                    location.state?.bookingType === 'hotel' ||
-                    venueName.toLowerCase().includes('hotel') || 
-                    venueName.toLowerCase().includes('luxe') || 
-                    venueName.toLowerCase().includes('resort') ||
-                    venueName.toLowerCase().includes('palace') ||
-                    cart.some(item => 
-                        item.name.toLowerCase().includes('room') || 
-                        item.name.toLowerCase().includes('suite') || 
-                        item.name.toLowerCase().includes('bed') ||
-                        item.category === 'Rooms' ||
-                        item.category === 'Suites' ||
-                        item.tags?.includes('Hotel') ||
-                        item.tags?.includes('Suite') ||
-                        item.tags?.includes('Room')
-                    );
-    const isBooking = isHotel || cart.some(item => 
-        item.tags?.includes('Luxury') || 
-        item.tags?.includes('Elite') || 
-        item.name.toLowerCase().includes('room') ||
-        item.name.toLowerCase().includes('suite') ||
-        item.name.toLowerCase().includes('bed')
+    // 1. Detect if this is a Hotel / Room / Stay Booking
+    const isHotelBookingContext = 
+        location.state?.orderType === 'booking' || 
+        location.state?.orderType === 'hotel' || 
+        location.state?.bookingType === 'hotel' ||
+        tableId === 'Check-in Assigned' ||
+        venueName.toLowerCase().includes('hotel') || 
+        venueName.toLowerCase().includes('luxe') || 
+        venueName.toLowerCase().includes('resort') ||
+        venueName.toLowerCase().includes('palace') ||
+        cart.some(item => 
+            item.name.toLowerCase().includes('room') || 
+            item.name.toLowerCase().includes('suite') || 
+            item.name.toLowerCase().includes('bed') ||
+            item.category === 'Rooms' ||
+            item.category === 'Suites' ||
+            item.tags?.includes('Hotel') ||
+            item.tags?.includes('Suite') ||
+            item.tags?.includes('Room') ||
+            item.tags?.includes('Rooms') ||
+            item.tags?.includes('Booking')
+        );
+
+    // 2. Detect if this is an explicit Stadium / Event Ticket order (STRICTLY NOT HOTEL)
+    const isExplicitStadiumOrTicket = !isHotelBookingContext && (
+        location.state?.isStadiumTicket || 
+        location.state?.orderType === 'stadium' || 
+        location.state?.orderType === 'stadium_ticket' || 
+        location.state?.orderType === 'club_ticket' ||
+        tableId === 'E-Ticket' ||
+        tableId === 'Club-Pass' ||
+        venueName.toLowerCase().includes('stadium') || 
+        venueName.toLowerCase().includes('arena') ||
+        cart.some(item => 
+            item.tags?.includes('Ticket') || 
+            item.tags?.includes('Fast-Lane') || 
+            item.name.toLowerCase().includes('ticket') || 
+            item.name.toLowerCase().includes('eintritt') || 
+            item.name.toLowerCase().includes('pass') ||
+            item.id?.startsWith('t') || 
+            item.id?.startsWith('st') ||
+            item.id?.startsWith('dynamic')
+        )
     );
-    const isStadium = venueName.toLowerCase().includes('stadium') || venueName.toLowerCase().includes('arena');
+
+    const isHotel = isHotelBookingContext;
+    const isBooking = isHotelBookingContext;
+    const isStadium = !isHotelBookingContext && (venueName.toLowerCase().includes('stadium') || venueName.toLowerCase().includes('arena'));
     const isParking = false;
     const guestName = location.state?.guestName;
     const guestDetails = location.state?.guestDetails;
@@ -76,21 +100,9 @@ const OrderTrackerPage = () => {
     const totalCost = location.state?.totalCost ?? cart.reduce((sum, item) => sum + item.price, 0);
 
     // Check if the order is a ticket order (e.g. Club entry, Event ticket, Stadium seat)
-    const hasTickets = !isBooking && !isHotel && cart.some(item => 
-        item.tags?.includes('Ticket') || 
-        item.tags?.includes('Fast-Lane') || 
-        item.tags?.includes('VIP') ||
-        item.name.toLowerCase().includes('ticket') || 
-        item.name.toLowerCase().includes('eintritt') || 
-        item.name.toLowerCase().includes('pass') ||
-        item.id?.startsWith('t') || 
-        item.id?.startsWith('st') ||
-        item.id?.startsWith('dynamic')
-    );
+    const hasTickets = isExplicitStadiumOrTicket;
+    const isStadiumTicket = isExplicitStadiumOrTicket;
 
-    const isStadiumTicket = !isHotel && !isBooking && !isWashHub && (isStadium || location.state?.isStadiumTicket || location.state?.orderType === 'stadium' || hasTickets);
-
-    const tableId = location.state?.tableId || "Unknown";
     const orderIdValue = location.state?.orderId || Date.now();
     const { socket } = useSocket();
     const { user } = useAuth();
@@ -668,7 +680,9 @@ const OrderTrackerPage = () => {
                     <div className="flex items-center justify-between px-2">
                         <div className="flex items-center gap-2">
                             <Receipt size={18} className="text-gray-500" />
-                            <h3 className="text-sm font-black italic uppercase tracking-widest text-gray-500">Your Ticket</h3>
+                            <h3 className="text-sm font-black italic uppercase tracking-widest text-gray-500">
+                                {isHotelBookingContext ? 'Your Reservation' : 'Your Ticket'}
+                            </h3>
                         </div>
                         
                         {isWashHub && (
@@ -1323,7 +1337,7 @@ const OrderTrackerPage = () => {
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <span className="text-gray-400 font-bold uppercase text-[10px] flex items-center gap-1.5">
-                                                <Users size={13} className="text-emerald-600" /> Ticket-Inhaber:
+                                                <Users size={13} className="text-emerald-600" /> {isHotelBookingContext ? 'Gast / Inhaber:' : 'Ticket-Inhaber:'}
                                             </span>
                                             <span className="font-black text-dark-950">
                                                 {guestName || user?.displayName || 'Azizi Khiam'}
@@ -1336,6 +1350,27 @@ const OrderTrackerPage = () => {
                                             <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md text-[10px] uppercase">
                                                 {t('paid')} (Online Card)
                                             </span>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-1 border-t border-gray-100">
+                                            <span className="text-gray-400 font-bold uppercase text-[10px] flex items-center gap-1.5">
+                                                🚐 Shuttle-Service:
+                                            </span>
+                                            {guestDetails?.hasShuttleService ? (
+                                                <div className="text-right">
+                                                    <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md text-[10px] uppercase inline-block">
+                                                        ✓ Gebucht ({guestDetails?.shuttlePersons || 1} Pers. • {guestDetails?.shuttleLuggage || 0} Koffer)
+                                                    </span>
+                                                    {guestDetails?.shuttlePickupAddress && (
+                                                        <span className="block text-[9px] text-gray-500 font-medium truncate max-w-[200px]">
+                                                            📍 {guestDetails.shuttlePickupAddress}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md text-[10px] uppercase">
+                                                    Nicht gebucht
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
 
@@ -1387,8 +1422,12 @@ const OrderTrackerPage = () => {
                                             <p className="text-xl font-black text-dark-950 italic">€{totalCost.toFixed(2)}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-[9px] font-black uppercase text-gray-400 tracking-wider">Ticket / {t('bookingId')}</p>
-                                            <p className="text-xs font-mono font-bold text-emerald-700">#TK-{String(orderIdValue).slice(-6)}</p>
+                                            <p className="text-[9px] font-black uppercase text-gray-400 tracking-wider">
+                                                {isHotelBookingContext ? t('bookingId') : 'Ticket ID'}
+                                            </p>
+                                            <p className="text-xs font-mono font-bold text-emerald-700">
+                                                {isHotelBookingContext ? `#BK-${String(orderIdValue).slice(-6)}` : `#TK-${String(orderIdValue).slice(-6)}`}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

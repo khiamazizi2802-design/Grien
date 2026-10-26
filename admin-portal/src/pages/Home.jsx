@@ -1175,7 +1175,7 @@ const Home = () => {
                                 <div className="space-y-3">
                                     {[
                                         { shop: 'Grand Luxury Hotel & Spa', offer: 'FREE SPA ACCESS & LATE CHECKOUT', icon: BedDouble, category: 'Luxury Hotel', color: 'text-emerald-400' },
-                                        { shop: 'Green Stadium Arena', offer: 'FREE VIP TICKET UPGRADE', icon: Trophy, category: 'Stadium VIP', color: 'text-amber-400' }
+                                        { shop: 'Grien Stadium Arena', offer: 'FREE VIP TICKET UPGRADE', icon: Trophy, category: 'Stadium VIP', color: 'text-amber-400' }
                                     ].map((perk, i) => (
                                         <div key={i} className="bg-[var(--bg-secondary)] border border-[var(--border-main)] p-5 rounded-3xl group hover:border-amber-400/20 transition-all relative overflow-hidden">
                                             <div className="flex justify-between items-start mb-4">
