@@ -3763,257 +3763,500 @@ const ManagerDashboard = () => {
                         ) : (
                             <AnimatePresence mode="wait">
                                 {view === 'overview' && (
-                                    <motion.div key="overview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-10">
-                                    {/* DYNAMIC STATS GRID */}
-                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                        {/* STAT 1 */}
-                                        <div className="glass-panel-subtle p-5 rounded-2xl border border-white/5 hover:border-brand/30 transition-all relative flex flex-col justify-between h-[110px]">
-                                            <div className="flex justify-between items-start">
-                                                <span className="text-[11px] md:text-sm lg:text-base font-medium text-gray-300">Reservations</span>
-                                                <span className="text-[9px] md:text-[11px] lg:text-xs bg-white/5 text-gray-300 px-1 py-0.5 rounded flex items-center"><ChevronRight size={12} /></span>
+                                    <motion.div key="overview" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-8">
+                                        {/* FLEET CONTROL BANNER */}
+                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-emerald-950/40 via-dark-900 to-black/60 p-6 md:p-8 rounded-[2.5rem] border border-emerald-500/20 shadow-2xl relative overflow-hidden">
+                                            <div className="absolute -right-16 -top-16 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                                            <div className="space-y-1.5 relative z-10">
+                                                <div className="flex items-center gap-2.5">
+                                                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                                                    <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.25em] text-emerald-400">Live Flotten-Leitstand • Zentrale</span>
+                                                </div>
+                                                <h1 className="text-2xl md:text-4xl font-black italic uppercase tracking-tight text-white">
+                                                    Flotten <span className="text-emerald-400">Operations</span> Cockpit
+                                                </h1>
+                                                <p className="text-gray-400 text-xs md:text-sm">
+                                                    Echtzeit-Telemetrie, aktive Fahrer-Schichten & automatische Transfer-Disposition
+                                                </p>
                                             </div>
-                                            <div className="flex justify-between items-end mt-2">
-                                                <div className="flex items-baseline gap-1.5">
-                                                    <span className="text-2xl font-bold text-white">88%</span>
-                                                    <span className="text-[10px] md:text-xs lg:text-sm text-gray-400 font-medium">booked</span>
-                                                </div>
-                                                <div className="w-14 h-8 opacity-70">
-                                                    <svg viewBox="0 0 100 30" className="w-full h-full stroke-gray-400" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M0,25 Q20,15 40,25 T80,10 T100,5" />
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {/* STAT 2 */}
-                                        <div className="glass-panel-subtle p-5 rounded-2xl border border-white/5 hover:border-brand/30 transition-all relative flex flex-col justify-between h-[110px]">
-                                            <div className="flex justify-between items-start">
-                                                <span className="text-[11px] md:text-sm lg:text-base font-medium text-gray-300">Active Tables</span>
-                                                <span className="text-[9px] md:text-[11px] lg:text-xs bg-brand/10 text-brand px-1 py-0.5 rounded flex items-center border border-brand/20"><Activity size={10} className="mr-0.5"/></span>
-                                            </div>
-                                            <div className="flex justify-between items-end mt-2">
-                                                <div className="flex items-baseline gap-1.5">
-                                                    <span className="text-2xl font-bold text-white">32/40</span>
-                                                </div>
-                                                <div className="w-14 h-8">
-                                                    <svg viewBox="0 0 100 30" className="w-full h-full stroke-brand" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M0,20 L20,25 L40,15 L60,20 L80,5 L100,10" />
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {/* STAT 3 */}
-                                        <div className="glass-panel-subtle p-5 rounded-2xl border border-white/5 hover:border-brand/30 transition-all relative flex flex-col justify-between h-[110px]">
-                                            <div className="flex justify-between items-start">
-                                                <span className="text-[11px] md:text-sm lg:text-base font-medium text-gray-300">Orders in Progress</span>
-                                                <span className="text-[10px] md:text-xs lg:text-sm text-gray-500 flex items-center">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between items-end mt-2">
-                                                <div className="flex items-baseline gap-1.5">
-                                                    <span className="text-2xl font-bold text-white">12</span>
-                                                </div>
-                                                <div className="w-14 h-8">
-                                                    <svg viewBox="0 0 100 30" className="w-full h-full stroke-purple-500 drop-shadow-[0_0_5px_rgba(168,85,247,0.5)]" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M0,15 Q20,25 40,10 T80,20 T100,5" />
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {/* STAT 4 */}
-                                        <div className="glass-panel-subtle p-5 rounded-2xl border border-white/5 hover:border-brand/30 transition-all relative flex flex-col justify-between h-[110px]">
-                                            <div className="flex justify-between items-start">
-                                                <span className="text-[11px] md:text-sm lg:text-base font-medium text-gray-300">Revenue Today</span>
-                                                <span className="text-[9px] md:text-[11px] lg:text-xs bg-brand/10 text-brand px-1 py-0.5 rounded flex items-center border border-brand/20"><TrendingUp size={10} className="mr-0.5"/></span>
-                                            </div>
-                                            <div className="flex justify-between items-end mt-2">
-                                                <div className="flex items-baseline gap-1.5">
-                                                    <span className="text-2xl font-bold text-white">$7,450</span>
-                                                </div>
-                                                <div className="w-14 h-8">
-                                                    <svg viewBox="0 0 100 30" className="w-full h-full stroke-brand drop-shadow-[0_0_5px_rgba(52,211,153,0.5)]" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M0,25 L30,20 L50,10 L70,15 L100,0" />
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {/* MOCKUP 3-COLUMN HUBS */}
-                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                        
-                                        {/* COL 1: Room & Suite Status */}
-                                        <div className="glass-panel-subtle border border-white/5 rounded-3xl p-5 relative shadow-xl">
-                                            <div className="flex justify-between items-center mb-4">
-                                                <h3 className="text-[13px] font-bold text-white">Room & Suite Status</h3>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 cursor-pointer"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
-                                            </div>
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <span className="text-[10px] md:text-xs lg:text-sm text-gray-400">Wing A & B</span>
-                                                <span className="text-[10px] md:text-xs lg:text-sm text-gray-500">Floors 1 - 4</span>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-3 mb-6">
-                                                <div className="bg-[#0B121E]/50 border border-brand/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-[0_0_15px_rgba(52,211,153,0.15)] relative overflow-hidden">
-                                                    <div className="absolute top-0 left-0 w-full h-full bg-brand/5"></div>
-                                                    <span className="text-xl font-bold text-white relative z-10">Suite 101</span>
-                                                    <span className="text-[9px] md:text-[11px] lg:text-xs font-bold text-brand relative z-10">Reserved</span>
-                                                    <span className="text-[8px] md:text-[10px] lg:text-xs text-gray-400 mt-1 relative z-10">8 PM Arrival</span>
-                                                </div>
-                                                <div className="bg-[#0B121E]/50 border border-white/10 rounded-xl p-3 flex flex-col items-center justify-center text-center">
-                                                    <span className="text-xl font-bold text-white">Room 102</span>
-                                                    <span className="text-[9px] md:text-[11px] lg:text-xs text-gray-400 mt-1">Superior</span>
-                                                    <span className="text-[8px] md:text-[10px] lg:text-xs text-emerald-400">Available</span>
-                                                </div>
-                                                <div className="bg-[#0B121E]/50 border border-brand/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-[0_0_15px_rgba(52,211,153,0.15)] relative overflow-hidden">
-                                                    <div className="absolute top-0 left-0 w-full h-full bg-brand/5"></div>
-                                                    <span className="text-xl font-bold text-white relative z-10">Suite 103</span>
-                                                    <span className="text-[9px] md:text-[11px] lg:text-xs font-bold text-brand relative z-10">Checked In</span>
-                                                    <span className="text-[8px] md:text-[10px] lg:text-xs text-gray-400 mt-1 relative z-10">2 Guests</span>
-                                                </div>
-                                                <div className="bg-[#0B121E]/50 border border-purple-500/50 rounded-xl p-3 flex flex-col items-center justify-center text-center shadow-[0_0_15px_rgba(168,85,247,0.15)] relative overflow-hidden">
-                                                    <div className="absolute top-0 left-0 w-full h-full bg-purple-500/5"></div>
-                                                    <span className="text-xl font-bold text-white relative z-10">Suite 104</span>
-                                                    <span className="text-[9px] md:text-[11px] lg:text-xs font-bold text-purple-400 relative z-10">VIP Suite</span>
-                                                    <span className="text-[8px] md:text-[10px] lg:text-xs text-gray-400 mt-1 relative z-10">8:30 PM</span>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <h4 className="text-[11px] md:text-sm lg:text-base font-bold text-white mb-2">Upcoming Arrivals:</h4>
-                                                <p className="text-[10px] md:text-xs lg:text-sm text-gray-400 mb-1">8:00 PM - Davis (Suite 101)</p>
-                                                <p className="text-[10px] md:text-xs lg:text-sm text-gray-400">8:15 PM - Chen (Room 102)</p>
+                                            <div className="flex flex-wrap items-center gap-3 relative z-10 w-full md:w-auto">
+                                                <button 
+                                                    onClick={() => setIsAddDriverOpen(true)}
+                                                    className="flex-1 md:flex-none px-4 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/40 rounded-xl text-xs font-bold tracking-wide transition-all flex items-center justify-center gap-2 shadow-lg"
+                                                >
+                                                    <Users size={15} /> + Fahrer anlegen
+                                                </button>
+                                                <button 
+                                                    onClick={() => setIsAddVehicleOpen(true)}
+                                                    className="flex-1 md:flex-none px-4 py-2.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 rounded-xl text-xs font-bold tracking-wide transition-all flex items-center justify-center gap-2 shadow-lg"
+                                                >
+                                                    <Car size={15} /> + Fahrzeug registrieren
+                                                </button>
+                                                <button 
+                                                    onClick={() => setView('shuttle')}
+                                                    className="flex-1 md:flex-none px-4 py-2.5 bg-brand hover:bg-brand/90 text-dark-900 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand/20"
+                                                >
+                                                    <Activity size={15} /> Dispatches (9)
+                                                </button>
                                             </div>
                                         </div>
 
-                                        {/* COL 2: Front Desk & Service Control */}
-                                        <div className="glass-panel-subtle border border-white/5 rounded-3xl p-5 relative shadow-xl">
-                                            <div className="flex justify-between items-center mb-6">
-                                                <h3 className="text-[13px] font-bold text-white">Front Desk & Service Control</h3>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 cursor-pointer"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                                        {/* FLEET KPI STATS GRID */}
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                            {/* KPI 1: AKTIVE FAHRER */}
+                                            <div 
+                                                onClick={() => setView('drivers')}
+                                                className="glass-panel-subtle p-5 rounded-2xl border border-white/5 hover:border-emerald-500/40 transition-all relative flex flex-col justify-between h-[120px] cursor-pointer group hover:bg-emerald-500/[0.03]"
+                                            >
+                                                <div className="flex justify-between items-start">
+                                                    <span className="text-[11px] md:text-sm font-semibold text-gray-300 flex items-center gap-1.5">
+                                                        <Users size={14} className="text-emerald-400" /> Fahrer im Dienst
+                                                    </span>
+                                                    <span className="text-[9px] md:text-[11px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded-full flex items-center border border-emerald-500/20 font-bold">
+                                                        Online
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-end mt-2">
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-baseline gap-1.5">
+                                                            <span className="text-2xl lg:text-3xl font-extrabold text-white">14</span>
+                                                            <span className="text-sm font-bold text-gray-400">/ 18</span>
+                                                        </div>
+                                                        <span className="text-[10px] text-gray-400 font-medium">10 auf Tour • 4 bereit</span>
+                                                    </div>
+                                                    <div className="w-14 h-8 opacity-80">
+                                                        <svg viewBox="0 0 100 30" className="w-full h-full stroke-emerald-400" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M0,25 Q20,10 40,20 T80,5 T100,2" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
                                             </div>
+
+                                            {/* KPI 2: FLOTTEN-FAHRZEUGE */}
+                                            <div 
+                                                onClick={() => setView('vehicles')}
+                                                className="glass-panel-subtle p-5 rounded-2xl border border-white/5 hover:border-cyan-500/40 transition-all relative flex flex-col justify-between h-[120px] cursor-pointer group hover:bg-cyan-500/[0.03]"
+                                            >
+                                                <div className="flex justify-between items-start">
+                                                    <span className="text-[11px] md:text-sm font-semibold text-gray-300 flex items-center gap-1.5">
+                                                        <Car size={14} className="text-cyan-400" /> Flotten-Fahrzeuge
+                                                    </span>
+                                                    <span className="text-[9px] md:text-[11px] bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded-full flex items-center border border-cyan-500/20 font-bold">
+                                                        Fuhrpark
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-end mt-2">
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-baseline gap-1.5">
+                                                            <span className="text-2xl lg:text-3xl font-extrabold text-white">24</span>
+                                                            <span className="text-xs font-bold text-gray-400">Autos</span>
+                                                        </div>
+                                                        <span className="text-[10px] text-gray-400 font-medium">18 unterwegs • 4 bereit • 2 Depot</span>
+                                                    </div>
+                                                    <div className="w-14 h-8">
+                                                        <svg viewBox="0 0 100 30" className="w-full h-full stroke-cyan-400" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M0,20 L20,15 L40,10 L60,18 L80,5 L100,8" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* KPI 3: LAUFENDE DISPATCHES */}
+                                            <div 
+                                                onClick={() => setView('shuttle')}
+                                                className="glass-panel-subtle p-5 rounded-2xl border border-white/5 hover:border-purple-500/40 transition-all relative flex flex-col justify-between h-[120px] cursor-pointer group hover:bg-purple-500/[0.03]"
+                                            >
+                                                <div className="flex justify-between items-start">
+                                                    <span className="text-[11px] md:text-sm font-semibold text-gray-300 flex items-center gap-1.5">
+                                                        <Activity size={14} className="text-purple-400" /> Aktive Touren
+                                                    </span>
+                                                    <span className="text-[9px] md:text-[11px] bg-purple-500/10 text-purple-400 px-1.5 py-0.5 rounded-full flex items-center border border-purple-500/20 font-bold">
+                                                        Dispatch
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-end mt-2">
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-baseline gap-1.5">
+                                                            <span className="text-2xl lg:text-3xl font-extrabold text-white">9</span>
+                                                            <span className="text-xs font-bold text-gray-400">im Lauf</span>
+                                                        </div>
+                                                        <span className="text-[10px] text-gray-400 font-medium">Ø 12 Min. Anfahrt • 99.4% Pünktlich</span>
+                                                    </div>
+                                                    <div className="w-14 h-8">
+                                                        <svg viewBox="0 0 100 30" className="w-full h-full stroke-purple-400 drop-shadow-[0_0_6px_rgba(168,85,247,0.5)]" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M0,15 Q25,5 50,18 T100,4" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* KPI 4: FLOTTEN-UMSATZ HEUTE */}
+                                            <div 
+                                                onClick={() => setView('finance')}
+                                                className="glass-panel-subtle p-5 rounded-2xl border border-white/5 hover:border-brand/40 transition-all relative flex flex-col justify-between h-[120px] cursor-pointer group hover:bg-brand/[0.03]"
+                                            >
+                                                <div className="flex justify-between items-start">
+                                                    <span className="text-[11px] md:text-sm font-semibold text-gray-300 flex items-center gap-1.5">
+                                                        <TrendingUp size={14} className="text-brand" /> Flotten-Umsatz Heute
+                                                    </span>
+                                                    <span className="text-[9px] md:text-[11px] bg-brand/10 text-brand px-1.5 py-0.5 rounded-full flex items-center border border-brand/20 font-bold">
+                                                        +18.4%
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-end mt-2">
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-baseline gap-1.5">
+                                                            <span className="text-2xl lg:text-3xl font-extrabold text-white">€3.840</span>
+                                                            <span className="text-xs font-bold text-gray-400">,00</span>
+                                                        </div>
+                                                        <span className="text-[10px] text-gray-400 font-medium">58 Fahrten • Ø 66 € / Tour</span>
+                                                    </div>
+                                                    <div className="w-14 h-8">
+                                                        <svg viewBox="0 0 100 30" className="w-full h-full stroke-brand drop-shadow-[0_0_6px_rgba(52,211,153,0.5)]" fill="none" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M0,25 L25,20 L50,12 L75,14 L100,2" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* 3-COLUMN FLEET HUBS */}
+                                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                             
-                                            <div className="space-y-4">
-                                                {/* Request 1 */}
-                                                <div className="bg-[#0B121E]/50 border border-purple-500/30 rounded-xl p-4 shadow-[0_0_15px_rgba(168,85,247,0.1)] relative">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <h4 className="text-[11px] md:text-sm lg:text-base text-white">Booking #142 <span className="text-gray-400">(Suite 103)</span></h4>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
-                                                    </div>
-                                                    <div className="flex justify-between items-start mb-4">
-                                                        <div className="text-[10px] md:text-xs lg:text-sm text-gray-400 leading-relaxed">
-                                                            <p>Airport VIP Shuttle</p>
-                                                            <p>Late Check-out (14:00)</p>
+                                            {/* COL 1: Live Flotten-Status & Fahrzeuge */}
+                                            <div className="glass-panel-subtle border border-white/5 rounded-3xl p-5 relative shadow-xl flex flex-col justify-between">
+                                                <div>
+                                                    <div className="flex justify-between items-center mb-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                                                                <Car size={16} />
+                                                            </div>
+                                                            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Live Flotten-Status</h3>
                                                         </div>
-                                                        <span className="text-[9px] md:text-[11px] lg:text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30">In Progress</span>
+                                                        <span className="text-[10px] bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-500/20 font-bold">
+                                                            E-Fuhrpark & VIP
+                                                        </span>
                                                     </div>
-                                                    <div className="h-1 w-full bg-white/5 rounded-full mb-3 overflow-hidden">
-                                                        <div className="h-full w-[60%] bg-purple-500"></div>
-                                                    </div>
-                                                    <div className="flex justify-between items-center text-[9px] md:text-[11px] lg:text-xs text-gray-500">
-                                                        <span>Booked at 7:45 PM</span>
-                                                        <span className="flex items-center gap-1"><Users size={10} /> 2 Guests</span>
+                                                    <p className="text-xs text-gray-400 mb-4">Echtzeit-Telemetrie & Akkustände der Fahrzeuge</p>
+
+                                                    <div className="space-y-3 mb-4">
+                                                        {/* Car 1 */}
+                                                        <div className="bg-[#0B121E]/60 border border-emerald-500/30 rounded-xl p-3.5 relative overflow-hidden shadow-lg">
+                                                            <div className="flex justify-between items-start mb-1.5">
+                                                                <div>
+                                                                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                                                                        Tesla Model S Plaid
+                                                                        <span className="text-[10px] px-1.5 py-0.2 bg-white/10 text-gray-300 rounded font-mono">F-GR 777E</span>
+                                                                    </h4>
+                                                                    <p className="text-[11px] text-gray-400">VIP Executive • Chauffeur: Sami Rahimi</p>
+                                                                </div>
+                                                                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">
+                                                                    Im Einsatz
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between text-xs text-gray-300 mt-2 pt-2 border-t border-white/5">
+                                                                <span className="flex items-center gap-1 text-emerald-400 font-bold">
+                                                                    <Zap size={12} /> 94% Akku (485 km)
+                                                                </span>
+                                                                <span className="text-[11px] text-gray-400">Ziel: Grand Hyatt</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Car 2 */}
+                                                        <div className="bg-[#0B121E]/60 border border-emerald-500/30 rounded-xl p-3.5 relative overflow-hidden shadow-lg">
+                                                            <div className="flex justify-between items-start mb-1.5">
+                                                                <div>
+                                                                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                                                                        Mercedes-Benz EQS 450+
+                                                                        <span className="text-[10px] px-1.5 py-0.2 bg-white/10 text-gray-300 rounded font-mono">F-GR 888E</span>
+                                                                    </h4>
+                                                                    <p className="text-[11px] text-gray-400">First Class Luxury • Chauffeur: Darius Meier</p>
+                                                                </div>
+                                                                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">
+                                                                    Auf Tour
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between text-xs text-gray-300 mt-2 pt-2 border-t border-white/5">
+                                                                <span className="flex items-center gap-1 text-cyan-400 font-bold">
+                                                                    <Zap size={12} /> 88% Akku (420 km)
+                                                                </span>
+                                                                <span className="text-[11px] text-gray-400">Ziel: Flughafen FRA</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Car 3 */}
+                                                        <div className="bg-[#0B121E]/60 border border-blue-500/30 rounded-xl p-3.5 relative overflow-hidden shadow-lg">
+                                                            <div className="flex justify-between items-start mb-1.5">
+                                                                <div>
+                                                                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                                                                        Porsche Taycan 4S
+                                                                        <span className="text-[10px] px-1.5 py-0.2 bg-white/10 text-gray-300 rounded font-mono">F-GR 999E</span>
+                                                                    </h4>
+                                                                    <p className="text-[11px] text-gray-400">Sport VIP Shuttle • Chauffeur: Elena Rostova</p>
+                                                                </div>
+                                                                <span className="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/40 px-2 py-0.5 rounded-full font-bold">
+                                                                    Bereit
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between text-xs text-gray-300 mt-2 pt-2 border-t border-white/5">
+                                                                <span className="flex items-center gap-1 text-blue-400 font-bold">
+                                                                    <Zap size={12} /> 100% Akku (450 km)
+                                                                </span>
+                                                                <span className="text-[11px] text-gray-400">Standplatz: Terminal 1</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Car 4 */}
+                                                        <div className="bg-[#0B121E]/60 border border-white/10 rounded-xl p-3.5 relative overflow-hidden shadow-lg">
+                                                            <div className="flex justify-between items-start mb-1.5">
+                                                                <div>
+                                                                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                                                                        Mercedes-Benz V-Klasse VIP
+                                                                        <span className="text-[10px] px-1.5 py-0.2 bg-white/10 text-gray-300 rounded font-mono">F-GR 440E</span>
+                                                                    </h4>
+                                                                    <p className="text-[11px] text-gray-400">7-Sitzer VIP Van • Chauffeur: Dennis Weber</p>
+                                                                </div>
+                                                                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">
+                                                                    Im Einsatz
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between text-xs text-gray-300 mt-2 pt-2 border-t border-white/5">
+                                                                <span className="flex items-center gap-1 text-amber-400 font-bold">
+                                                                    <Zap size={12} /> 76% Akku (290 km)
+                                                                </span>
+                                                                <span className="text-[11px] text-gray-400">Steigenberger Transfer</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                {/* Request 2 */}
-                                                <div className="bg-[#0B121E]/50 border border-brand/30 rounded-xl p-4 shadow-[0_0_15px_rgba(52,211,153,0.1)] relative">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <h4 className="text-[11px] md:text-sm lg:text-base text-white">Booking #143 <span className="text-gray-400">(Room 105)</span></h4>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
-                                                    </div>
-                                                    <div className="flex justify-between items-start mb-4">
-                                                        <div className="text-[10px] md:text-xs lg:text-sm text-gray-400 leading-relaxed">
-                                                            <p>Breakfast in Room</p>
-                                                            <p>Extra Pillow Set</p>
+                                                <button 
+                                                    onClick={() => setView('vehicles')}
+                                                    className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-cyan-300 border border-cyan-500/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 mt-2"
+                                                >
+                                                    Fuhrpark verwalten (24 Autos) <ChevronRight size={14} />
+                                                </button>
+                                            </div>
+
+                                            {/* COL 2: Fahrer-Einsatz & Schichten */}
+                                            <div className="glass-panel-subtle border border-white/5 rounded-3xl p-5 relative shadow-xl flex flex-col justify-between">
+                                                <div>
+                                                    <div className="flex justify-between items-center mb-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                                                                <Users size={16} />
+                                                            </div>
+                                                            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Fahrer-Schichten</h3>
                                                         </div>
-                                                        <span className="text-[9px] md:text-[11px] lg:text-xs bg-brand/20 text-brand px-2 py-0.5 rounded-full border border-brand/30">Confirmed</span>
+                                                        <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">
+                                                            14 im Dienst
+                                                        </span>
                                                     </div>
-                                                    <div className="h-1 w-full bg-white/5 rounded-full mb-3 overflow-hidden">
-                                                        <div className="h-full w-[100%] bg-brand"></div>
-                                                    </div>
-                                                    <div className="flex justify-between items-center text-[9px] md:text-[11px] lg:text-xs text-gray-500">
-                                                        <span>Booked at 7:35 PM</span>
-                                                        <span className="flex items-center gap-1"><Users size={10} /> 3 Guests</span>
+                                                    <p className="text-xs text-gray-400 mb-4">Aktive Schichten, Status & Fahrtenbilanz</p>
+                                                    
+                                                    <div className="space-y-3 mb-4">
+                                                        {/* Driver 1 */}
+                                                        <div className="bg-[#0B121E]/60 border border-emerald-500/30 rounded-xl p-3.5 relative shadow-lg">
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <div className="flex items-center gap-2.5">
+                                                                    <div className="w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center font-bold text-emerald-400 text-xs">
+                                                                        SR
+                                                                    </div>
+                                                                    <div>
+                                                                        <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                                                                            Sami Rahimi <span className="text-amber-400 text-[11px] font-normal">★ 4.95</span>
+                                                                        </h4>
+                                                                        <p className="text-[11px] text-gray-400">Tesla Model S Plaid • Schicht Früh (06:00 - 15:00)</p>
+                                                                    </div>
+                                                                </div>
+                                                                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">
+                                                                    Fahrt #482
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center text-[11px] text-gray-400 pt-2 border-t border-white/5">
+                                                                <span>Dienstzeit: 4h 15m</span>
+                                                                <span className="text-emerald-400 font-semibold">6 Fahrten heute</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Driver 2 */}
+                                                        <div className="bg-[#0B121E]/60 border border-emerald-500/30 rounded-xl p-3.5 relative shadow-lg">
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <div className="flex items-center gap-2.5">
+                                                                    <div className="w-9 h-9 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center font-bold text-cyan-400 text-xs">
+                                                                        DM
+                                                                    </div>
+                                                                    <div>
+                                                                        <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                                                                            Darius Meier <span className="text-amber-400 text-[11px] font-normal">★ 4.88</span>
+                                                                        </h4>
+                                                                        <p className="text-[11px] text-gray-400">Mercedes EQS • Schicht Tag (10:00 - 19:00)</p>
+                                                                    </div>
+                                                                </div>
+                                                                <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">
+                                                                    Fahrt #483
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center text-[11px] text-gray-400 pt-2 border-t border-white/5">
+                                                                <span>Dienstzeit: 2h 40m</span>
+                                                                <span className="text-cyan-400 font-semibold">3 Fahrten heute</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Driver 3 */}
+                                                        <div className="bg-[#0B121E]/60 border border-blue-500/30 rounded-xl p-3.5 relative shadow-lg">
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <div className="flex items-center gap-2.5">
+                                                                    <div className="w-9 h-9 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center font-bold text-purple-400 text-xs">
+                                                                        ER
+                                                                    </div>
+                                                                    <div>
+                                                                        <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                                                                            Elena Rostova <span className="text-amber-400 text-[11px] font-normal">★ 5.00</span>
+                                                                        </h4>
+                                                                        <p className="text-[11px] text-gray-400">Porsche Taycan • Schicht Spät (14:00 - 23:00)</p>
+                                                                    </div>
+                                                                </div>
+                                                                <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full font-bold">
+                                                                    Bereit
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center text-[11px] text-gray-400 pt-2 border-t border-white/5">
+                                                                <span>Dienstzeit: 1h 10m</span>
+                                                                <span className="text-blue-400 font-semibold">Wartet am Gate</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Driver 4 */}
+                                                        <div className="bg-[#0B121E]/60 border border-amber-500/30 rounded-xl p-3.5 relative shadow-lg">
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <div className="flex items-center gap-2.5">
+                                                                    <div className="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center font-bold text-amber-400 text-xs">
+                                                                        DW
+                                                                    </div>
+                                                                    <div>
+                                                                        <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                                                                            Dennis Weber <span className="text-amber-400 text-[11px] font-normal">★ 4.91</span>
+                                                                        </h4>
+                                                                        <p className="text-[11px] text-gray-400">V-Klasse VIP • Schicht Tag (08:00 - 17:00)</p>
+                                                                    </div>
+                                                                </div>
+                                                                <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-bold">
+                                                                    Pause
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center text-[11px] text-gray-400 pt-2 border-t border-white/5">
+                                                                <span>Pause bis: 17:30</span>
+                                                                <span className="text-amber-400 font-semibold">5 Fahrten heute</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
+
+                                                <button 
+                                                    onClick={() => setView('drivers')}
+                                                    className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 mt-2"
+                                                >
+                                                    Fahrer-Team verwalten (18 Fahrer) <ChevronRight size={14} />
+                                                </button>
+                                            </div>
+
+                                            {/* COL 3: Eingehende Transfer-Aufträge (Dispatch Queue) */}
+                                            <div className="glass-panel-subtle border border-white/5 rounded-3xl p-5 relative shadow-xl flex flex-col justify-between">
+                                                <div>
+                                                    <div className="flex justify-between items-center mb-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-7 h-7 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                                                                <Activity size={16} />
+                                                            </div>
+                                                            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Transfer-Aufträge</h3>
+                                                        </div>
+                                                        <span className="text-[10px] bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/20 font-bold">
+                                                            Dispatch Queue
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-xs text-gray-400 mb-4">Hotels, VIP-Kunden & Partner Shuttle Anfragen</p>
+
+                                                    <div className="space-y-3 mb-4">
+                                                        {/* Dispatch 1 */}
+                                                        <div className="bg-[#0B121E]/60 border border-purple-500/30 rounded-xl p-3.5 relative shadow-lg">
+                                                            <div className="flex justify-between items-start mb-1.5">
+                                                                <div>
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="text-[10px] font-mono text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">#TR-882</span>
+                                                                        <h4 className="text-xs font-bold text-white">Grand Hyatt → Frankfurt Airport (FRA)</h4>
+                                                                    </div>
+                                                                    <p className="text-[11px] text-gray-400 mt-1">Gast: Dr. Markus Weber (2 Pers., 3 Gepäck)</p>
+                                                                </div>
+                                                                <span className="text-[9px] bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30 font-bold shrink-0">
+                                                                    In Fahrt
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center text-[10px] text-gray-400 mt-2 pt-2 border-t border-white/5">
+                                                                <span className="text-emerald-400 font-semibold">Chauffeur: Darius Meier</span>
+                                                                <span>ETA: 12 Min</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Dispatch 2 */}
+                                                        <div className="bg-[#0B121E]/60 border border-brand/40 rounded-xl p-3.5 relative shadow-lg">
+                                                            <div className="flex justify-between items-start mb-1.5">
+                                                                <div>
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="text-[10px] font-mono text-brand bg-brand/10 px-1.5 py-0.5 rounded">#TR-883</span>
+                                                                        <h4 className="text-xs font-bold text-white">Deutsche Bank Park → Steigenberger</h4>
+                                                                    </div>
+                                                                    <p className="text-[11px] text-gray-400 mt-1">VIP Delegation (5 Personen • Van Shuttle)</p>
+                                                                </div>
+                                                                <span className="text-[9px] bg-brand/20 text-brand px-2 py-0.5 rounded-full border border-brand/30 font-bold shrink-0">
+                                                                    Offen
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center text-[10px] text-gray-400 mt-2 pt-2 border-t border-white/5">
+                                                                <span className="text-gray-400">Abholung: 18:15 Uhr</span>
+                                                                <button 
+                                                                    onClick={() => {
+                                                                        triggerNotification('Tour #TR-883 wurde Chauffeur Dennis Weber zugewiesen', 'success');
+                                                                    }}
+                                                                    className="px-2.5 py-1 bg-brand text-dark-900 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-brand/90 transition-all shadow-md"
+                                                                >
+                                                                    Fahrer zuweisen
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Dispatch 3 */}
+                                                        <div className="bg-[#0B121E]/60 border border-white/10 rounded-xl p-3.5 relative shadow-lg">
+                                                            <div className="flex justify-between items-start mb-1.5">
+                                                                <div>
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="text-[10px] font-mono text-gray-400 bg-white/10 px-1.5 py-0.5 rounded">#TR-884</span>
+                                                                        <h4 className="text-xs font-bold text-white">Kempinski Gravenbruch → Alte Oper</h4>
+                                                                    </div>
+                                                                    <p className="text-[11px] text-gray-400 mt-1">Gast: L. Rothschild (1 Gast • VIP Executive)</p>
+                                                                </div>
+                                                                <span className="text-[9px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/30 font-bold shrink-0">
+                                                                    Vorgemerkt
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center text-[10px] text-gray-400 mt-2 pt-2 border-t border-white/5">
+                                                                <span className="text-gray-400">Abholung: 19:00 Uhr</span>
+                                                                <span className="text-blue-400 font-semibold">Reserviert</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <button 
+                                                    onClick={() => setView('shuttle')}
+                                                    className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-purple-300 border border-purple-500/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 mt-2"
+                                                >
+                                                    Alle Shuttle-Aufträge öffnen (Live Tracker) <ChevronRight size={14} />
+                                                </button>
                                             </div>
                                         </div>
-
-                                        {/* COL 3: Suite & Room Catalog */}
-                                        <div className="glass-panel-subtle border border-white/5 rounded-3xl p-5 relative shadow-xl">
-                                            <div className="flex justify-between items-center mb-6">
-                                                <h3 className="text-[13px] font-bold text-white">Suite & Room Catalog</h3>
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 cursor-pointer"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
-                                            </div>
-
-                                            <div className="space-y-3">
-                                                {/* Item 1 */}
-                                                <div className="bg-[#0B121E]/50 border border-white/5 rounded-xl p-3 flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                                                        <BedDouble size={16} className="text-emerald-400" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between items-start">
-                                                            <div>
-                                                                <h4 className="text-[11px] md:text-sm lg:text-base text-white">Deluxe Ocean Suite</h4>
-                                                                <p className="text-[10px] md:text-xs lg:text-sm text-gray-400">(€180 / Night)</p>
-                                                            </div>
-                                                        </div>
-                                                        <p className="text-[8px] md:text-[10px] lg:text-xs text-gray-500 mt-1 line-clamp-1">King Bed, Balcony, Spa Access</p>
-                                                        <div className="flex justify-between items-center mt-2">
-                                                            <span className="text-[9px] md:text-[11px] lg:text-xs text-brand">Active</span>
-                                                            <div className="w-7 h-4 bg-brand rounded-full relative">
-                                                                <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Item 2 */}
-                                                <div className="bg-[#0B121E]/50 border border-white/5 rounded-xl p-3 flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                                                        <BedDouble size={16} className="text-emerald-400" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between items-start">
-                                                            <div>
-                                                                <h4 className="text-[11px] md:text-sm lg:text-base text-white">Executive Panorama</h4>
-                                                                <p className="text-[10px] md:text-xs lg:text-sm text-gray-400">(€350 / Night)</p>
-                                                            </div>
-                                                        </div>
-                                                        <p className="text-[8px] md:text-[10px] lg:text-xs text-gray-500 mt-1 line-clamp-1">2 Bedrooms, Lounge & VIP Transfer</p>
-                                                        <div className="flex justify-between items-center mt-2">
-                                                            <span className="text-[9px] md:text-[11px] lg:text-xs text-brand">Active</span>
-                                                            <div className="w-7 h-4 bg-brand rounded-full relative">
-                                                                <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Item 3 */}
-                                                <div className="bg-[#0B121E]/50 border border-white/5 rounded-xl p-3 flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                                                        <BedDouble size={16} className="text-emerald-400" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between items-start">
-                                                            <div>
-                                                                <h4 className="text-[11px] md:text-sm lg:text-base text-white">Presidential Penthouse</h4>
-                                                                <p className="text-[10px] md:text-xs lg:text-sm text-gray-400">(€750 / Night)</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex justify-between items-center mt-2">
-                                                            <span className="text-[9px] md:text-[11px] lg:text-xs text-brand">Active</span>
-                                                            <div className="w-7 h-4 bg-brand rounded-full relative">
-                                                                <div className="absolute right-0.5 top-0.5 w-3 h-3 bg-white rounded-full"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            )}
+                                    </motion.div>
+                                )}
 
                             {view === 'profile' && (
                                 <motion.div key="profile" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-8 max-w-4xl mx-auto pb-12">
