@@ -9892,21 +9892,52 @@ const ManagerDashboard = () => {
                                         </select>
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="text-xs font-black uppercase text-cyan-200 block mb-1">Fahrer Foto (URL oder Upload)</label>
-                                    <div className="flex gap-2">
-                                        <input type="text" value={newDriverForm.photoUrl} onChange={(e) => setNewDriverForm({ ...newDriverForm, photoUrl: e.target.value })} placeholder="https://..." className="flex-1 bg-white/10 border border-cyan-500/30 rounded-xl p-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400" />
-                                        <label className="px-4 py-3 bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 text-xs font-black uppercase rounded-xl cursor-pointer hover:bg-cyan-500/30 transition-all flex items-center gap-1 shrink-0">
-                                            + Upload
+                                                                <div>
+                                    <label className="text-xs font-black uppercase text-cyan-200 block mb-1">Fahrer Profilfoto</label>
+                                    {newDriverForm.photoUrl ? (
+                                        <div className="flex items-center gap-3 p-2.5 bg-white/5 border border-cyan-500/30 rounded-xl">
+                                            <img src={newDriverForm.photoUrl} alt="Vorschau" className="w-12 h-12 rounded-xl object-cover border border-cyan-400/50 shadow-md" />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-xs font-bold text-white truncate">Foto ausgewählt</p>
+                                                <p className="text-[10px] text-cyan-300">Wird für Fahrerprofil verwendet</p>
+                                            </div>
+                                            <label className="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 rounded-lg text-xs font-bold cursor-pointer transition-all">
+                                                Ändern
+                                                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                                                    const file = e.target.files[0];
+                                                    if (file) {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            setNewDriverForm({ ...newDriverForm, photoUrl: reader.result });
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                }} />
+                                            </label>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => setNewDriverForm({ ...newDriverForm, photoUrl: '' })}
+                                                className="p-1.5 text-gray-400 hover:text-red-400 transition-colors cursor-pointer"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label className="flex items-center justify-center gap-2.5 p-3.5 bg-white/5 hover:bg-cyan-500/10 border-2 border-dashed border-cyan-500/40 hover:border-cyan-400 rounded-xl cursor-pointer transition-all text-cyan-300 shadow-sm group">
+                                            <Camera size={18} className="text-cyan-400 group-hover:scale-110 transition-transform" />
+                                            <span className="text-xs font-black uppercase tracking-wider">Foto aufnehmen oder Bild auswählen</span>
                                             <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                                                 const file = e.target.files[0];
                                                 if (file) {
-                                                    const url = URL.createObjectURL(file);
-                                                    setNewDriverForm({ ...newDriverForm, photoUrl: url });
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => {
+                                                        setNewDriverForm({ ...newDriverForm, photoUrl: reader.result });
+                                                    };
+                                                    reader.readAsDataURL(file);
                                                 }
                                             }} />
                                         </label>
-                                    </div>
+                                    )}
                                 </div>
 
                                 {/* FAHRER LOGIN-ZUGANGSDATEN */}
@@ -9953,48 +9984,123 @@ const ManagerDashboard = () => {
                                             Gesetzliche Pflicht-Nachweise (Fahrer)
                                         </h4>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                                        {/* P-Schein */}
-                                        <div className="p-3 bg-white/10 border border-cyan-500/30 rounded-xl space-y-1.5">
-                                            <span className="text-xs font-black uppercase text-white block">1. P-Schein (§ 48 FeV) *</span>
-                                            <label className="flex items-center justify-between p-2.5 bg-cyan-500/20 border border-cyan-400/50 rounded-lg text-cyan-200 text-xs font-black uppercase cursor-pointer hover:bg-cyan-500/30 transition-all shadow-sm">
-                                                <span className="truncate">{newDriverForm.pScheinDoc?.name || '+ Upload PDF/Bild'}</span>
-                                                <Upload size={14} className="shrink-0 text-cyan-300" />
-                                                <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => {
-                                                    const file = e.target.files[0];
-                                                    if (file) {
-                                                        setNewDriverForm(prev => ({ ...prev, pScheinDoc: { name: file.name, fileData: URL.createObjectURL(file) } }));
-                                                    }
+                                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                                        {/* P-Schein (Multi-Upload) */}
+                                        <div className="p-3 bg-white/10 border border-cyan-500/30 rounded-xl space-y-1.5 flex flex-col justify-between">
+                                            <div>
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-[11px] font-black uppercase text-white block">1. P-Schein (§ 48 FeV) *</span>
+                                                    {(newDriverForm.pScheinDocs?.length > 0 || newDriverForm.pScheinDoc) && (
+                                                        <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.2 rounded font-bold">
+                                                            {newDriverForm.pScheinDocs?.length || 1} Foto(s)
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {newDriverForm.pScheinDocs && newDriverForm.pScheinDocs.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto no-scrollbar mb-1.5">
+                                                        {newDriverForm.pScheinDocs.map((item, idx) => (
+                                                            <div key={idx} className="flex items-center gap-1 bg-cyan-950/80 border border-cyan-500/40 px-1.5 py-0.5 rounded text-[9px] text-cyan-200">
+                                                                <span className="truncate max-w-[70px]">{item.name}</span>
+                                                                <button type="button" onClick={() => setNewDriverForm(prev => ({ ...prev, pScheinDocs: prev.pScheinDocs.filter((_, i) => i !== idx) }))} className="text-gray-400 hover:text-red-400 cursor-pointer">
+                                                                    <X size={10} />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <label className="flex items-center justify-between p-2 bg-cyan-500/20 border border-cyan-400/50 rounded-lg text-cyan-200 text-[10px] font-black uppercase cursor-pointer hover:bg-cyan-500/30 transition-all shadow-sm">
+                                                <span className="truncate">{newDriverForm.pScheinDocs?.length ? '+ Weitere Seite/Foto' : '+ Mehrere Bilder/PDF'}</span>
+                                                <Upload size={12} className="shrink-0 text-cyan-300" />
+                                                <input type="file" multiple accept="image/*,.pdf" className="hidden" onChange={(e) => {
+                                                    const selected = Array.from(e.target.files || []);
+                                                    selected.forEach(file => {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            setNewDriverForm(prev => ({ ...prev, pScheinDocs: [...(prev.pScheinDocs || []), { name: file.name, fileData: reader.result }] }));
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    });
                                                 }} />
                                             </label>
                                         </div>
 
-                                        {/* Führerschein */}
-                                        <div className="p-3 bg-white/10 border border-cyan-500/30 rounded-xl space-y-1.5">
-                                            <span className="text-xs font-black uppercase text-white block">2. Führerschein (Klasse B) *</span>
-                                            <label className="flex items-center justify-between p-2.5 bg-cyan-500/20 border border-cyan-400/50 rounded-lg text-cyan-200 text-xs font-black uppercase cursor-pointer hover:bg-cyan-500/30 transition-all shadow-sm">
-                                                <span className="truncate">{newDriverForm.fuehrerscheinDoc?.name || '+ Upload PDF/Bild'}</span>
-                                                <Upload size={14} className="shrink-0 text-cyan-300" />
-                                                <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => {
-                                                    const file = e.target.files[0];
-                                                    if (file) {
-                                                        setNewDriverForm(prev => ({ ...prev, fuehrerscheinDoc: { name: file.name, fileData: URL.createObjectURL(file) } }));
-                                                    }
+                                        {/* Führerschein (Multi-Upload Vorder- & Rückseite) */}
+                                        <div className="p-3 bg-white/10 border border-cyan-500/30 rounded-xl space-y-1.5 flex flex-col justify-between">
+                                            <div>
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-[11px] font-black uppercase text-white block">2. Führerschein (Klasse B) *</span>
+                                                    {(newDriverForm.fuehrerscheinDocs?.length > 0 || newDriverForm.fuehrerscheinDoc) && (
+                                                        <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.2 rounded font-bold">
+                                                            {newDriverForm.fuehrerscheinDocs?.length || 1} Foto(s)
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {newDriverForm.fuehrerscheinDocs && newDriverForm.fuehrerscheinDocs.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto no-scrollbar mb-1.5">
+                                                        {newDriverForm.fuehrerscheinDocs.map((item, idx) => (
+                                                            <div key={idx} className="flex items-center gap-1 bg-cyan-950/80 border border-cyan-500/40 px-1.5 py-0.5 rounded text-[9px] text-cyan-200">
+                                                                <span className="truncate max-w-[70px]">{item.name}</span>
+                                                                <button type="button" onClick={() => setNewDriverForm(prev => ({ ...prev, fuehrerscheinDocs: prev.fuehrerscheinDocs.filter((_, i) => i !== idx) }))} className="text-gray-400 hover:text-red-400 cursor-pointer">
+                                                                    <X size={10} />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <label className="flex items-center justify-between p-2 bg-cyan-500/20 border border-cyan-400/50 rounded-lg text-cyan-200 text-[10px] font-black uppercase cursor-pointer hover:bg-cyan-500/30 transition-all shadow-sm">
+                                                <span className="truncate">{newDriverForm.fuehrerscheinDocs?.length ? '+ Weitere Seite/Foto' : '+ Vorder- & Rückseite'}</span>
+                                                <Upload size={12} className="shrink-0 text-cyan-300" />
+                                                <input type="file" multiple accept="image/*,.pdf" className="hidden" onChange={(e) => {
+                                                    const selected = Array.from(e.target.files || []);
+                                                    selected.forEach(file => {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            setNewDriverForm(prev => ({ ...prev, fuehrerscheinDocs: [...(prev.fuehrerscheinDocs || []), { name: file.name, fileData: reader.result }] }));
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    });
                                                 }} />
                                             </label>
                                         </div>
 
-                                        {/* Ausweis / Pass */}
-                                        <div className="p-3 bg-white/10 border border-cyan-500/30 rounded-xl space-y-1.5">
-                                            <span className="text-xs font-black uppercase text-white block">3. Personalausweis / Pass *</span>
-                                            <label className="flex items-center justify-between p-2.5 bg-cyan-500/20 border border-cyan-400/50 rounded-lg text-cyan-200 text-xs font-black uppercase cursor-pointer hover:bg-cyan-500/30 transition-all shadow-sm">
-                                                <span className="truncate">{newDriverForm.ausweisDoc?.name || '+ Upload PDF/Bild'}</span>
-                                                <Upload size={14} className="shrink-0 text-cyan-300" />
-                                                <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => {
-                                                    const file = e.target.files[0];
-                                                    if (file) {
-                                                        setNewDriverForm(prev => ({ ...prev, ausweisDoc: { name: file.name, fileData: URL.createObjectURL(file) } }));
-                                                    }
+                                        {/* Ausweis / Pass (Multi-Upload Vorder- & Rückseite) */}
+                                        <div className="p-3 bg-white/10 border border-cyan-500/30 rounded-xl space-y-1.5 flex flex-col justify-between">
+                                            <div>
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <span className="text-[11px] font-black uppercase text-white block">3. Personalausweis / Pass *</span>
+                                                    {(newDriverForm.ausweisDocs?.length > 0 || newDriverForm.ausweisDoc) && (
+                                                        <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.2 rounded font-bold">
+                                                            {newDriverForm.ausweisDocs?.length || 1} Foto(s)
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {newDriverForm.ausweisDocs && newDriverForm.ausweisDocs.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 max-h-16 overflow-y-auto no-scrollbar mb-1.5">
+                                                        {newDriverForm.ausweisDocs.map((item, idx) => (
+                                                            <div key={idx} className="flex items-center gap-1 bg-cyan-950/80 border border-cyan-500/40 px-1.5 py-0.5 rounded text-[9px] text-cyan-200">
+                                                                <span className="truncate max-w-[70px]">{item.name}</span>
+                                                                <button type="button" onClick={() => setNewDriverForm(prev => ({ ...prev, ausweisDocs: prev.ausweisDocs.filter((_, i) => i !== idx) }))} className="text-gray-400 hover:text-red-400 cursor-pointer">
+                                                                    <X size={10} />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <label className="flex items-center justify-between p-2 bg-cyan-500/20 border border-cyan-400/50 rounded-lg text-cyan-200 text-[10px] font-black uppercase cursor-pointer hover:bg-cyan-500/30 transition-all shadow-sm">
+                                                <span className="truncate">{newDriverForm.ausweisDocs?.length ? '+ Weitere Seite/Foto' : '+ Vorder- & Rückseite'}</span>
+                                                <Upload size={12} className="shrink-0 text-cyan-300" />
+                                                <input type="file" multiple accept="image/*,.pdf" className="hidden" onChange={(e) => {
+                                                    const selected = Array.from(e.target.files || []);
+                                                    selected.forEach(file => {
+                                                        const reader = new FileReader();
+                                                        reader.onloadend = () => {
+                                                            setNewDriverForm(prev => ({ ...prev, ausweisDocs: [...(prev.ausweisDocs || []), { name: file.name, fileData: reader.result }] }));
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    });
                                                 }} />
                                             </label>
                                         </div>
