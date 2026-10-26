@@ -1150,6 +1150,8 @@ const ManagerDashboard = () => {
         name: '',
         phone: '',
         email: '',
+        loginUsername: '',
+        password: '',
         licenseNumber: '',
         vehicleAssigned: 'Kein Fahrzeug',
         status: 'Aktiv',
@@ -9901,6 +9903,41 @@ const ManagerDashboard = () => {
                                     </div>
                                 </div>
 
+                                {/* FAHRER LOGIN-ZUGANGSDATEN */}
+                                <div className="p-3.5 bg-cyan-950/40 border border-cyan-500/40 rounded-xl space-y-2.5">
+                                    <div className="flex items-center gap-1.5 text-cyan-300">
+                                        <Key size={14} className="text-cyan-400" />
+                                        <label className="text-xs font-black uppercase tracking-wider text-cyan-200">
+                                            Login-Daten für Fahrer (Zugangsdaten festlegen)
+                                        </label>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase text-gray-300 block mb-1">Fahrer Login-Benutzername / E-Mail *</label>
+                                            <input 
+                                                type="text" 
+                                                value={newDriverForm.loginUsername || newDriverForm.email} 
+                                                onChange={(e) => setNewDriverForm({ ...newDriverForm, loginUsername: e.target.value })} 
+                                                placeholder="alex@green-fleet.de" 
+                                                className="w-full bg-white/10 border border-cyan-500/30 rounded-lg p-2.5 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400" 
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase text-gray-300 block mb-1">Fahrer Initial-Passwort *</label>
+                                            <input 
+                                                type="text" 
+                                                value={newDriverForm.password} 
+                                                onChange={(e) => setNewDriverForm({ ...newDriverForm, password: e.target.value })} 
+                                                placeholder="z.B. Fahrer2026!" 
+                                                className="w-full bg-white/10 border border-cyan-500/30 rounded-lg p-2.5 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 font-mono" 
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-cyan-300/80">
+                                        Der Fahrer meldet sich mit diesem Passwort an und wird automatisch Ihrer Flotte zugeordnet.
+                                    </p>
+                                </div>
+
                                 {/* GESETZLICHE PFLICHT-DOKUMENTE FÜR FAHRER ANMELDUNG */}
                                 <div className="pt-3 border-t border-cyan-500/30 space-y-3">
                                     <div className="bg-cyan-950/70 border border-cyan-500/50 p-2.5 rounded-xl flex items-center gap-2 text-cyan-300 shadow-md">
@@ -9967,20 +10004,37 @@ const ManagerDashboard = () => {
                                         alert("Bitte Name und E-Mail des Fahrers eingeben.");
                                         return;
                                     }
+                                    const loginUser = (newDriverForm.loginUsername || newDriverForm.email).trim();
+                                    const driverPass = (newDriverForm.password || `DGrien${Math.floor(100 + Math.random() * 900)}!`).trim();
                                     const generatedCode = `DRV-${Math.floor(1000 + Math.random() * 9000)}-FM`;
+                                    const hasDocs = !!(newDriverForm.pScheinDoc || newDriverForm.fuehrerscheinDoc);
                                     const created = {
                                         id: `drv_${Date.now()}`,
                                         ...newDriverForm,
-                                        status: 'Wartend auf Admin-Freigabe',
-                                        approvalStatus: 'Pending Admin Verification',
+                                        loginUsername: loginUser,
+                                        password: driverPass,
+                                        fleetManagerEmail: user?.email || 'manager@grien.de',
+                                        fleetManagerName: profileForm?.businessName || 'Green Fleet Operations',
+                                        status: hasDocs ? 'Aktiv' : 'Wartend auf Dokumente',
+                                        approvalStatus: hasDocs ? 'Approved' : 'Pending Documents',
                                         accessCode: generatedCode,
                                         rating: 5.0,
                                         tripsCompleted: 0
                                     };
                                     setDriversList([...driversList, created]);
+                                    
+                                    // Store account so driver can log in
+                                    try {
+                                        const saved = JSON.parse(localStorage.getItem('green_registered_driver_accounts') || '[]');
+                                        const filtered = saved.filter(a => a.loginUsername !== loginUser);
+                                        filtered.push(created);
+                                        localStorage.setItem('green_registered_driver_accounts', JSON.stringify(filtered));
+                                        localStorage.setItem(`green_driver_account_${loginUser.toLowerCase()}`, JSON.stringify(created));
+                                    } catch(e) {}
+                                    
                                     setIsAddDriverOpen(false);
-                                    setNewDriverForm({ name: '', phone: '', email: '', licenseNumber: '', vehicleAssigned: 'Kein Fahrzeug', status: 'Wartend auf Admin-Freigabe', approvalStatus: 'Pending Admin Verification', accessCode: null, photoUrl: '', pScheinDoc: null, fuehrerscheinDoc: null, ausweisDoc: null });
-                                    alert(`✅ Fahrer "${created.name}" wurde angelegt!\n🔑 Flotten-Manager Code für Fahrer: ${generatedCode}\n(Diesen Code kann dein Fahrer bei der Registrierung eingeben, um sich exklusiv mit deinem Dashboard zu verbinden.)`);
+                                    setNewDriverForm({ name: '', phone: '', email: '', loginUsername: '', password: '', licenseNumber: '', vehicleAssigned: 'Kein Fahrzeug', status: 'Aktiv', photoUrl: '', pScheinDoc: null, fuehrerscheinDoc: null, ausweisDoc: null });
+                                    alert(`✅ Fahrer "${created.name}" wurde angelegt!\n\n🔑 Zugangsdaten für Fahrer:\n• Login: ${loginUser}\n• Passwort: ${driverPass}\n• Flotten-Code: ${generatedCode}\n\nDer Fahrer ist jetzt direkt Ihrer Flotte zugeordnet.`);
                                 }} className="px-8 py-3 bg-cyan-400 text-dark-950 font-black uppercase tracking-wider text-xs rounded-xl shadow-lg hover:bg-cyan-300 hover:scale-105 transition-all cursor-pointer">
                                     Fahrer Anmelden
                                 </button>

@@ -1156,6 +1156,8 @@ const ManagerDashboard = () => {
         name: '',
         phone: '',
         email: '',
+        loginUsername: '',
+        password: '',
         licenseNumber: '',
         vehicleAssigned: 'Kein Fahrzeug',
         status: 'Aktiv',
@@ -9906,6 +9908,42 @@ const ManagerDashboard = () => {
                                         </label>
                                     </div>
                                 </div>
+
+                                {/* FAHRER LOGIN-ZUGANGSDATEN */}
+                                <div className="p-3.5 bg-cyan-950/40 border border-cyan-500/40 rounded-xl space-y-2.5">
+                                    <div className="flex items-center gap-1.5 text-cyan-300">
+                                        <Key size={14} className="text-cyan-400" />
+                                        <label className="text-xs font-black uppercase tracking-wider text-cyan-200">
+                                            Login-Daten für Fahrer (Zugangsdaten festlegen)
+                                        </label>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase text-gray-300 block mb-1">Fahrer Login-Benutzername / E-Mail *</label>
+                                            <input 
+                                                type="text" 
+                                                value={newDriverForm.loginUsername || newDriverForm.email} 
+                                                onChange={(e) => setNewDriverForm({ ...newDriverForm, loginUsername: e.target.value })} 
+                                                placeholder="alex@green-fleet.de" 
+                                                className="w-full bg-white/10 border border-cyan-500/30 rounded-lg p-2.5 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400" 
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase text-gray-300 block mb-1">Fahrer Initial-Passwort *</label>
+                                            <input 
+                                                type="text" 
+                                                value={newDriverForm.password} 
+                                                onChange={(e) => setNewDriverForm({ ...newDriverForm, password: e.target.value })} 
+                                                placeholder="z.B. Fahrer2026!" 
+                                                className="w-full bg-white/10 border border-cyan-500/30 rounded-lg p-2.5 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 font-mono" 
+                                            />
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-cyan-300/80">
+                                        Der Fahrer meldet sich mit diesem Passwort an und wird automatisch Ihrer Flotte zugeordnet.
+                                    </p>
+                                </div>
+
 
                                 {/* GESETZLICHE PFLICHT-DOKUMENTE FÜR FAHRER ANMELDUNG */}
                                 <div className="pt-3 border-t border-cyan-500/30 space-y-3">

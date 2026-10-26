@@ -46,7 +46,8 @@ import {
     Sun,
     RotateCcw,
     Bus,
-    Handshake
+    Handshake,
+    ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -219,6 +220,7 @@ const DriverDashboard = () => {
     const [chatInput, setChatInput] = useState('');
 
     const [documentsSheetOpen, setDocumentsSheetOpen] = useState(false);
+    const [showDocLockModal, setShowDocLockModal] = useState(false);
     
     // Defensive useState initializers to prevent crashes on invalid localStorage states
     const [driverDocs, setDriverDocs] = useState(() => {
@@ -1219,6 +1221,13 @@ const DriverDashboard = () => {
 
     const handleOfflineRequest = () => {
         if (!isOnline) {
+            const isLicenseUploaded = driverDocs.some(d => d.id === 'license' && (d.file || d.fileUrl || d.status === 'verified' || d.status === 'pending'));
+            const isPscheinUploaded = driverDocs.some(d => d.id === 'pschein' && (d.file || d.fileUrl || d.status === 'verified' || d.status === 'pending'));
+            const isDemo = user?.email?.toLowerCase() === 'driver@green.de';
+            if (!isDemo && (!isLicenseUploaded || !isPscheinUploaded)) {
+                setShowDocLockModal(true);
+                return;
+            }
             setIsOnline(true);
             setTimeout(() => {
                 handleSimulateTestRide();
@@ -4165,6 +4174,81 @@ const DriverDashboard = () => {
                     </div>
                 </div>
             </Sheet>
+
+                        {/* DOCUMENT LOCK MODAL (PREVENTS GOING ONLINE WITHOUT UPLOADED DOCUMENTS) */}
+            <AnimatePresence>
+                {showDocLockModal && (
+                    <div className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.9 }} 
+                            animate={{ opacity: 1, scale: 1 }} 
+                            exit={{ opacity: 0, scale: 0.9 }} 
+                            className="bg-[#0b0f19] border-2 border-amber-500/50 rounded-[2.5rem] p-6 md:p-8 max-w-md w-full space-y-6 shadow-2xl text-white text-center relative overflow-hidden"
+                        >
+                            <div className="w-16 h-16 rounded-2xl bg-amber-500/20 border-2 border-amber-500/50 flex items-center justify-center mx-auto text-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.3)]">
+                                <ShieldAlert size={34} />
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="inline-block px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-[10px] font-black uppercase tracking-wider text-amber-300">
+                                    Gesetzliche Freischaltung erforderlich
+                                </div>
+                                <h3 className="text-xl md:text-2xl font-black italic uppercase tracking-tight text-white">
+                                    Online-Schaltung gesperrt
+                                </h3>
+                                <p className="text-xs text-gray-300 leading-relaxed">
+                                    Sie können erst online gehen und Fahraufträge annehmen, wenn Ihre erforderlichen Dokumente hochgeladen wurden gem. § 48 FeV & PBefG.
+                                </p>
+                            </div>
+
+                            <div className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-2.5 text-left text-xs">
+                                <div className="flex items-center justify-between">
+                                    <span className="font-bold text-gray-200">1. Führerschein (Klasse B)</span>
+                                    {driverDocs.some(d => d.id === 'license' && (d.file || d.fileUrl || d.status === 'verified' || d.status === 'pending')) ? (
+                                        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded font-bold">Vorhanden</span>
+                                    ) : (
+                                        <span className="text-[10px] bg-red-500/20 text-red-400 border border-red-500/40 px-2 py-0.5 rounded font-bold">Fehlt noch</span>
+                                    )}
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="font-bold text-gray-200">2. P-Schein (§ 48 FeV)</span>
+                                    {driverDocs.some(d => d.id === 'pschein' && (d.file || d.fileUrl || d.status === 'verified' || d.status === 'pending')) ? (
+                                        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded font-bold">Vorhanden</span>
+                                    ) : (
+                                        <span className="text-[10px] bg-red-500/20 text-red-400 border border-red-500/40 px-2 py-0.5 rounded font-bold">Fehlt noch</span>
+                                    )}
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="font-bold text-gray-200">3. Personalausweis / Pass</span>
+                                    {driverDocs.some(d => d.id === 'idcard' && (d.file || d.fileUrl || d.status === 'verified' || d.status === 'pending')) ? (
+                                        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded font-bold">Vorhanden</span>
+                                    ) : (
+                                        <span className="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded font-bold">Empfohlen</span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-2 pt-2">
+                                <button 
+                                    onClick={() => {
+                                        setShowDocLockModal(false);
+                                        setDocumentsSheetOpen(true);
+                                    }}
+                                    className="w-full py-3.5 bg-brand text-dark-900 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-brand/90 transition-all shadow-lg shadow-brand/20 flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                    <Upload size={16} /> Dokumente jetzt hochladen
+                                </button>
+                                <button 
+                                    onClick={() => setShowDocLockModal(false)}
+                                    className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                                >
+                                    Abbrechen
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* TACTICAL DRIVER DOCUMENT VAULT SHEET */}
             <Sheet
