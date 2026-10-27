@@ -205,6 +205,16 @@ const DriverDashboard = () => {
     
     // Driver Identity Profile States
     const [profileSheetOpen, setProfileSheetOpen] = useState(false);
+    const [profileData, setProfileData] = useState({
+        firstName: '',
+        lastName: '',
+        address: '',
+        email: user?.email || '',
+        zipCode: '',
+        city: '',
+        phoneNumber: '',
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'Parsa'}`
+    });
     // Driver Ausweis, Terms & Approval States
     const [idCardFront, setIdCardFront] = useState(() => localStorage.getItem('driver_id_card_front') || null);
     const [idCardBack, setIdCardBack] = useState(() => localStorage.getItem('driver_id_card_back') || null);
@@ -313,18 +323,9 @@ const DriverDashboard = () => {
             };
         } catch(e) {}
         return () => { if (bc) bc.close(); };
-    }, [user?.email, profileData.email]);
+    }, [user?.email, profileData?.email]);
 
-    const [profileData, setProfileData] = useState({
-        firstName: '',
-        lastName: '',
-        address: '',
-        email: user?.email || '',
-        zipCode: '',
-        city: '',
-        phoneNumber: '',
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'Parsa'}`
-    });
+    
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [chatMessages, setChatMessages] = useState([{ sender: 'ai', text: 'Hello! I am the Support assistant. How can I help you today?' }]);
     const [chatInput, setChatInput] = useState('');
