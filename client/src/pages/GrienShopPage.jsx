@@ -397,6 +397,28 @@ export default function GrienShopPage() {
 
     // Orders & Invoices Side Sheet State
     const [isOrdersOpen, setIsOrdersOpen] = useState(false);
+    const [invoiceSettings, setInvoiceSettings] = useState(() => {
+        try {
+            const cached = localStorage.getItem('grien_invoice_settings');
+            return cached ? JSON.parse(cached) : null;
+        } catch(e) { return null; }
+    });
+
+    useEffect(() => {
+        const fetchInvoiceSettings = async () => {
+            try {
+                const res = await fetch('http://localhost:3001/api/shop/invoice-settings');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.settings) {
+                        setInvoiceSettings(data.settings);
+                        localStorage.setItem('grien_invoice_settings', JSON.stringify(data.settings));
+                    }
+                }
+            } catch(e) {}
+        };
+        fetchInvoiceSettings();
+    }, []);
     const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
     const [orders, setOrders] = useState(() => {
         try {
@@ -2719,11 +2741,17 @@ export default function GrienShopPage() {
                                         <div className="text-2xl font-black italic tracking-tighter text-slate-950 uppercase">
                                             GRIEN <span className="text-[#059669]">OFFICIAL</span>
                                         </div>
-                                        <p className="text-[11px] text-slate-500 font-semibold mt-1">
-                                            Grien Chauffeur & Lifestyle Services GmbH<br />
-                                            Kurfürstendamm 21, 10719 Berlin<br />
-                                            USt-IdNr.: DE 318 942 158
-                                        </p>
+                                        <div className="mt-1 text-[11px] text-slate-600 font-medium leading-relaxed">
+                                            <div className="font-bold text-slate-900">{invoiceSettings?.companyName || 'Grien Official'}</div>
+                                            {invoiceSettings?.ownerName && <div>Inhaber: {invoiceSettings.ownerName}</div>}
+                                            {invoiceSettings?.street && <div>{invoiceSettings.street}</div>}
+                                            {(invoiceSettings?.postalCode || invoiceSettings?.city) && (
+                                                <div>{invoiceSettings.postalCode} {invoiceSettings.city}</div>
+                                            )}
+                                            {invoiceSettings?.vatId && <div className="font-semibold text-slate-800">USt-IdNr.: {invoiceSettings.vatId}</div>}
+                                            {invoiceSettings?.taxId && <div>Steuernummer: {invoiceSettings.taxId}</div>}
+                                            {invoiceSettings?.email && <div className="text-slate-500 text-[10px]">{invoiceSettings.email}</div>}
+                                        </div>
                                     </div>
                                     <div className="text-right">
                                         <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
@@ -2807,9 +2835,16 @@ export default function GrienShopPage() {
                                 </div>
 
                                 {/* Footer Note */}
-                                <p className="text-[10px] text-slate-400 text-center pt-4 border-t border-slate-100 leading-relaxed">
-                                    Vielen Dank für deine Bestellung bei Grien Official. Dies ist ein elektronisch erstellter Beleg und ohne Unterschrift gültig.
-                                </p>
+                                <div className="pt-4 border-t border-slate-100 text-center space-y-1">
+                                    <p className="text-[10px] text-slate-500 leading-relaxed">
+                                        {invoiceSettings?.footerNote || 'Vielen Dank für deine Bestellung bei Grien Official. Dies ist ein elektronisch erstellter Beleg und ohne Unterschrift gültig.'}
+                                    </p>
+                                    {invoiceSettings?.iban && (
+                                        <p className="text-[9px] text-slate-400 font-mono">
+                                            {invoiceSettings.bankName ? `Bank: ${invoiceSettings.bankName} · ` : ''}IBAN: {invoiceSettings.iban} {invoiceSettings.bic ? `· BIC: ${invoiceSettings.bic}` : ''}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </motion.div>
                     </div>

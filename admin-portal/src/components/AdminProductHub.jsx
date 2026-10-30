@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
+    FileText, Building2, Landmark, Receipt, MapPin,
     Upload, Star, Image as ImageIcon,
     Sparkles, Shirt, Smartphone, Flame, Home as HomeIcon, Gift,
     Plus, Search, Filter, Edit3, Trash2, CheckCircle2, XCircle,
@@ -177,6 +178,67 @@ const AdminProductHub = () => {
 
     // Modals
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+    const [isSavingInvoice, setIsSavingInvoice] = useState(false);
+    const [invoiceSettings, setInvoiceSettings] = useState({
+        companyName: 'Grien Official',
+        ownerName: 'Khiam Azizi',
+        street: '',
+        postalCode: '',
+        city: '',
+        taxId: '',
+        vatId: '',
+        email: 'rechnung@grien.app',
+        phone: '',
+        bankName: '',
+        iban: '',
+        bic: '',
+        footerNote: 'Vielen Dank für Ihre Bestellung bei Grien Official. Dies ist ein elektronisch erstellter Beleg und ohne Unterschrift gültig.'
+    });
+
+    const fetchInvoiceSettings = async () => {
+        try {
+            const res = await fetch('http://localhost:3001/api/shop/invoice-settings');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.settings) {
+                    setInvoiceSettings(prev => ({ ...prev, ...data.settings }));
+                    localStorage.setItem('grien_invoice_settings', JSON.stringify(data.settings));
+                }
+            }
+        } catch (e) {
+            const cached = localStorage.getItem('grien_invoice_settings');
+            if (cached) {
+                try { setInvoiceSettings(JSON.parse(cached)); } catch(err) {}
+            }
+        }
+    };
+
+    const handleSaveInvoiceSettings = async (e) => {
+        if (e) e.preventDefault();
+        setIsSavingInvoice(true);
+        try {
+            const res = await fetch('http://localhost:3001/api/shop/invoice-settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(invoiceSettings)
+            });
+            const data = await res.json();
+            if (data.success) {
+                localStorage.setItem('grien_invoice_settings', JSON.stringify(data.settings));
+                notify('Rechnungsdaten erfolgreich gespeichert!', 'success');
+                setIsInvoiceModalOpen(false);
+            } else {
+                notify('Fehler beim Speichern', 'error');
+            }
+        } catch (err) {
+            localStorage.setItem('grien_invoice_settings', JSON.stringify(invoiceSettings));
+            notify('Lokal gespeichert (Offline-Fallback)', 'success');
+            setIsInvoiceModalOpen(false);
+        } finally {
+            setIsSavingInvoice(false);
+        }
+    };
     const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -238,6 +300,7 @@ const AdminProductHub = () => {
 
     useEffect(() => {
         fetchProducts();
+        fetchInvoiceSettings();
     }, []);
 
     const handleOpenAddModal = (presetCategory = 'fashion') => {
@@ -1070,6 +1133,245 @@ const AdminProductHub = () => {
         return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
     };
 
+    // RENDER INVOICE SETTINGS MODAL VIA PORTAL
+    const renderInvoiceSettingsModal = () => {
+        if (!isInvoiceModalOpen) return null;
+
+        const modalContent = (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fadeIn">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="relative w-full max-w-2xl max-h-[90vh] bg-[#0A101D] border border-cyan-500/30 rounded-3xl shadow-2xl flex flex-col overflow-hidden text-white font-sans"
+                >
+                    {/* Header */}
+                    <div className="shrink-0 px-6 py-4 bg-gradient-to-r from-cyan-950/60 to-slate-900 border-b border-white/10 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center">
+                                <FileText size={20} />
+                            </div>
+                            <div>
+                                <h2 className="text-base font-black text-white m-0 uppercase tracking-wide">
+                                    Offizielle Firmendaten & Rechnungs-Setup
+                                </h2>
+                                <p className="text-[11px] text-cyan-300/80 m-0">
+                                    Pflichtangaben nach deutschem Steuerrecht (§ 14 Abs. 4 UStG)
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setIsInvoiceModalOpen(false)}
+                            className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition"
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
+
+                    {/* Scrollable Form Body */}
+                    <form onSubmit={handleSaveInvoiceSettings} className="p-6 overflow-y-auto space-y-5 text-left">
+                        {/* Box 1: Unternehmensdaten */}
+                        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
+                            <span className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                                <Building2 size={14} /> 1. Firmenbezeichnung & Inhaber
+                            </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                                        Firmenname / Rechnungssteller *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={invoiceSettings.companyName}
+                                        onChange={(e) => setInvoiceSettings({ ...invoiceSettings, companyName: e.target.value })}
+                                        placeholder="z.B. Grien Official oder Firmenname"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                                        Inhaber / Vertretungsberechtigt
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={invoiceSettings.ownerName}
+                                        onChange={(e) => setInvoiceSettings({ ...invoiceSettings, ownerName: e.target.value })}
+                                        placeholder="z.B. Khiam Azizi"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Box 2: Anschrift */}
+                        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
+                            <span className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                                <MapPin size={14} /> 2. Anschrift (Betriebsstätte)
+                            </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="sm:col-span-3">
+                                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                                        Straße & Hausnummer *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={invoiceSettings.street}
+                                        onChange={(e) => setInvoiceSettings({ ...invoiceSettings, street: e.target.value })}
+                                        placeholder="z.B. Musterstraße 12"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                                        Postleitzahl *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={invoiceSettings.postalCode}
+                                        onChange={(e) => setInvoiceSettings({ ...invoiceSettings, postalCode: e.target.value })}
+                                        placeholder="z.B. 60311"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400"
+                                    />
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                                        Stadt / Ort *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={invoiceSettings.city}
+                                        onChange={(e) => setInvoiceSettings({ ...invoiceSettings, city: e.target.value })}
+                                        placeholder="z.B. Frankfurt am Main"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Box 3: Steuernummern */}
+                        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
+                            <span className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                                <Receipt size={14} /> 3. Steuerangaben (Finanzamt & USt-IdNr.)
+                            </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                                        USt-IdNr. (falls vorhanden)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={invoiceSettings.vatId}
+                                        onChange={(e) => setInvoiceSettings({ ...invoiceSettings, vatId: e.target.value })}
+                                        placeholder="z.B. DE 123456789"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                                        Steuernummer (Finanzamt)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={invoiceSettings.taxId}
+                                        onChange={(e) => setInvoiceSettings({ ...invoiceSettings, taxId: e.target.value })}
+                                        placeholder="z.B. 014/123/45678"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Box 4: Kontakt & Bank (Fußzeile) */}
+                        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
+                            <span className="text-xs font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                                <Landmark size={14} /> 4. Bankverbindung & Kontakt (Optional für PDF-Fußzeile)
+                            </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                                        Rechnungs-E-Mail
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={invoiceSettings.email}
+                                        onChange={(e) => setInvoiceSettings({ ...invoiceSettings, email: e.target.value })}
+                                        placeholder="rechnung@grien.app"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                                        Telefon / Hotline
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={invoiceSettings.phone}
+                                        onChange={(e) => setInvoiceSettings({ ...invoiceSettings, phone: e.target.value })}
+                                        placeholder="+49 69 ..."
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400"
+                                    />
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label className="block text-[11px] font-bold text-slate-300 mb-1">
+                                        IBAN
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={invoiceSettings.iban}
+                                        onChange={(e) => setInvoiceSettings({ ...invoiceSettings, iban: e.target.value })}
+                                        placeholder="DE..."
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400 font-mono"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Box 5: Fußzeilen-Text */}
+                        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 space-y-2">
+                            <label className="block text-xs font-black uppercase tracking-wider text-cyan-400">
+                                5. Rechnungshinweis (Fußzeile)
+                            </label>
+                            <textarea
+                                rows={2}
+                                value={invoiceSettings.footerNote}
+                                onChange={(e) => setInvoiceSettings({ ...invoiceSettings, footerNote: e.target.value })}
+                                placeholder="Hinweistext am Ende der Rechnung..."
+                                className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400 resize-none"
+                            />
+                        </div>
+                    </form>
+
+                    {/* Footer */}
+                    <div className="shrink-0 px-6 py-4 bg-[#080E1B] border-t border-white/10 flex items-center justify-between">
+                        <span className="text-[10px] text-slate-400">
+                            Wird automatisch in alle Kunden-PDFs übertragen.
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setIsInvoiceModalOpen(false)}
+                                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-bold text-xs transition"
+                            >
+                                Abbrechen
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleSaveInvoiceSettings}
+                                disabled={isSavingInvoice}
+                                className="px-5 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-extrabold text-xs shadow-lg shadow-cyan-400/20 transition flex items-center gap-1.5 cursor-pointer"
+                            >
+                                {isSavingInvoice ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                                <span>Rechnungsdaten speichern</span>
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        );
+
+        return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
+    };
+
     // RENDER AGENT MODAL VIA PORTAL
     const renderAgentModal = () => {
         if (!isAgentModalOpen) return null;
@@ -1302,6 +1604,15 @@ const AdminProductHub = () => {
                     >
                         <Plus className="w-4 h-4 stroke-[3]" />
                         <span>Neues Produkt</span>
+                    </button>
+
+                    <button
+                        onClick={() => setIsInvoiceModalOpen(true)}
+                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600/20 to-blue-600/20 hover:from-cyan-600/30 hover:to-blue-600/30 border border-cyan-500/40 text-cyan-300 hover:text-white text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-cyan-500/10 cursor-pointer"
+                        title="Offizielle Firmendaten & Steuerangaben für Kundenrechnungen nach § 14 UStG anpassen"
+                    >
+                        <FileText className="w-4 h-4 text-cyan-400" />
+                        <span>PDF Rechnungsdaten</span>
                     </button>
                 </div>
             </div>
@@ -1722,6 +2033,7 @@ const AdminProductHub = () => {
             {/* Render Modals outside transformed parent tree */}
             {renderEditModal()}
             {renderAgentModal()}
+            {renderInvoiceSettingsModal()}
         </div>
     );
 };

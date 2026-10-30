@@ -772,6 +772,87 @@ app.delete('/api/shop/products/:id', (req, res) => {
     }
 });
 
+// Helper for invoice settings
+const INVOICE_SETTINGS_FILE = path.join(__dirname, 'data', 'shop_invoice_settings.json');
+
+const loadInvoiceSettings = () => {
+    try {
+        if (!fs.existsSync(INVOICE_SETTINGS_FILE)) {
+            const defaults = {
+                companyName: 'Grien Official',
+                ownerName: 'Khiam Azizi',
+                street: '',
+                city: '',
+                taxId: '',
+                vatId: '',
+                email: 'rechnung@grien.app',
+                phone: '',
+                bankName: '',
+                iban: '',
+                bic: '',
+                footerNote: 'Vielen Dank für Ihre Bestellung bei Grien Official. Dies ist ein elektronisch erstellter Beleg und ohne Unterschrift gültig.'
+            };
+            fs.writeFileSync(INVOICE_SETTINGS_FILE, JSON.stringify(defaults, null, 2), 'utf8');
+            return defaults;
+        }
+        return JSON.parse(fs.readFileSync(INVOICE_SETTINGS_FILE, 'utf8'));
+    } catch (err) {
+        console.error('Error loading invoice settings:', err.message);
+        return {
+            companyName: 'Grien Official',
+            ownerName: 'Khiam Azizi',
+            street: '',
+            city: '',
+            taxId: '',
+            vatId: '',
+            email: 'rechnung@grien.app',
+            phone: '',
+            bankName: '',
+            iban: '',
+            bic: '',
+            footerNote: 'Vielen Dank für Ihre Bestellung bei Grien Official. Dies ist ein elektronisch erstellter Beleg und ohne Unterschrift gültig.'
+        };
+    }
+};
+
+const saveInvoiceSettings = (settings) => {
+    try {
+        fs.writeFileSync(INVOICE_SETTINGS_FILE, JSON.stringify(settings, null, 2), 'utf8');
+        return true;
+    } catch (err) {
+        console.error('Error saving invoice settings:', err.message);
+        return false;
+    }
+};
+
+// GET /api/shop/invoice-settings
+app.get('/api/shop/invoice-settings', (req, res) => {
+    try {
+        const settings = loadInvoiceSettings();
+        res.json({ success: true, settings });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/shop/invoice-settings
+app.post('/api/shop/invoice-settings', (req, res) => {
+    try {
+        const current = loadInvoiceSettings();
+        const updated = {
+            ...current,
+            ...req.body,
+            updatedAt: new Date().toISOString()
+        };
+        saveInvoiceSettings(updated);
+        io.emit('shop-invoice-settings-updated', updated);
+        console.log('📄 [Grien Hub] Invoice settings updated successfully');
+        res.json({ success: true, settings: updated });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // 6. POST /api/shop/agent/smart-generate
 app.post('/api/shop/agent/smart-generate', (req, res) => {
     try {
