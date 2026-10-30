@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-    ArrowLeft, Search, ShoppingBag, X, Plus, Minus, Trash2, 
+    ArrowLeft, ArrowUp, Search, ShoppingBag, X, Plus, Minus, Trash2, 
     Sparkles, Check, SlidersHorizontal, Star, ShieldCheck, 
     Truck, RefreshCw, CreditCard, ChevronLeft, ChevronRight,
     Shirt, Smartphone, Flame, Home as HomeIcon, Gift,
@@ -396,6 +396,21 @@ export default function GrienShopPage() {
     const [addedFeedback, setAddedFeedback] = useState(null);
 
     // Orders & Invoices Side Sheet State
+    const pageScrollRef = useRef(null);
+    const [showScrollTop, setShowScrollTop] = useState(false);
+
+    const handlePageScroll = (e) => {
+        if (e.target && e.target.scrollTop > 220) {
+            setShowScrollTop(true);
+        } else {
+            setShowScrollTop(false);
+        }
+    };
+
+    const scrollToTop = () => {
+        pageScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const [isOrdersOpen, setIsOrdersOpen] = useState(false);
     const [invoiceSettings, setInvoiceSettings] = useState(() => {
         try {
@@ -981,6 +996,8 @@ export default function GrienShopPage() {
     return (
         /* Full Viewport Scrollable Wrapper: Solves the overflow:hidden cutoff completely */
         <div 
+            ref={pageScrollRef}
+            onScroll={handlePageScroll}
             className="fixed inset-0 overflow-y-auto no-scrollbar font-sans select-text z-30"
             style={{ 
                 backgroundColor: C.pageBg, 
@@ -989,21 +1006,21 @@ export default function GrienShopPage() {
             }}
         >
             
-            {/* STICKY HEADER WITH MAXIMUM CONTRAST */}
+            {/* SLIM STICKY NAVIGATION BAR (Only Back + Title + Orders/Cart stay pinned) */}
             <header 
-                className="sticky top-0 z-40 backdrop-blur-2xl px-4 md:px-6 py-4 shadow-sm"
+                className="sticky top-0 z-40 backdrop-blur-2xl px-4 md:px-6 py-3 shadow-sm border-b"
                 style={{ 
                     backgroundColor: isDark ? 'rgba(11, 15, 12, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                    borderBottom: `1.5px solid ${C.borderMain}`
+                    borderColor: C.borderMain
                 }}
             >
                 <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
                     
-                    {/* Back Button & Brand */}
+                    {/* Back Button & Brand - Clean without Official badge or subtitle */}
                     <div className="flex items-center gap-3">
                         <button 
                             onClick={() => navigate('/home')}
-                            className="w-11 h-11 rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
+                            className="w-10 h-10 rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
                             style={{ 
                                 backgroundColor: isDark ? '#161B17' : '#F1F5F9',
                                 border: `1.5px solid ${C.borderMain}`,
@@ -1011,42 +1028,24 @@ export default function GrienShopPage() {
                             }}
                             aria-label="Zurück zur Home"
                         >
-                            <ArrowLeft size={20} strokeWidth={2.5} />
+                            <ArrowLeft size={19} strokeWidth={2.5} />
                         </button>
                         <div>
-                            <div className="flex items-center gap-2">
-                                <span 
-                                    className="text-xl md:text-2xl font-black italic tracking-tighter uppercase"
-                                    style={{ color: C.textPrimary }}
-                                >
-                                    GRIEN <span style={{ color: C.brandGreen }}>SHOP</span>
-                                </span>
-                                <span 
-                                    className="px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-full"
-                                    style={{ 
-                                        backgroundColor: 'rgba(0, 255, 136, 0.15)',
-                                        color: isDark ? C.brandGreen : '#059669',
-                                        border: '1px solid rgba(0, 255, 136, 0.35)'
-                                    }}
-                                >
-                                    Official
-                                </span>
-                            </div>
-                            <p 
-                                className="text-[10px] md:text-xs font-bold tracking-wider"
-                                style={{ color: C.textSecondary }}
+                            <span 
+                                className="text-xl md:text-2xl font-black italic tracking-tighter uppercase"
+                                style={{ color: C.textPrimary }}
                             >
-                                Klamotten, Elektronik & Lifestyle
-                            </p>
+                                GRIEN <span style={{ color: C.brandGreen }}>SHOP</span>
+                            </span>
                         </div>
                     </div>
 
                     {/* RIGHT HEADER ACTIONS: ORDERS/INVOICES BUTTON + CART BUTTON */}
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2">
                         {/* ORDERS & INVOICES BUTTON */}
                         <button
                             onClick={() => setIsOrdersOpen(true)}
-                            className="relative w-12 h-12 rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
+                            className="relative w-10 h-10 rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
                             style={{ 
                                 backgroundColor: isDark ? '#161B17' : '#F1F5F9',
                                 border: `1.5px solid ${C.borderMain}`,
@@ -1055,16 +1054,15 @@ export default function GrienShopPage() {
                             title="Meine Bestellungen & Rechnungen"
                             aria-label="Meine Bestellungen & Rechnungen"
                         >
-                            <Receipt size={21} strokeWidth={2.4} style={{ color: C.textPrimary }} />
+                            <Receipt size={18} strokeWidth={2.4} style={{ color: C.textPrimary }} />
                             {orders.length > 0 && (
                                 <motion.span 
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 text-[10px] font-black rounded-full flex items-center justify-center shadow-md"
+                                    className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 text-[9px] font-black rounded-full flex items-center justify-center shadow-md"
                                     style={{ 
                                         backgroundColor: '#10B981',
-                                        color: '#FFFFFF',
-                                        border: `2px solid ${isDark ? '#0B0F0C' : '#FFFFFF'}`
+                                        color: '#FFFFFF'
                                     }}
                                 >
                                     {orders.length}
@@ -1078,20 +1076,20 @@ export default function GrienShopPage() {
                                 setCartStep('cart');
                                 setIsCartOpen(true);
                             }}
-                            className="relative w-12 h-12 rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl cursor-pointer"
+                            className="relative w-10 h-10 rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg cursor-pointer"
                             style={{ 
                                 backgroundColor: isDark ? '#FFFFFF' : '#0F172A',
-                                border: `2px solid ${isDark ? '#FFFFFF' : '#0F172A'}`,
+                                border: `1.5px solid ${isDark ? '#FFFFFF' : '#0F172A'}`,
                                 color: isDark ? '#0F172A' : '#FFFFFF'
                             }}
                             aria-label="Warenkorb öffnen"
                         >
-                            <ShoppingBag size={22} strokeWidth={2.5} style={{ color: isDark ? '#0F172A' : '#FFFFFF' }} />
+                            <ShoppingBag size={19} strokeWidth={2.5} style={{ color: isDark ? '#0F172A' : '#FFFFFF' }} />
                             {totalItemsCount > 0 ? (
                                 <motion.span 
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    className="absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-1 text-[11px] font-black rounded-full flex items-center justify-center shadow-lg"
+                                    className="absolute -top-1.5 -right-1.5 min-w-[19px] h-[19px] px-1 text-[10px] font-black rounded-full flex items-center justify-center shadow-lg"
                                     style={{ 
                                         backgroundColor: C.brandGreen,
                                         color: '#000000',
@@ -1102,52 +1100,52 @@ export default function GrienShopPage() {
                                 </motion.span>
                             ) : (
                                 <span 
-                                    className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full"
+                                    className="absolute top-2 right-2 w-2 h-2 rounded-full"
                                     style={{ backgroundColor: C.brandGreen }}
                                 />
                             )}
                         </button>
                     </div>
                 </div>
+            </header>
 
-                {/* SEARCH BAR */}
-                <div className="max-w-6xl mx-auto mt-4">
-                    <div className="relative">
-                        <Search 
-                            size={18} 
-                            className="absolute left-4 top-1/2 -translate-y-1/2" 
-                            style={{ color: C.textSecondary }}
-                        />
-                        <input 
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Suche nach Klamotten, Parfüm, Elektronik, Geschenken..."
-                            className="w-full pl-12 pr-10 py-3.5 rounded-2xl text-sm transition-all shadow-sm font-medium focus:outline-none"
+            {/* SEARCH & CATEGORIES BAR (Scrolls away freely when browsing products) */}
+            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-3 pb-2 space-y-3">
+                {/* SEARCH BAR - Clean placeholder */}
+                <div className="relative">
+                    <Search 
+                        size={17} 
+                        className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" 
+                        style={{ color: C.textSecondary }}
+                    />
+                    <input 
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Produkte suchen..."
+                        className="w-full pl-11 pr-10 py-2.5 rounded-2xl text-xs sm:text-sm transition-all shadow-sm font-medium focus:outline-none"
+                        style={{ 
+                            backgroundColor: C.inputBg,
+                            border: `1.5px solid ${C.inputBorder}`,
+                            color: C.textPrimary
+                        }}
+                    />
+                    {searchQuery && (
+                        <button 
+                            onClick={() => setSearchQuery('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center text-xs cursor-pointer"
                             style={{ 
-                                backgroundColor: C.inputBg,
-                                border: `1.5px solid ${C.inputBorder}`,
+                                backgroundColor: isDark ? '#232B25' : '#E2E8F0',
                                 color: C.textPrimary
                             }}
-                        />
-                        {searchQuery && (
-                            <button 
-                                onClick={() => setSearchQuery('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full flex items-center justify-center text-xs cursor-pointer"
-                                style={{ 
-                                    backgroundColor: isDark ? '#232B25' : '#E2E8F0',
-                                    color: C.textPrimary
-                                }}
-                            >
-                                <X size={14} />
-                            </button>
-                        )}
-                    </div>
+                        >
+                            <X size={13} />
+                        </button>
+                    )}
                 </div>
 
                 {/* INFINITE CIRCULAR TOUCH/FINGER DRAGGABLE CAROUSEL */}
-                <div className="max-w-6xl mx-auto mt-4 relative select-none">
-                    
+                <div className="relative select-none">
                     {/* Desktop Left/Right quick scroll buttons */}
                     <button
                         onClick={() => scrollByAmount(-220)}
@@ -1183,7 +1181,7 @@ export default function GrienShopPage() {
                         onMouseLeave={handleMouseUp}
                         onTouchStart={handleTouchStart}
                         onTouchMove={handleTouchMove}
-                        className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-2 cursor-grab active:cursor-grabbing px-2"
+                        className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1.5 cursor-grab active:cursor-grabbing px-1"
                         style={{ 
                             WebkitOverflowScrolling: 'touch',
                             scrollbarWidth: 'none',
@@ -1197,25 +1195,17 @@ export default function GrienShopPage() {
                                 <button
                                     key={cat.loopKey}
                                     onClick={() => handleCategoryClick(cat.id)}
-                                    className="flex-shrink-0 px-4 py-2.5 rounded-2xl text-xs md:text-sm flex items-center gap-2.5 transition-all duration-200 cursor-pointer shadow-sm select-none"
+                                    className="flex-shrink-0 px-3.5 py-2 rounded-2xl text-xs flex items-center gap-2 transition-all duration-200 cursor-pointer shadow-sm select-none"
                                     style={{
-                                        backgroundColor: isSelected 
-                                            ? C.brandGreen 
-                                            : (isDark ? '#161B17' : '#FFFFFF'),
-                                        color: isSelected 
-                                            ? '#000000' 
-                                            : C.textPrimary,
-                                        border: isSelected 
-                                            ? `2px solid ${C.brandGreen}` 
-                                            : `1.5px solid ${C.borderMain}`,
-                                        fontWeight: isSelected ? 900 : 700,
-                                        boxShadow: isSelected ? '0 4px 14px rgba(0, 255, 136, 0.35)' : 'none',
-                                        transform: isSelected ? 'scale(1.04)' : 'scale(1)'
+                                        backgroundColor: isSelected ? C.brandGreen : C.surfaceBg,
+                                        color: isSelected ? '#000000' : C.textPrimary,
+                                        border: isSelected ? `1.5px solid ${C.brandGreen}` : `1.5px solid ${C.borderMain}`,
+                                        fontWeight: isSelected ? 900 : 700
                                     }}
                                 >
                                     <IconComponent 
-                                        size={17} 
-                                        strokeWidth={isSelected ? 3 : 2.2} 
+                                        size={14} 
+                                        strokeWidth={isSelected ? 2.5 : 2} 
                                         style={{ 
                                             color: isSelected ? '#000000' : (isDark ? C.brandGreen : C.emeraldAccent) 
                                         }} 
@@ -1224,64 +1214,6 @@ export default function GrienShopPage() {
                                 </button>
                             );
                         })}
-                    </div>
-                </div>
-            </header>
-
-            {/* HIGH CONTRAST LUXURY HERO BANNER */}
-            <div className="max-w-6xl mx-auto px-4 md:px-6 pt-6">
-                <div 
-                    className="relative rounded-[32px] overflow-hidden p-6 md:p-10 shadow-2xl dark-catalog-card"
-                    style={{ 
-                        background: 'linear-gradient(135deg, #022013 0%, #06150F 50%, #020705 100%)',
-                        border: '1.5px solid rgba(0, 255, 136, 0.35)',
-                        color: '#FFFFFF'
-                    }}
-                >
-                    <div 
-                        className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl pointer-events-none"
-                        style={{ backgroundColor: 'rgba(0, 255, 136, 0.18)' }} 
-                    />
-                    <div className="relative z-10 max-w-xl">
-                        
-                        <div 
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] md:text-xs font-black uppercase tracking-wider mb-3 shadow-md"
-                            style={{ 
-                                backgroundColor: C.brandGreen, 
-                                color: '#000000' 
-                            }}
-                        >
-                            <Sparkles size={13} strokeWidth={2.5} /> OFFICIAL GRIEN COLLECTION
-                        </div>
-
-                        {/* PURE WHITE HEADLINE - 100% UNBEATABLE CONTRAST */}
-                        <div 
-                            className="text-2xl md:text-4xl font-black italic tracking-tight uppercase leading-tight drop-shadow-lg mb-2"
-                        >
-                            <span style={{ color: '#FFFFFF' }}>DAS BESTE AUS </span>
-                            <span style={{ color: C.brandGreen }}>FASHION, TECH</span>
-                            <span style={{ color: '#FFFFFF' }}> & LIFESTYLE</span>
-                        </div>
-
-                        <p 
-                            className="text-xs md:text-sm font-medium leading-relaxed mb-5"
-                            style={{ color: '#E2E8F0' }}
-                        >
-                            Entdecke handverlesene Streetwear, innovative Gadgets und edle Signature-Düfte – direkt zu dir geliefert.
-                        </p>
-
-                        <div className="flex flex-wrap items-center gap-3 text-xs font-bold">
-                            <span 
-                                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl backdrop-blur-md"
-                                style={{ 
-                                    backgroundColor: 'rgba(0, 0, 0, 0.65)', 
-                                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                                    color: '#FFFFFF'
-                                }}
-                            >
-                                <Truck size={15} style={{ color: C.brandGreen }} /> Blitzschneller Expressversand
-                            </span>
-                        </div>
                     </div>
                 </div>
             </div>
