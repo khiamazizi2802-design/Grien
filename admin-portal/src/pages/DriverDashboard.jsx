@@ -205,6 +205,7 @@ const DriverDashboard = () => {
     
     // Driver Identity Profile States
     const [profileSheetOpen, setProfileSheetOpen] = useState(false);
+    const [tempPhotoPreview, setTempPhotoPreview] = useState(() => localStorage.getItem('driver_profile_avatar') || null);
     const [profileData, setProfileData] = useState({
         firstName: '',
         lastName: '',
@@ -302,6 +303,10 @@ const DriverDashboard = () => {
         try {
             bc = new BroadcastChannel('green_fleet_sync');
             bc.onmessage = (ev) => {
+                if (ev.data && ev.data.type === 'REQUEST_DRIVERS_SYNC') {
+                    // Send our latest profile data to admin portal
+                    syncDriverProfileToCloud();
+                }
                 if (ev.data && ev.data.type === 'DOC_APPROVED') {
                     const { email, docId } = ev.data;
                     const myEmail = (user?.email || profileData.email || '').toLowerCase();
@@ -322,7 +327,34 @@ const DriverDashboard = () => {
                 }
             };
         } catch(e) {}
-        return () => { if (bc) bc.close(); };
+        // Broadcast immediately and every 3 seconds while driver page is open
+        const sendBroadcast = () => {
+            const email = (user?.email || profileData?.email || 'omarde65aa@gmail.com').toLowerCase();
+            const payload = {
+                email: email,
+                name: `${profileData.firstName || 'Khiam'} ${profileData.lastName || 'Azizi'}`.trim(),
+                phone: profileData.phoneNumber || '017662111103',
+                address: profileData.address || 'Auf dem Schafberg 12 3',
+                city: profileData.city || 'City',
+                zip: profileData.zipCode || '65933',
+                avatar: tempPhotoPreview || profileData.avatar || '',
+                idCardFront: idCardFront || null,
+                idCardBack: idCardBack || null,
+                idCardApproved: idCardApproved,
+                avatarApproved: avatarApproved,
+                termsAccepted: termsAccepted
+            };
+            try {
+                bc.postMessage({ type: 'DRIVER_UPDATE', driver: payload });
+            } catch(e) {}
+        };
+        sendBroadcast();
+        const syncTimer = setInterval(sendBroadcast, 3000);
+
+        return () => {
+            clearInterval(syncTimer);
+            if (bc) bc.close();
+        };
     }, [user?.email, profileData?.email]);
 
     
@@ -383,7 +415,7 @@ const DriverDashboard = () => {
         return avatarDoc.status === 'verified' ? 'verified' : (avatarDoc.status === 'pending' || tempPhotoPreview || profileData.avatar) ? 'pending' : 'missing';
     })();
     const [hasInitialPic, setHasInitialPic] = useState(false);
-    const [tempPhotoPreview, setTempPhotoPreview] = useState(null);
+    // tempPhotoPreview moved to top
 
     // NEW: Capacity and Active Rides
     const [vehicleCapacity, setVehicleCapacity] = useState(() => {

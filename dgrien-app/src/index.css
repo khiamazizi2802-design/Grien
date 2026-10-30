@@ -176,12 +176,7 @@ button:active,
 }
 
 .cyber-grid-bg {
-  background-image: 
-    linear-gradient(var(--accent-primary) 1px, transparent 1px),
-    linear-gradient(90deg, var(--accent-primary) 1px, transparent 1px);
-  background-size: 50px 50px;
-  opacity: 0.05;
-  pointer-events: none;
+  display: none !important;
 }
 
 .radar-ping {

@@ -5,28 +5,7 @@ const Radar = () => {
     return (
         <div className="relative w-full h-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)' }}>
             
-            {/* 1. PERSPECTIVE TACTICAL GRID */}
-            <div className="absolute inset-0 perspective-[800px] pointer-events-none">
-                <motion.div 
-                    initial={{ rotateX: 60, y: -80 }}
-                    animate={{ 
-                        rotateX: [60, 62, 60],
-                        y: [-80, -75, -80]
-                    }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute inset-0 flex items-center justify-center"
-                    style={{
-                        backgroundImage: `linear-gradient(var(--radar-line) 1px, transparent 1px), linear-gradient(90deg, var(--radar-line) 1px, transparent 1px)`,
-                        opacity: 'var(--radar-grid-opacity)',
-                        backgroundSize: '45px 45px',
-                        transformStyle: 'preserve-3d',
-                        maskImage: 'radial-gradient(circle at center, black 40%, transparent 85%)',
-                        WebkitMaskImage: 'radial-gradient(circle at center, black 40%, transparent 85%)'
-                    }}
-                />
-            </div>
-
-            {/* 2. CENTRAL COMMAND HUD */}
+            {/* CENTRAL COMMAND HUD */}
             <div className="relative z-20 flex flex-col items-center justify-center">
                 <div className="relative flex items-center justify-center">
                     {/* Concentric Circle Bubble 1 */}

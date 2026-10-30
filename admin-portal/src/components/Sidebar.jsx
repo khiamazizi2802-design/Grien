@@ -30,7 +30,7 @@ import {
     Users,
     Utensils,
     Languages,
-    Search, Calendar, Monitor, Trophy, Activity, Bus
+    Search, Calendar, Monitor, Trophy, Activity, Bus, ShoppingBag
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -119,6 +119,7 @@ const Sidebar = ({ isOpen, onClose, currentRole = 'driver', onItemClick }) => {
             role: ['super_admin'],
             items: [
                 { id: 'command-deck', icon: ShieldCheck, label: "Command Deck", badge: "Live" },
+                { id: 'product-hub', icon: ShoppingBag, label: "Grien Shop Hub", badge: "Smart" },
                 { id: 'agents', icon: Bot, label: "Neural Agents", badge: "AI" },
                 { id: 'settlements', icon: Wallet, label: "Settlement Ledger" },
                 { id: 'feedback', icon: MessageSquare, label: "Feedback Hub" },

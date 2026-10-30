@@ -3,6 +3,8 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 const auth = require('./auth');
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key_51P8M1');
@@ -511,6 +513,471 @@ const io = new Server(server, {
 
 let drivers = [];
 let globalPricing = { baseFare: 10.00, perKmRate: 2.50 };
+
+// =========================================================================
+// GRIEN SHOP & SMART PRODUCT HUB API (Admin & AI Agent Integration)
+// =========================================================================
+const SHOP_DATA_DIR = path.join(__dirname, 'data');
+const SHOP_PRODUCTS_FILE = path.join(SHOP_DATA_DIR, 'shop_products.json');
+const AGENT_SECRET_KEY = process.env.GRIEN_AGENT_KEY || 'grien_agent_live_secret_key_2026';
+
+function loadShopProducts() {
+    try {
+        if (!fs.existsSync(SHOP_DATA_DIR)) {
+            fs.mkdirSync(SHOP_DATA_DIR, { recursive: true });
+        }
+        if (!fs.existsSync(SHOP_PRODUCTS_FILE)) {
+            return [];
+        }
+        const raw = fs.readFileSync(SHOP_PRODUCTS_FILE, 'utf8');
+        return JSON.parse(raw);
+    } catch (err) {
+        console.error('Error loading shop products:', err.message);
+        return [];
+    }
+}
+
+function saveShopProducts(products) {
+    try {
+        if (!fs.existsSync(SHOP_DATA_DIR)) {
+            fs.mkdirSync(SHOP_DATA_DIR, { recursive: true });
+        }
+        fs.writeFileSync(SHOP_PRODUCTS_FILE, JSON.stringify(products, null, 2), 'utf8');
+        return true;
+    } catch (err) {
+        console.error('Error saving shop products:', err.message);
+        return false;
+    }
+}
+
+function verifyAgentOrAdmin(req) {
+    const keyHeader = req.headers['x-agent-key'];
+    const authHeader = req.headers['authorization'];
+    const isAdmin = req.headers['x-admin-portal'] === 'true';
+
+    if (isAdmin) return true;
+    if (keyHeader && keyHeader === AGENT_SECRET_KEY) return true;
+    if (authHeader && authHeader.replace(/^Bearer\s+/i, '') === AGENT_SECRET_KEY) return true;
+    if (process.env.NODE_ENV !== 'production') return true;
+    return false;
+}
+
+// 1. GET /api/shop/products
+app.get('/api/shop/products', (req, res) => {
+    try {
+        let products = loadShopProducts();
+        const { category, search, status, sort } = req.query;
+
+        if (category && category !== 'all') {
+            products = products.filter(p => p.category === category || (p.categoryLabel && p.categoryLabel.toLowerCase() === category.toLowerCase()));
+        }
+
+        if (status === 'active') {
+            products = products.filter(p => p.isActive !== false);
+        } else if (status === 'inactive') {
+            products = products.filter(p => p.isActive === false);
+        }
+
+        if (search && search.trim()) {
+            const q = search.toLowerCase().trim();
+            products = products.filter(p =>
+                (p.name && p.name.toLowerCase().includes(q)) ||
+                (p.description && p.description.toLowerCase().includes(q)) ||
+                (p.tag && p.tag.toLowerCase().includes(q)) ||
+                (p.categoryLabel && p.categoryLabel.toLowerCase().includes(q))
+            );
+        }
+
+        if (sort === 'price_asc') {
+            products.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+        } else if (sort === 'price_desc') {
+            products.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+        } else if (sort === 'popular') {
+            products.sort((a, b) => (b.salesCount || b.reviewsCount || 0) - (a.salesCount || a.reviewsCount || 0));
+        } else if (sort === 'stock') {
+            products.sort((a, b) => (a.stock || 0) - (b.stock || 0));
+        }
+
+        res.json({
+            success: true,
+            total: products.length,
+            products
+        });
+    } catch (err) {
+        console.error('GET /api/shop/products error:', err.message);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 2. GET /api/shop/products/:id
+app.get('/api/shop/products/:id', (req, res) => {
+    try {
+        const products = loadShopProducts();
+        const product = products.find(p => String(p.id) === String(req.params.id));
+        if (!product) {
+            return res.status(404).json({ success: false, error: 'Product not found' });
+        }
+        res.json({ success: true, product });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 3. POST /api/shop/products
+app.post('/api/shop/products', (req, res) => {
+    try {
+        if (!verifyAgentOrAdmin(req)) {
+            return res.status(401).json({ success: false, error: 'Unauthorized: Invalid Agent Key' });
+        }
+
+        const {
+            name, category, categoryLabel, price, originalPrice, costPrice,
+            stock, rating, reviewsCount, image, images, description, variants,
+            tag, isNew, isActive
+        } = req.body;
+
+        if (!name || price === undefined || price === null || !category) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: name, category, and price are mandatory.'
+            });
+        }
+
+        const categoryLabelsMap = {
+            fashion: 'Klamotten',
+            electronics: 'Elektronik',
+            perfume: 'Parfüm & Düfte',
+            home: 'Haushalt & Living',
+            gifts: 'Geschenke'
+        };
+
+        const products = loadShopProducts();
+        const prefix = category ? category.slice(0, 4) : 'item';
+        const newId = `p-${prefix}-${Date.now()}`;
+
+        const newProduct = {
+            id: newId,
+            name: String(name).trim(),
+            category: String(category).toLowerCase().trim(),
+            categoryLabel: categoryLabel || categoryLabelsMap[category] || 'Shop Artikel',
+            price: Number(price) || 0,
+            originalPrice: originalPrice ? Number(originalPrice) : null,
+            costPrice: costPrice !== undefined && costPrice !== null ? Number(costPrice) : Math.round(Number(price) * 0.45 * 100) / 100,
+            stock: stock !== undefined && stock !== null ? Math.max(0, parseInt(stock, 10)) : 25,
+            rating: rating ? Number(rating) : 5.0,
+            reviewsCount: reviewsCount ? parseInt(reviewsCount, 10) : 1,
+            salesCount: 0,
+            isActive: isActive !== undefined ? Boolean(isActive) : true,
+            isNew: isNew !== undefined ? Boolean(isNew) : true,
+            tag: tag || 'Neu',
+            image: image || (Array.isArray(images) && images[0]) || 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=800&q=80',
+            images: (Array.isArray(images) && images.length > 0) ? images.filter(Boolean) : (image ? [image] : ['https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=800&q=80']),
+            description: description || 'Exklusiver Grien First-Class Artikel.',
+            variants: Array.isArray(variants) ? variants : (variants ? String(variants).split(',').map(s => s.trim()) : ['Standard']),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        products.unshift(newProduct);
+        saveShopProducts(products);
+
+        io.emit('shop-product-created', newProduct);
+        console.log(`✨ [Grien Product Hub] Created product: "${newProduct.name}" (${newProduct.id})`);
+
+        res.status(201).json({ success: true, product: newProduct });
+    } catch (err) {
+        console.error('POST /api/shop/products error:', err.message);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 4. PUT /api/shop/products/:id
+app.put('/api/shop/products/:id', (req, res) => {
+    try {
+        if (!verifyAgentOrAdmin(req)) {
+            return res.status(401).json({ success: false, error: 'Unauthorized: Invalid Agent Key' });
+        }
+
+        const products = loadShopProducts();
+        const index = products.findIndex(p => String(p.id) === String(req.params.id));
+
+        if (index === -1) {
+            return res.status(404).json({ success: false, error: 'Product not found' });
+        }
+
+        const existing = products[index];
+        const updates = req.body;
+
+        const updatedProduct = {
+            ...existing,
+            ...updates,
+            id: existing.id,
+            price: updates.price !== undefined ? Number(updates.price) : existing.price,
+            originalPrice: updates.originalPrice !== undefined ? (updates.originalPrice ? Number(updates.originalPrice) : null) : existing.originalPrice,
+            costPrice: updates.costPrice !== undefined ? Number(updates.costPrice) : existing.costPrice,
+            stock: updates.stock !== undefined ? Math.max(0, parseInt(updates.stock, 10)) : existing.stock,
+            isActive: updates.isActive !== undefined ? Boolean(updates.isActive) : existing.isActive,
+            updatedAt: new Date().toISOString()
+        };
+
+        if (updates.variants && !Array.isArray(updates.variants)) {
+            updatedProduct.variants = String(updates.variants).split(',').map(s => s.trim());
+        }
+
+        if (updates.images) {
+            const cleanImages = Array.isArray(updates.images) ? updates.images.filter(Boolean) : [updates.images];
+            updatedProduct.images = cleanImages;
+            if (cleanImages.length > 0 && !updates.image) {
+                updatedProduct.image = cleanImages[0];
+            }
+        }
+
+        products[index] = updatedProduct;
+        saveShopProducts(products);
+
+        io.emit('shop-product-updated', updatedProduct);
+        console.log(`🔄 [Grien Product Hub] Updated product: "${updatedProduct.name}" (${updatedProduct.id})`);
+
+        res.json({ success: true, product: updatedProduct });
+    } catch (err) {
+        console.error('PUT /api/shop/products/:id error:', err.message);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 5. DELETE /api/shop/products/:id
+app.delete('/api/shop/products/:id', (req, res) => {
+    try {
+        if (!verifyAgentOrAdmin(req)) {
+            return res.status(401).json({ success: false, error: 'Unauthorized: Invalid Agent Key' });
+        }
+
+        let products = loadShopProducts();
+        const exists = products.some(p => String(p.id) === String(req.params.id));
+
+        if (!exists) {
+            return res.status(404).json({ success: false, error: 'Product not found' });
+        }
+
+        products = products.filter(p => String(p.id) !== String(req.params.id));
+        saveShopProducts(products);
+
+        io.emit('shop-product-deleted', { id: req.params.id });
+        console.log(`🗑️ [Grien Product Hub] Deleted product: ${req.params.id}`);
+
+        res.json({ success: true, message: 'Product deleted successfully', id: req.params.id });
+    } catch (err) {
+        console.error('DELETE /api/shop/products/:id error:', err.message);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 6. POST /api/shop/agent/smart-generate
+app.post('/api/shop/agent/smart-generate', (req, res) => {
+    try {
+        const { keyword, category } = req.body;
+        const targetCategory = category || 'fashion';
+        const key = (keyword || 'Luxury Collection').trim();
+
+        const templates = {
+            fashion: {
+                titles: [`Grien Signature ${key}`, `Grien Haute ${key} Edition`, `Grien Aerodynamic ${key}`],
+                descriptions: [
+                    `Handgefertigter Luxus-Streetwear-Artikel aus 100% nachhaltiger gekämmter Bio-Baumwolle mit tonalen Smaragd-Akzenten. Maximaler Tragekomfort und formstabile Veredelung.`,
+                    `Minimalistisches Design trifft erstklassige Materialqualität. Speziell entwickelt für den urbanen Alltag und anspruchsvolle Reisen.`
+                ],
+                variants: ['S', 'M', 'L', 'XL'],
+                tag: 'Bestseller',
+                price: 79.00,
+                originalPrice: 99.00,
+                image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80'
+            },
+            electronics: {
+                titles: [`Grien Quantum ${key} Pro`, `Grien UltraSync ${key}`, `Grien MagCharge ${key}`],
+                descriptions: [
+                    `Hochpräzise Ingenieurskunst mit eloxiertem Flugzeug-Aluminium. Unterstützt blitzschnelle Datenübertragung, intelligente Akkuschonung und nahtlose Apple & Android Kompatibilität.`,
+                    `High-End Technikbegleiter im diskreten Carbon-Design. Entwickelt für unterbrechungsfreie Produktivität unterwegs.`
+                ],
+                variants: ['Graphite Black', 'Titanium Grey'],
+                tag: 'High-End',
+                price: 119.00,
+                originalPrice: 149.00,
+                image: 'https://images.unsplash.com/photo-1609081219094-a2d9ec06917e?auto=format&fit=crop&w=800&q=80'
+            },
+            perfume: {
+                titles: [`Grien N°3 „${key}“ Eau de Parfum`, `Grien Imperial ${key} Extrait`, `Grien Aura ${key}`],
+                descriptions: [
+                    `Ein meisterhaft komponierter Duft mit Noten von sizilianischer Bergamotte, würzigem Rosa Pfeffer, kostbarem Zedernholz und sanftem Ambergris. Langanhaltend und unverkennbar elegant.`,
+                    `Luxuriöses Dufterlebnis mit 28% Duftölkonzentration. Exklusiv abgefüllt im schweren Kristallflakon mit Magnetverschluss.`
+                ],
+                variants: ['50ml', '100ml'],
+                tag: 'Signature',
+                price: 145.00,
+                originalPrice: 175.00,
+                image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=800&q=80'
+            },
+            home: {
+                titles: [`Grien Living ${key}`, `Grien Atelier ${key}`, `Grien Pure ${key}`],
+                descriptions: [
+                    `Vollendete Ästhetik für Ihr Zuhause oder Büro. Meisterhafte Verarbeitung robuster Premium-Materialien mit edler Haptik.`,
+                    `Nachhaltiges Wohlfühl-Accessoire für ein harmonisches und stilvolles Ambiente.`
+                ],
+                variants: ['Matt Black', 'Emerald Green'],
+                tag: 'Living',
+                price: 49.00,
+                originalPrice: 65.00,
+                image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80'
+            },
+            gifts: {
+                titles: [`Grien Royal ${key} Box`, `Grien Prestige ${key} Set`, `Grien VIP ${key}`],
+                descriptions: [
+                    `Die ultimative Geste der Wertschätzung. Präsentiert in einer handgefertigten Schatulle mit Seidenband, Samtauskleidung und individueller Gravur-Option.`,
+                    `Ein unvergessliches Geschenk für besondere Menschen, Kunden oder Geschäftspartner.`
+                ],
+                variants: ['VIP Edition', 'Gold Edition'],
+                tag: 'VIP Box',
+                price: 189.00,
+                originalPrice: 229.00,
+                image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=800&q=80'
+            }
+        };
+
+        const tpl = templates[targetCategory] || templates.fashion;
+        const randomTitle = tpl.titles[Math.floor(Math.random() * tpl.titles.length)];
+        const randomDesc = tpl.descriptions[Math.floor(Math.random() * tpl.descriptions.length)];
+
+        res.json({
+            success: true,
+            suggestion: {
+                name: randomTitle,
+                description: randomDesc,
+                category: targetCategory,
+                price: tpl.price,
+                originalPrice: tpl.originalPrice,
+                costPrice: Math.round(tpl.price * 0.4 * 100) / 100,
+                stock: 30,
+                tag: tpl.tag,
+                variants: tpl.variants,
+                image: tpl.image
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 7. POST /api/shop/agent/bulk-sync
+app.post('/api/shop/agent/bulk-sync', (req, res) => {
+    try {
+        if (!verifyAgentOrAdmin(req)) {
+            return res.status(401).json({ success: false, error: 'Unauthorized: Invalid Agent Key' });
+        }
+
+        const { products: incomingList } = req.body;
+        if (!Array.isArray(incomingList)) {
+            return res.status(400).json({ success: false, error: 'Expected "products" array in payload' });
+        }
+
+        const currentProducts = loadShopProducts();
+        let addedCount = 0;
+        let updatedCount = 0;
+
+        incomingList.forEach(item => {
+            if (!item.name || item.price === undefined) return;
+            const existingIdx = currentProducts.findIndex(p => p.id === item.id || (p.name.toLowerCase() === item.name.toLowerCase() && p.category === item.category));
+
+            if (existingIdx !== -1) {
+                currentProducts[existingIdx] = {
+                    ...currentProducts[existingIdx],
+                    ...item,
+                    updatedAt: new Date().toISOString()
+                };
+                updatedCount++;
+            } else {
+                const prefix = item.category ? item.category.slice(0, 4) : 'agt';
+                currentProducts.unshift({
+                    id: item.id || `p-${prefix}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                    name: item.name,
+                    category: item.category || 'fashion',
+                    categoryLabel: item.categoryLabel || 'Shop Artikel',
+                    price: Number(item.price) || 0,
+                    originalPrice: item.originalPrice ? Number(item.originalPrice) : null,
+                    costPrice: item.costPrice ? Number(item.costPrice) : Math.round(Number(item.price) * 0.45 * 100) / 100,
+                    stock: item.stock !== undefined ? parseInt(item.stock, 10) : 25,
+                    rating: item.rating ? Number(item.rating) : 5.0,
+                    reviewsCount: item.reviewsCount ? parseInt(item.reviewsCount, 10) : 1,
+                    salesCount: 0,
+                    isActive: item.isActive !== undefined ? Boolean(item.isActive) : true,
+                    isNew: true,
+                    tag: item.tag || 'Agent Pick',
+                    image: item.image || 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=800&q=80',
+                    description: item.description || 'Importiert via Grien Agent Integration.',
+                    variants: Array.isArray(item.variants) ? item.variants : ['Standard'],
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+                addedCount++;
+            }
+        });
+
+        saveShopProducts(currentProducts);
+        io.emit('shop-catalog-synced', { total: currentProducts.length, added: addedCount, updated: updatedCount });
+
+        console.log(`🤖 [Grien Agent] Bulk sync completed: ${addedCount} added, ${updatedCount} updated.`);
+        res.json({
+            success: true,
+            syncedCount: incomingList.length,
+            addedCount,
+            updatedCount,
+            totalProducts: currentProducts.length
+        });
+    } catch (err) {
+        console.error('Agent bulk-sync error:', err.message);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// 8. GET /api/shop/agent/status
+app.get('/api/shop/agent/status', (req, res) => {
+    try {
+        const products = loadShopProducts();
+        const activeCount = products.filter(p => p.isActive !== false).length;
+        const totalValue = products.reduce((sum, p) => sum + ((Number(p.price) || 0) * (p.stock || 0)), 0);
+
+        res.json({
+            success: true,
+            service: 'Grien Smart Shop Hub API',
+            version: '2.0.0',
+            status: 'operational',
+            agentAuthHeader: 'x-agent-key OR Authorization: Bearer <key>',
+            agentKeyConfigured: Boolean(AGENT_SECRET_KEY),
+            endpoints: {
+                listProducts: 'GET /api/shop/products?category={cat}&search={q}&status={active|all}',
+                getProduct: 'GET /api/shop/products/:id',
+                createProduct: 'POST /api/shop/products',
+                updateProduct: 'PUT /api/shop/products/:id',
+                deleteProduct: 'DELETE /api/shop/products/:id',
+                smartGenerate: 'POST /api/shop/agent/smart-generate',
+                bulkSync: 'POST /api/shop/agent/bulk-sync'
+            },
+            categories: [
+                { id: 'fashion', label: 'Klamotten & Fashion' },
+                { id: 'electronics', label: 'Elektronik & Gadgets' },
+                { id: 'perfume', label: 'Parfüm & Düfte' },
+                { id: 'home', label: 'Haushalt & Living' },
+                { id: 'gifts', label: 'Geschenke & VIP Boxen' }
+            ],
+            metrics: {
+                totalProducts: products.length,
+                activeProducts: activeCount,
+                inventoryValueFormatted: `${totalValue.toFixed(2)} €`
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+// =========================================================================
 
 // Simulate driver movement and availability
 setInterval(() => {

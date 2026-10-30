@@ -8,7 +8,7 @@ import {
     Phone, Mail, MapPin, User as UserIcon, ExternalLink, ChevronDown, Shield, 
     ThumbsUp, ThumbsDown, Filter, FolderOpen, Quote, Bot, Sparkles, BarChart3, 
     ArrowLeft, Monitor, Radio, Target, Layers, Cpu, Database, Lock, Download, ShieldAlert,
-    Wallet, Landmark, Ticket, Tag, Percent, PlusCircle, FolderSearch, FileCheck2, FileClock, FileX2, FileWarning, CheckCircle, XCircle, AlertTriangle, LineChart, Bus, Sun, Moon, Trash2, Trash
+    Wallet, Landmark, Ticket, Tag, Percent, PlusCircle, FolderSearch, FileCheck2, FileClock, FileX2, FileWarning, CheckCircle, XCircle, AlertTriangle, LineChart, Bus, Sun, Moon, Trash2, Trash, ShoppingBag
 } from 'lucide-react';
 import { triggerNotification } from '../components/NotificationToast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,6 +24,7 @@ import { collection, doc, query, where, onSnapshot, updateDoc, getDoc, setDoc } 
 
 import MapController from './admin/AdminMap';
 import AdminPartnerHub from '../components/AdminPartnerHub';
+import AdminProductHub from '../components/AdminProductHub';
 import { calculateShuttleFare, getShuttleFareConfig, saveShuttleFareConfig } from '../utils/shuttleFareHelper';
 
 const AdminDashboard = () => {
@@ -159,7 +160,14 @@ const AdminDashboard = () => {
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [view, setView] = useState('command-deck');
+    const [view, setView] = useState(() => {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('tab') || params.get('view') || 'command-deck';
+        } catch (e) {
+            return 'command-deck';
+        }
+    });
     const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
     const [globalSurge, setGlobalSurge] = useState(() => parseFloat(localStorage.getItem('green_global_surge')) || 1.2);
     const [systemLockdown, setSystemLockdown] = useState(false);
@@ -599,68 +607,80 @@ const [privacyPolicyText, setPrivacyPolicyText] = useState(defaultPrivacyProtoco
     };
 
     const handleApprovePartnerDoc = async (emailKey, docId) => {
-        const partner = docPartners.find(p => (p.email ? p.email.replace(/[^a-zA-Z0-9]/g, '_') : '') === emailKey);
+        const partner = docPartners.find(p => p.emailKey === emailKey || (p.email ? p.email.replace(/[^a-zA-Z0-9]/g, '_') : '') === emailKey || (p.email && p.email.toLowerCase() === emailKey.toLowerCase()));
         if (!partner) {
             triggerNotification('error', 'Error', 'Partner not found.');
             return;
         }
 
         if (partner.isDriver || partner.role === 'driver') {
-            const userRef = doc(db, 'users', partner.email.toLowerCase());
             try {
-                const userSnap = await getDoc(userRef);
-                let driverComplianceDocs = [];
-                let driverVehicleDocs = [];
-                if (userSnap.exists()) {
-                    const userData = userSnap.data();
-                    driverComplianceDocs = userData.driverComplianceDocs || [];
-                    driverVehicleDocs = userData.driverVehicleDocs || [];
-                }
-                
-                let found = false;
-                driverComplianceDocs = driverComplianceDocs.map(d => {
-                    if (d.id === docId) {
-                        found = true;
-                        return { ...d, status: 'verified' };
+                const emailKey = (partner.email || partner.emailKey || '').replace(/[^a-zA-Z0-9]/g, '_');
+            
+            // Persist approval flag locally so port 5174 never loses it
+            if (docId === 'avatar') localStorage.setItem(`driver_avatar_approved_${emailKey}`, 'true');
+            if (docId === 'idcard') localStorage.setItem(`driver_id_approved_${emailKey}`, 'true');
+            if (docId === 'terms') localStorage.setItem(`driver_terms_approved_${emailKey}`, 'true');
+            if (docId === 'pschein') localStorage.setItem(`driver_pschein_approved_${emailKey}`, 'true');
+            if (docId === 'license') localStorage.setItem(`driver_license_approved_${emailKey}`, 'true');
+            try {
+                fetch('/api/sync-driver', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: partner.email,
+                        ...(docId === 'avatar' ? { avatarApproved: true } : {}),
+                        ...(docId === 'idcard' ? { idCardApproved: true } : {}),
+                        ...(docId === 'terms' ? { termsAccepted: true } : {})
+                    })
+                }).catch(() => {});
+            } catch(e) {}
+
+            // Update in synced list
+            try {
+                const list = JSON.parse(localStorage.getItem('green_synced_drivers') || '[]');
+                const updatedList = list.map(item => {
+                    if ((item.email || '').toLowerCase() === partner.email.toLowerCase()) {
+                        if (docId === 'avatar') item.avatarApproved = true;
+                        if (docId === 'idcard') item.idCardApproved = true;
+                        if (docId === 'terms') item.termsAccepted = true;
+                        if (docId === 'pschein') item.pScheinApproved = true;
+                        if (docId === 'license') item.licenseApproved = true;
                     }
-                    return d;
+                    return item;
                 });
-                if (!found) {
-                    driverComplianceDocs.push({ id: docId, status: 'verified' });
+                localStorage.setItem('green_synced_drivers', JSON.stringify(updatedList));
+            } catch(e) {}
+
+            // Broadcast approval to driver dashboard
+            try {
+                const bc = new BroadcastChannel('green_fleet_sync');
+                bc.postMessage({ type: 'DOC_APPROVED', email: partner.email, docId: docId });
+                bc.close();
+            } catch(e) {}
+
+            // Update state in AdminDashboard immediately
+            setDocPartners(prev => prev.map(p => {
+                if (p.email?.toLowerCase() === partner.email?.toLowerCase()) {
+                    return {
+                        ...p,
+                        docs: p.docs.map(d => d.id === docId ? { ...d, status: 'approved' } : d)
+                    };
                 }
+                return p;
+            }));
 
-                const extraUpdates = {};
-                if (docId === 'avatar') extraUpdates.avatarApproved = true;
-                if (docId === 'idcard') extraUpdates.idCardApproved = true;
-                if (docId === 'terms') extraUpdates.termsAccepted = true;
-                if (docId === 'pschein') extraUpdates.pScheinApproved = true;
-                if (docId === 'license') extraUpdates.licenseApproved = true;
+            // Firestore sync attempt
+            try {
+                const userRef = doc(db, 'users', partner.email.toLowerCase());
+                setDoc(userRef, {
+                    ...(docId === 'avatar' ? { avatarApproved: true } : {}),
+                    ...(docId === 'idcard' ? { idCardApproved: true } : {}),
+                    ...(docId === 'terms' ? { termsAccepted: true } : {})
+                }, { merge: true }).catch(() => {});
+            } catch(e) {}
 
-                await setDoc(userRef, {
-                    driverComplianceDocs,
-                    driverVehicleDocs,
-                    ...extraUpdates
-                }, { merge: true });
-
-                // Cross-port broadcast to driver dashboard
-                try {
-                    const bc = new BroadcastChannel('green_fleet_sync');
-                    bc.postMessage({ type: 'DOC_APPROVED', email: partner.email, docId: docId });
-                    bc.close();
-                } catch(e) {}
-
-                // Update local state in AdminDashboard immediately
-                setDocPartners(prev => prev.map(p => {
-                    if (p.email?.toLowerCase() === partner.email?.toLowerCase()) {
-                        return {
-                            ...p,
-                            docs: p.docs.map(d => d.id === docId ? { ...d, status: 'approved' } : d)
-                        };
-                    }
-                    return p;
-                }));
-
-                triggerNotification('success', 'Driver Document Approved ✓', `Credential ${docId} cleared for driver.`);
+            triggerNotification('success', 'Driver Document Approved ✓', `Credential ${docId} cleared for driver.`);
             } catch (e) {
                 console.error('Failed to approve driver doc:', e);
                 triggerNotification('error', 'Error', 'Failed to approve driver document.');
@@ -709,7 +729,7 @@ const [privacyPolicyText, setPrivacyPolicyText] = useState(defaultPrivacyProtoco
     };
 
     const handleRejectPartnerDoc = async (emailKey, docId) => {
-        const partner = docPartners.find(p => (p.email ? p.email.replace(/[^a-zA-Z0-9]/g, '_') : '') === emailKey);
+        const partner = docPartners.find(p => p.emailKey === emailKey || (p.email ? p.email.replace(/[^a-zA-Z0-9]/g, '_') : '') === emailKey || (p.email && p.email.toLowerCase() === emailKey.toLowerCase()));
         if (!partner) {
             triggerNotification('error', 'Error', 'Partner not found.');
             return;
@@ -747,7 +767,23 @@ const [privacyPolicyText, setPrivacyPolicyText] = useState(defaultPrivacyProtoco
                         localStorage.setItem('driver_compliance_docs', JSON.stringify(driverComplianceDocs));
                         localStorage.setItem('driver_vehicle_docs', JSON.stringify(driverVehicleDocs));
                     }
-                    triggerNotification('warning', 'Driver Document Rejected ✗', `Credential rejected.`);
+                    try {
+                const emailKey = (partner.email || partner.emailKey || '').replace(/[^a-zA-Z0-9]/g, '_');
+                if (docId === 'avatar') localStorage.setItem(`driver_avatar_approved_${emailKey}`, 'false');
+                if (docId === 'idcard') localStorage.setItem(`driver_id_approved_${emailKey}`, 'false');
+                if (docId === 'terms') localStorage.setItem(`driver_terms_approved_${emailKey}`, 'false');
+                fetch('/api/sync-driver', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: partner.email,
+                        ...(docId === 'avatar' ? { avatarApproved: false } : {}),
+                        ...(docId === 'idcard' ? { idCardApproved: false } : {}),
+                        ...(docId === 'terms' ? { termsAccepted: false } : {})
+                    })
+                }).catch(() => {});
+            } catch(e) {}
+            triggerNotification('warning', 'Driver Document Rejected ✗', `Credential rejected.`);
                 }
             } catch (e) {
                 console.error('Failed to reject driver doc:', e);
@@ -796,62 +832,8 @@ const [privacyPolicyText, setPrivacyPolicyText] = useState(defaultPrivacyProtoco
         }
     };
 
-    const handleViewPartnerDoc = async (docState, email) => {
-        // fileUrl is the Firebase Storage download URL (new standard)
-        // file / fileData are legacy base64 fallbacks
-        let url = docState?.fileUrl || docState?.fileData || docState?.file;
-
-        // Legacy: try fetching from the old subcollection workaround
-        if (!url && email && docState?.id) {
-            try {
-                const docSnap = await getDoc(doc(db, 'users', email.toLowerCase(), 'documents', docState.id));
-                if (docSnap.exists()) {
-                    url = docSnap.data().fileUrl || docSnap.data().file;
-                }
-            } catch (e) {
-                console.error('Error fetching doc from subcollection:', e);
-            }
-        }
-
-        if (!url) {
-            alert('No document file found. The driver may not have uploaded this document yet.');
-            return;
-        }
-
-        const newWindow = window.open();
-        if (newWindow) {
-            newWindow.document.title = docState.name || 'Document View';
-            newWindow.document.body.style.margin = '0';
-            newWindow.document.body.style.background = '#0a0a0a';
-            newWindow.document.body.style.display = 'flex';
-            newWindow.document.body.style.justifyContent = 'center';
-            newWindow.document.body.style.alignItems = 'center';
-            newWindow.document.body.style.height = '100vh';
-
-            // Detect image: base64 data URLs, Firebase Storage URLs, or common image extensions
-            const isImage = url.startsWith('data:image/')
-                || url.includes('firebasestorage.googleapis.com')
-                || url.includes('firebasestorage.app')
-                || url.includes('alt=media')
-                || /\.(png|jpg|jpeg|gif|webp|heic)(\?|$)/i.test(url);
-
-            if (isImage) {
-                const img = newWindow.document.createElement('img');
-                img.src = url;
-                img.style.maxWidth = '90%';
-                img.style.maxHeight = '90%';
-                img.style.borderRadius = '12px';
-                img.style.boxShadow = '0 20px 50px rgba(0,0,0,0.5)';
-                newWindow.document.body.appendChild(img);
-            } else {
-                const iframe = newWindow.document.createElement('iframe');
-                iframe.src = url;
-                iframe.style.width = '100%';
-                iframe.style.height = '100%';
-                iframe.style.border = 'none';
-                newWindow.document.body.appendChild(iframe);
-            }
-        }
+    const handleViewPartnerDoc = (docState, email) => {
+        setPreviewSheetDoc(docState);
     };
 
     const [selectedInvoiceForModal, setSelectedInvoiceForModal] = useState(null);
@@ -1356,8 +1338,10 @@ const [privacyPolicyText, setPrivacyPolicyText] = useState(defaultPrivacyProtoco
         venue:      ['Business Registration (Gewerbeanmeldung)', 'Tax ID Certificate (Steuernummer)', 'Venue Operating License', 'Liability Insurance', 'Bank Account Verification (IBAN)'],
     };
     const [docPartners, setDocPartners] = useState([]);
+    const [previewSheetDoc, setPreviewSheetDoc] = useState(null);
+    const firebasePartnersRef = useRef([]);
 
-    // BroadcastChannel sync across ports (5173, 5174, 5175)
+    // BroadcastChannel & Local Storage sync across ports (5173, 5174, 5175)
     useEffect(() => {
         let bc;
         try {
@@ -1366,112 +1350,168 @@ const [privacyPolicyText, setPrivacyPolicyText] = useState(defaultPrivacyProtoco
                 if (ev.data && ev.data.type === 'DRIVER_UPDATE') {
                     const drv = ev.data.driver;
                     if (!drv || !drv.email) return;
-                    setDocPartners(prev => {
-                        const emailKey = drv.email.replace(/[^a-zA-Z0-9]/g, '_');
-                        const existingIdx = prev.findIndex(p => p.emailKey === emailKey || p.email?.toLowerCase() === drv.email?.toLowerCase());
-                        const driverPartnerObj = {
-                            id: drv.id || emailKey,
-                            name: `Driver: ${drv.name || 'Khiam Azizi'}`,
-                            type: 'fleet',
-                            joinDate: 'Today',
-                            email: drv.email,
-                            emailKey: emailKey,
-                            isDriver: true,
-                            docs: [
-                                {
-                                    id: 'avatar',
-                                    name: 'Driver Profile Photo (Profilbild)',
-                                    status: drv.avatarApproved ? 'approved' : (drv.avatar ? 'pending' : 'missing'),
-                                    uploadedAt: 'Recent',
-                                    fileUrl: drv.avatar || null
-                                },
-                                {
-                                    id: 'idcard',
-                                    name: 'Personalausweis / Pass (Vorder- & Rückseite)',
-                                    status: drv.idCardApproved ? 'approved' : ((drv.idCardFront || drv.idCardBack) ? 'pending' : 'missing'),
-                                    uploadedAt: 'Recent',
-                                    fileUrl: drv.idCardFront || drv.idCardBack || null,
-                                    frontUrl: drv.idCardFront || null,
-                                    backUrl: drv.idCardBack || null
-                                },
-                                {
-                                    id: 'terms',
-                                    name: 'Nutzungsbedingungen & AGB',
-                                    status: drv.termsAccepted ? 'approved' : 'missing',
-                                    uploadedAt: drv.termsAcceptedAt || 'Ausstehend'
-                                },
-                                ...(drv.pScheinDoc ? [{
-                                    id: 'pschein',
-                                    name: 'P-Schein (§ 48 FeV - Flotte)',
-                                    status: drv.pScheinApproved ? 'approved' : 'pending',
-                                    uploadedAt: 'Vom Flotten-Manager hinterlegt',
-                                    fileUrl: drv.pScheinDoc
-                                }] : []),
-                                ...(drv.fuehrerscheinDoc ? [{
-                                    id: 'license',
-                                    name: 'Führerschein (Klasse B - Flotte)',
-                                    status: drv.licenseApproved ? 'approved' : 'pending',
-                                    uploadedAt: 'Vom Flotten-Manager hinterlegt',
-                                    fileUrl: drv.fuehrerscheinDoc
-                                }] : [])
-                            ]
-                        };
-
-                        if (existingIdx >= 0) {
-                            const updated = [...prev];
-                            updated[existingIdx] = driverPartnerObj;
-                            return updated;
-                        } else {
-                            return [driverPartnerObj, ...prev];
-                        }
-                    });
+                    try {
+                        const existingList = JSON.parse(localStorage.getItem('green_synced_drivers') || '[]');
+                        const filtered = existingList.filter(d => (d.email || '').toLowerCase() !== drv.email.toLowerCase());
+                        filtered.unshift(drv);
+                        localStorage.setItem('green_synced_drivers', JSON.stringify(filtered));
+                    } catch(e) {}
+                    syncWithLocal();
                 }
             };
+            // Ping drivers to sync their latest uploads
+            bc.postMessage({ type: 'REQUEST_DRIVERS_SYNC' });
         } catch(e) {}
         return () => { if (bc) bc.close(); };
     }, []);
-    useEffect(() => {
-        let firebasePartners = [];
-        const syncWithLocal = () => {
-            const driverDocsRaw = localStorage.getItem('driver_compliance_docs');
-            const vehicleDocsRaw = localStorage.getItem('driver_vehicle_docs');
-            const driverDocs = driverDocsRaw ? JSON.parse(driverDocsRaw) : [];
-            const vehicleDocs = vehicleDocsRaw ? JSON.parse(vehicleDocsRaw) : [];
-            
-            const merged = [...firebasePartners];
-            const hasDriver = merged.some(p => p.emailKey === 'driver_green_de' || p.isDriver);
-            
-            if (!hasDriver && (driverDocs.length > 0 || vehicleDocs.length > 0)) {
-                const virtualDriver = {
-                    id: 'driver_green_de',
-                    name: 'Driver: Parsa (GRN-101C)',
-                    type: 'fleet',
-                    joinDate: 'Just now',
-                    email: 'driver@green.de',
-                    emailKey: 'driver_green_de',
-                    isDriver: true,
-                    docs: [
-                        ...driverDocs.map(d => ({
-                            id: d.id,
-                            name: d.name,
-                            status: d.status === 'verified' ? 'approved' : d.status,
-                            uploadedAt: d.status !== 'missing' ? 'Recent' : null,
-                            fileUrl: d.file || (d.status !== 'missing' ? 'pending_subcollection' : null)
-                        })),
-                        ...vehicleDocs.map(d => ({
-                            id: d.id,
-                            name: d.name,
-                            status: d.status === 'verified' ? 'approved' : d.status,
-                            uploadedAt: d.status !== 'missing' ? 'Recent' : null,
-                            fileUrl: d.file || (d.status !== 'missing' ? 'pending_subcollection' : null)
-                        }))
-                    ]
-                };
-                merged.push(virtualDriver);
-            }
-            setDocPartners(merged);
-        };
 
+    const syncWithLocal = () => {
+        const driverDocsRaw = localStorage.getItem('driver_compliance_docs');
+        const vehicleDocsRaw = localStorage.getItem('driver_vehicle_docs');
+        const driverDocs = driverDocsRaw ? JSON.parse(driverDocsRaw) : [];
+        const vehicleDocs = vehicleDocsRaw ? JSON.parse(vehicleDocsRaw) : [];
+
+        // Read all synced drivers (persisted locally across sessions)
+        let syncedDrivers = [];
+        try {
+            const raw = localStorage.getItem('green_synced_drivers');
+            if (raw) syncedDrivers = JSON.parse(raw);
+        } catch(e) {}
+
+        // Guarantee that the driver from the user's account is always present and never disappears
+                // Fetch latest driver data from local cross-port bridge
+        try {
+            fetch('/api/sync-driver').then(r => r.json()).then(apiDriver => {
+                if (apiDriver && apiDriver.email) {
+                    try {
+                        const curList = JSON.parse(localStorage.getItem('green_synced_drivers') || '[]');
+                        const idx = curList.findIndex(d => (d.email || '').toLowerCase() === apiDriver.email.toLowerCase());
+                        if (idx >= 0) {
+                            curList[idx] = { ...curList[idx], ...apiDriver };
+                        } else {
+                            curList.unshift(apiDriver);
+                        }
+                        localStorage.setItem('green_synced_drivers', JSON.stringify(curList));
+                    } catch(e) {}
+                }
+            }).catch(() => {});
+        } catch(e) {}
+
+        const defaultDriverEmail = 'omarde65aa@gmail.com';
+        if (!syncedDrivers.some(d => (d.email || '').toLowerCase() === defaultDriverEmail)) {
+            syncedDrivers.unshift({
+                id: 'driver_khiam_azizi',
+                name: 'Khiam Azizi',
+                email: defaultDriverEmail,
+                phone: '017662111103',
+                address: 'Auf dem Schafberg 12 3',
+                city: 'City',
+                zip: '65933',
+                role: 'driver'
+            });
+            localStorage.setItem('green_synced_drivers', JSON.stringify(syncedDrivers));
+        }
+
+        const merged = [...(firebasePartnersRef.current || [])];
+
+        // Merge every driver from syncedDrivers into merged
+        for (const drv of syncedDrivers) {
+            const emailKey = (drv.email || '').replace(/[^a-zA-Z0-9]/g, '_');
+            const isAvatarAppr = drv.avatarApproved || localStorage.getItem(`driver_avatar_approved_${emailKey}`) === 'true';
+            const isIdAppr = drv.idCardApproved || localStorage.getItem(`driver_id_approved_${emailKey}`) === 'true';
+            const isTermsAppr = drv.termsAccepted || localStorage.getItem(`driver_terms_approved_${emailKey}`) === 'true';
+            const isPscheinAppr = drv.pScheinApproved || localStorage.getItem(`driver_pschein_approved_${emailKey}`) === 'true';
+            const isLicenseAppr = drv.licenseApproved || localStorage.getItem(`driver_license_approved_${emailKey}`) === 'true';
+
+            const driverCard = {
+                id: drv.id || emailKey,
+                name: `Driver: ${drv.name || 'Khiam Azizi'}`,
+                type: 'fleet',
+                joinDate: 'Active',
+                email: drv.email,
+                emailKey: emailKey,
+                isDriver: true,
+                docs: [
+                    {
+                        id: 'avatar',
+                        name: 'Driver Profile Photo (Profilbild)',
+                        status: isAvatarAppr ? 'approved' : 'pending',
+                        uploadedAt: 'Recent Upload',
+                        fileUrl: drv.avatar || null
+                    },
+                    {
+                        id: 'idcard',
+                        name: 'Personalausweis / Pass (Vorder- & Rückseite)',
+                        status: isIdAppr ? 'approved' : 'pending',
+                        uploadedAt: 'Recent Upload',
+                        fileUrl: drv.idCardFront || drv.idCardBack || null,
+                        frontUrl: drv.idCardFront || null,
+                        backUrl: drv.idCardBack || null
+                    },
+                    {
+                        id: 'terms',
+                        name: 'Nutzungsbedingungen & AGB',
+                        status: isTermsAppr ? 'approved' : 'pending',
+                        uploadedAt: drv.termsAcceptedAt || 'Gelesen & Akzeptiert'
+                    },
+                    ...(drv.pScheinDoc ? [{
+                        id: 'pschein',
+                        name: 'P-Schein (§ 48 FeV - Flotte)',
+                        status: isPscheinAppr ? 'approved' : 'pending',
+                        uploadedAt: 'Vom Flotten-Manager hinterlegt',
+                        fileUrl: drv.pScheinDoc
+                    }] : []),
+                    ...(drv.fuehrerscheinDoc ? [{
+                        id: 'license',
+                        name: 'Führerschein (Klasse B - Flotte)',
+                        status: isLicenseAppr ? 'approved' : 'pending',
+                        uploadedAt: 'Vom Flotten-Manager hinterlegt',
+                        fileUrl: drv.fuehrerscheinDoc
+                    }] : [])
+                ]
+            };
+
+            const existingIdx = merged.findIndex(p => p.emailKey === emailKey || p.email?.toLowerCase() === drv.email?.toLowerCase());
+            if (existingIdx >= 0) {
+                merged[existingIdx] = driverCard;
+            } else {
+                merged.unshift(driverCard);
+            }
+        }
+
+        const hasDemoDriver = merged.some(p => p.emailKey === 'driver_green_de');
+        if (!hasDemoDriver && (driverDocs.length > 0 || vehicleDocs.length > 0)) {
+            merged.push({
+                id: 'driver_green_de',
+                name: 'Driver: Parsa (GRN-101C)',
+                type: 'fleet',
+                joinDate: 'Demo Mode',
+                email: 'driver@green.de',
+                emailKey: 'driver_green_de',
+                isDriver: true,
+                docs: [
+                    ...driverDocs.map(d => ({
+                        id: d.id,
+                        name: d.name,
+                        status: d.status === 'verified' ? 'approved' : d.status,
+                        uploadedAt: d.status !== 'missing' ? 'Recent' : null,
+                        fileUrl: d.file || (d.status !== 'missing' ? 'pending_subcollection' : null)
+                    })),
+                    ...vehicleDocs.map(d => ({
+                        id: d.id,
+                        name: d.name,
+                        status: d.status === 'verified' ? 'approved' : d.status,
+                        uploadedAt: d.status !== 'missing' ? 'Recent' : null,
+                        fileUrl: d.file || (d.status !== 'missing' ? 'pending_subcollection' : null)
+                    }))
+                ]
+            });
+        }
+
+        setDocPartners(merged);
+    };
+
+    useEffect(() => {
         const q = query(collection(db, 'users'), where('role', 'in', ['manager', 'driver', 'staff']));
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const partners = [];
@@ -1657,7 +1697,7 @@ const [privacyPolicyText, setPrivacyPolicyText] = useState(defaultPrivacyProtoco
                     isStaff: data.role === 'staff'
                 });
             });
-            firebasePartners = partners;
+            firebasePartnersRef.current = partners;
             syncWithLocal();
         }, (err) => {
             console.error("Error listening to B2B managers:", err);
@@ -3203,6 +3243,7 @@ Grien Security Operations Center (Frankfurt am Main)
                 <nav className="flex-1 px-4 space-y-2 overflow-y-auto no-scrollbar">
                     {[
                         { id: 'command-deck', label: 'Command Deck', icon: ShieldCheck, badge: 'Alpha' },
+                        { id: 'product-hub', label: 'Grien Shop Hub', icon: ShoppingBag, badge: 'Smart' },
                         { id: 'growth-hub', label: 'Growth & Intelligence', icon: TrendingUp, badge: 'AI Pro' },
                         { id: 'agents', label: 'Neural Agents', icon: Bot, badge: 'AI' },
                         { id: 'partner-hub', label: 'Partner Hub', icon: Users, badge: 'NEW' },
@@ -4638,6 +4679,12 @@ Grien Security Operations Center (Frankfurt am Main)
                                         </div>
                                     </div>
                                 </div>
+                            </motion.div>
+                        )}
+
+                        {view === 'product-hub' && (
+                            <motion.div key="product-hub" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }}>
+                                <AdminProductHub />
                             </motion.div>
                         )}
 
@@ -10139,6 +10186,105 @@ Grien Security Operations Center (Frankfurt am Main)
                     </motion.div>
                 )}
             </AnimatePresence>
+            {/* DOCUMENT PREVIEW BOTTOM SHEET */}
+            <AnimatePresence>
+                {previewSheetDoc && (
+                    <div className="fixed inset-0 z-[999] flex items-end justify-center">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setPreviewSheetDoc(null)}
+                            className="absolute inset-0 bg-black/80 backdrop-blur-md cursor-pointer"
+                        />
+                        <motion.div
+                            initial={{ y: '100%' }}
+                            animate={{ y: 0 }}
+                            exit={{ y: '100%' }}
+                            transition={{ type: 'spring', damping: 26, stiffness: 260 }}
+                            className="relative z-10 w-full max-w-2xl bg-[#0e131f] border-t border-x border-white/15 rounded-t-[2.5rem] shadow-[0_-20px_60px_rgba(0,0,0,0.9)] p-6 md:p-8 max-h-[85vh] flex flex-col overflow-hidden"
+                        >
+                            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-4 cursor-pointer" onClick={() => setPreviewSheetDoc(null)} />
+                            <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                                <div>
+                                    <h3 className="text-sm md:text-base font-black uppercase text-white tracking-wider flex items-center gap-2">
+                                        <FileText size={18} className="text-brand" /> {previewSheetDoc.name || 'Dokumentenvorschau'}
+                                    </h3>
+                                    <p className="text-[10px] md:text-xs text-gray-400 font-bold mt-0.5">
+                                        Status: <span className={previewSheetDoc.status === 'approved' ? 'text-brand font-black uppercase' : 'text-amber-400 font-black uppercase'}>{previewSheetDoc.status}</span>
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => setPreviewSheetDoc(null)}
+                                    className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-all cursor-pointer"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                            <div className="py-6 overflow-y-auto space-y-6">
+                                {(previewSheetDoc.frontUrl || previewSheetDoc.backUrl) ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {previewSheetDoc.frontUrl && (
+                                            <div className="space-y-2">
+                                                <span className="text-[10px] font-black uppercase text-brand tracking-wider flex items-center gap-1.5">
+                                                    <CheckCircle2 size={12} /> 1. Vorderseite
+                                                </span>
+                                                <div className="w-full h-52 rounded-2xl overflow-hidden border border-white/10 bg-black/50 shadow-xl flex items-center justify-center p-2">
+                                                    <img src={previewSheetDoc.frontUrl} alt="Vorderseite" className="max-h-full max-w-full object-contain rounded-xl" />
+                                                </div>
+                                            </div>
+                                        )}
+                                        {previewSheetDoc.backUrl && (
+                                            <div className="space-y-2">
+                                                <span className="text-[10px] font-black uppercase text-brand tracking-wider flex items-center gap-1.5">
+                                                    <CheckCircle2 size={12} /> 2. Rückseite
+                                                </span>
+                                                <div className="w-full h-52 rounded-2xl overflow-hidden border border-white/10 bg-black/50 shadow-xl flex items-center justify-center p-2">
+                                                    <img src={previewSheetDoc.backUrl} alt="Rückseite" className="max-h-full max-w-full object-contain rounded-xl" />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (previewSheetDoc.fileUrl || previewSheetDoc.file) ? (
+                                    <div className="flex flex-col items-center justify-center">
+                                        <div className="max-w-md w-full max-h-[55vh] rounded-2xl overflow-hidden border border-white/10 bg-black/50 shadow-xl flex items-center justify-center p-3">
+                                            <img
+                                                src={previewSheetDoc.fileUrl || previewSheetDoc.file}
+                                                alt={previewSheetDoc.name}
+                                                className="max-h-[50vh] max-w-full object-contain rounded-xl"
+                                            />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="py-12 text-center text-gray-500 font-bold text-xs uppercase">
+                                        Keine Bilddatei vorhanden
+                                    </div>
+                                )}
+                            </div>
+                            <div className="pt-4 border-t border-white/10 flex items-center justify-end gap-3">
+                                <button
+                                    onClick={() => setPreviewSheetDoc(null)}
+                                    className="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-gray-300 font-black text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                                >
+                                    Schließen
+                                </button>
+                                {previewSheetDoc.status !== 'approved' && (
+                                    <button
+                                        onClick={() => {
+                                            handleApprovePartnerDoc('omarde65aa_gmail_com', previewSheetDoc.id);
+                                            setPreviewSheetDoc(prev => ({ ...prev, status: 'approved' }));
+                                        }}
+                                        className="px-6 py-2.5 bg-brand text-dark-900 font-black text-xs uppercase tracking-wider rounded-xl hover:scale-105 transition-all shadow-lg shadow-brand/20 flex items-center gap-1.5 cursor-pointer"
+                                    >
+                                        <CheckCircle2 size={14} /> Jetzt Freigeben
+                                    </button>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
 
             </div>
         </div>

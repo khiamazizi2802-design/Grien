@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import ManagerPortalOverview from './pages/ManagerPortalOverview';
 import ManagerDashboard from './pages/ManagerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminProductHub from './components/AdminProductHub';
 import MenuManagement from './pages/MenuManagement';
 import SettlementHub from './pages/SettlementHub';
 import StaffPermissions from './pages/StaffPermissions';
@@ -37,6 +38,9 @@ function App() {
 
                                 {/* Platform Director & Super Admin Console */}
                                 <Route path="/admin" element={<AdminDashboard />} />
+                                <Route path="/products" element={<AdminProductHub />} />
+                                <Route path="/product-hub" element={<AdminProductHub />} />
+                                <Route path="/shop-hub" element={<AdminProductHub />} />
 
                                 {/* Authentication */}
                                 <Route path="/login" element={<Login />} />

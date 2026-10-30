@@ -495,6 +495,7 @@ const Home = () => {
 
     const navItems = [
         { id: 'greenride', icon: Search, label: 'GreenRide' },
+        { id: 'shop', icon: ShoppingBag, label: 'GrienShop' },
         { id: 'sharing', icon: Share2, label: 'GreenS' },
     ];
 
@@ -763,25 +764,7 @@ const Home = () => {
 
 
             {/* Main Action Area */}
-            <main className="flex-1 relative z-10 flex flex-col items-center justify-end pb-48 px-8">
-
-                {/* Dash content shifted up slightly */}
-                <div className="h-12" />
-
-                <button
-                    onClick={() => navigate('/green-ride')}
-                    className="w-full py-7 rounded-[2rem] bg-[var(--text-primary)] text-[var(--bg-primary)] font-black uppercase tracking-[0.3em] italic flex items-center justify-center gap-4 active:scale-[0.98] transition-all text-xl group relative overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-[var(--border-main)]"
-                >
-                    <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-[200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-                    <span className="relative z-10 flex items-center gap-4">
-                        {t('initiate')}
-                        <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-all">
-                            <ArrowRight size={22} className={`${dir === 'rtl' ? 'rotate-180' : ''} group-hover:translate-x-1 transition-transform`} />
-                        </div>
-                    </span>
-                </button>
-            </main>
+            <main className="flex-1 relative z-10 pointer-events-none" />
 
 
             <div className="fixed safe-bottom-inset left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-sm">
@@ -793,6 +776,8 @@ const Home = () => {
                             onClick={() => {
                                 if (item.id === 'sharing') {
                                     navigate('/greens');
+                                } else if (item.id === 'shop') {
+                                    navigate('/shop');
                                 } else if (item.id === 'greenride') {
                                     navigate('/green-ride');
                                 } else {

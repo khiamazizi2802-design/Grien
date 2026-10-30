@@ -228,6 +228,7 @@ const DriverDashboard = () => {
     
     // Driver Identity Profile States
     const [profileSheetOpen, setProfileSheetOpen] = useState(false);
+    const [tempPhotoPreview, setTempPhotoPreview] = useState(() => localStorage.getItem('driver_profile_avatar') || null);
     const [profileData, setProfileData] = useState({
         firstName: '',
         lastName: '',
@@ -236,7 +237,7 @@ const DriverDashboard = () => {
         zipCode: '',
         city: '',
         phoneNumber: '',
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'Parsa'}`
+        avatar: localStorage.getItem('driver_profile_avatar') || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'Parsa'}`
     });
     // Driver Ausweis, Terms & Approval States
     const [idCardFront, setIdCardFront] = useState(() => localStorage.getItem('driver_id_card_front') || null);
@@ -307,7 +308,20 @@ const DriverDashboard = () => {
                 { id: 'idcard', name: 'Personalausweis (Vorder- & Rückseite)', status: idCardApproved ? 'verified' : ((dataToSave.idCardFront || dataToSave.idCardBack) ? 'pending' : 'missing'), fileUrl: dataToSave.idCardFront || dataToSave.idCardBack, frontUrl: dataToSave.idCardFront, backUrl: dataToSave.idCardBack },
                 { id: 'terms', name: 'Nutzungsbedingungen & AGB', status: dataToSave.termsAccepted ? 'verified' : 'missing' }
             ];
-            await setDoc(uRef, dataToSave, { merge: true });
+            try {
+                const sanitized = JSON.parse(JSON.stringify(dataToSave, (k, v) => v === undefined ? null : v));
+                await setDoc(uRef, sanitized, { merge: true });
+            } catch(e) {
+                console.error('setDoc error:', e);
+            }
+
+            try {
+                fetch('http://localhost:5174/api/sync-driver', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataToSave)
+                }).catch(() => {});
+            } catch(e) {}
 
             try {
                 const bc = new BroadcastChannel('green_fleet_sync');
@@ -319,12 +333,46 @@ const DriverDashboard = () => {
         }
     };
 
+    
+    // Poll admin approvals from local API bridge every 1.5 seconds
+    useEffect(() => {
+        const pollApprovals = async () => {
+            try {
+                const res = await fetch('http://localhost:5174/api/sync-driver');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data) {
+                        if (data.avatarApproved === true) {
+                            setAvatarApproved(true);
+                            localStorage.setItem('driver_avatar_approved', 'true');
+                        }
+                        if (data.idCardApproved === true) {
+                            setIdCardApproved(true);
+                            localStorage.setItem('driver_id_card_approved', 'true');
+                        }
+                        if (data.termsAccepted === true) {
+                            setTermsAccepted(true);
+                            localStorage.setItem('driver_terms_accepted', 'true');
+                        }
+                    }
+                }
+            } catch(e) {}
+        };
+        pollApprovals();
+        const interval = setInterval(pollApprovals, 1500);
+        return () => clearInterval(interval);
+    }, []);
+
     // Cross-port sync listener
     useEffect(() => {
         let bc;
         try {
             bc = new BroadcastChannel('green_fleet_sync');
             bc.onmessage = (ev) => {
+                if (ev.data && ev.data.type === 'REQUEST_DRIVERS_SYNC') {
+                    // Send our latest profile data to admin portal
+                    syncDriverProfileToCloud();
+                }
                 if (ev.data && ev.data.type === 'DOC_APPROVED') {
                     const { email, docId } = ev.data;
                     const myEmail = (user?.email || profileData.email || '').toLowerCase();
@@ -345,7 +393,45 @@ const DriverDashboard = () => {
                 }
             };
         } catch(e) {}
-        return () => { if (bc) bc.close(); };
+        // Broadcast immediately and every 3 seconds while driver page is open
+        const sendBroadcast = () => {
+            const email = (user?.email || profileData?.email || 'omarde65aa@gmail.com').toLowerCase();
+            const curAvatar = tempPhotoPreview || profileData.avatar || localStorage.getItem('driver_profile_avatar') || '';
+            const curFront = idCardFront || localStorage.getItem('driver_id_card_front') || null;
+            const curBack = idCardBack || localStorage.getItem('driver_id_card_back') || null;
+            const payload = {
+                email: email,
+                name: `${profileData.firstName || 'Khiam'} ${profileData.lastName || 'Azizi'}`.trim(),
+                phone: profileData.phoneNumber || '017662111103',
+                address: profileData.address || 'Auf dem Schafberg 12 3',
+                city: profileData.city || 'City',
+                zip: profileData.zipCode || '65933',
+                avatar: curAvatar,
+                idCardFront: curFront,
+                idCardBack: curBack,
+                ...(avatarApproved ? { avatarApproved: true } : {}),
+                ...(idCardApproved ? { idCardApproved: true } : {}),
+                termsAccepted: termsAccepted
+            };
+            try {
+                if (bc) bc.postMessage({ type: 'DRIVER_UPDATE', driver: payload });
+            } catch(e) {}
+
+            try {
+                fetch('http://localhost:5174/api/sync-driver', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(() => {});
+            } catch(e) {}
+        };
+        sendBroadcast();
+        const syncTimer = setInterval(sendBroadcast, 3000);
+
+        return () => {
+            clearInterval(syncTimer);
+            if (bc) bc.close();
+        };
     }, [user?.email, profileData?.email]);
 
     
@@ -406,7 +492,7 @@ const DriverDashboard = () => {
         return avatarDoc.status === 'verified' ? 'verified' : (avatarDoc.status === 'pending' || tempPhotoPreview || profileData.avatar) ? 'pending' : 'missing';
     })();
     const [hasInitialPic, setHasInitialPic] = useState(false);
-    const [tempPhotoPreview, setTempPhotoPreview] = useState(null);
+    // tempPhotoPreview moved to top
 
     // NEW: Capacity and Active Rides
     const [vehicleCapacity, setVehicleCapacity] = useState(() => {
@@ -3324,9 +3410,11 @@ const DriverDashboard = () => {
                                                     const compressed = canvas.toDataURL('image/jpeg', 0.75);
                                                     setTempPhotoPreview(compressed);
                                                     setProfileData(prev => ({ ...prev, avatar: compressed }));
+                                                    localStorage.setItem('driver_profile_avatar', compressed);
                                                     setHasInitialPic(true);
                                                     // Use the standard handler so the doc appears in Admin Document Hub
                                                     handleUploadDocument('avatar', compressed);
+                                                    syncDriverProfileToCloud({ avatar: compressed });
                                                 };
                                             };
                                             reader.readAsDataURL(file);
@@ -3335,42 +3423,48 @@ const DriverDashboard = () => {
                                     />
 
                                     {/* Avatar Section */}
-                                    <div className="relative group">
-                                        <div className="w-40 h-40 rounded-[2.5rem] bg-brand/20 border-4 border-brand/50 p-1.5 shadow-2xl relative overflow-hidden">
-                                            <img
-                                                src={tempPhotoPreview || profileData.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name}`}
-                                                alt="Avatar"
-                                                className={`w-full h-full rounded-[2.1rem] bg-dark-800 ${profilePicStatus === 'pending' ? 'grayscale opacity-50' : ''}`}
-                                            />
-
-                                            {profilePicStatus === 'pending' && (
-                                                <div className="absolute inset-0 bg-[var(--bg-primary)]/60 backdrop-blur-[2px] flex flex-col items-center justify-center text-center p-4">
-                                                    <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center mb-2 border border-amber-500/30">
-                                                        <Clock className="text-amber-500" size={20} />
-                                                    </div>
-                                                    <p className="text-[8px] md:text-[10px] lg:text-xs font-black uppercase tracking-[0.2em] text-amber-500">Awaiting Admin Approval</p>
+                                    <div className="flex flex-col items-center gap-4">
+                                        <div className="relative group">
+                                            <div className="w-40 h-40 rounded-[2.5rem] bg-brand/20 border-4 border-brand/50 p-1.5 shadow-2xl relative overflow-hidden">
+                                                <img
+                                                    src={tempPhotoPreview || profileData.avatar || localStorage.getItem('driver_profile_avatar') || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'Driver'}`}
+                                                    alt="Avatar"
+                                                    className="w-full h-full rounded-[2.1rem] bg-dark-800 object-cover"
+                                                />
+                                                <div
+                                                    onClick={() => document.getElementById('profile-pic-view-upload').click()}
+                                                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity backdrop-blur-[2px]"
+                                                >
+                                                    <Upload className="text-brand mb-1" size={28} />
+                                                    <span className="text-[9px] font-black uppercase text-white tracking-wider">Foto ändern</span>
                                                 </div>
-                                            )}
-
-                                            {profilePicStatus === 'missing' && (
-                                                <div className="absolute inset-0 bg-[var(--bg-primary)]/40 flex flex-col items-center justify-center cursor-pointer" onClick={() => document.getElementById('profile-pic-view-upload').click()}>
-                                                    <Upload className="text-primary opacity- mb-1" size={24} />
-                                                    <p className="text-[7px] font-black uppercase tracking-widest text-primary opacity-">Tap to Upload</p>
-                                                </div>
-                                            )}
-
-                                            {profilePicStatus === 'verified' && (
-                                                <div className="absolute inset-0 bg-[var(--bg-primary)]/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => document.getElementById('profile-pic-view-upload').click()}>
-                                                    <Upload className="text-brand" size={40} />
-                                                </div>
-                                            )}
-                                        </div>
-                                        {profilePicStatus !== 'pending' && (
+                                            </div>
                                             <button
+                                                type="button"
                                                 onClick={() => document.getElementById('profile-pic-view-upload').click()}
-                                                className="absolute -bottom-2 -right-2 w-12 h-12 bg-[var(--brand)] rounded-2xl flex items-center justify-center text-[var(--bg-primary)] shadow-xl ring-4 ring-[var(--bg-primary)] hover:scale-110 transition-transform"
+                                                className="absolute -bottom-2 -right-2 w-12 h-12 bg-brand text-dark-900 rounded-2xl flex items-center justify-center shadow-xl ring-4 ring-dark-900 hover:scale-110 transition-transform cursor-pointer"
+                                                title="Profilbild ändern"
                                             >
                                                 <Edit3 size={20} />
+                                            </button>
+                                        </div>
+
+                                        {/* Status Badge right below photo */}
+                                        {avatarApproved ? (
+                                            <span className="px-4 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-lg">
+                                                <CheckCircle size={14} /> Profilbild Verifiziert ✓
+                                            </span>
+                                        ) : (tempPhotoPreview || profileData.avatar || localStorage.getItem('driver_profile_avatar')) ? (
+                                            <span className="px-4 py-1.5 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-lg">
+                                                <Clock size={14} /> Wartet auf Admin-Freigabe
+                                            </span>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => document.getElementById('profile-pic-view-upload').click()}
+                                                className="px-4 py-1.5 bg-brand/20 text-brand border border-brand/40 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 hover:bg-brand/30 transition-all cursor-pointer"
+                                            >
+                                                <Upload size={14} /> Foto hochladen
                                             </button>
                                         )}
                                     </div>

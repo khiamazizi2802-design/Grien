@@ -87,9 +87,7 @@ const Login = () => {
 
     return (
         <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col items-center justify-center p-6 font-sans text-[var(--text-primary)] relative overflow-hidden">
-            {/* Cyber Grid Background */}
-            <div className="absolute inset-0 cyber-grid-bg opacity-[0.03] pointer-events-none" />
-            
+                        
             {/* Ambient Blurred Overlays */}
             <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-brand/5 blur-[130px] rounded-full pointer-events-none" />
             <div className="absolute bottom-10 right-10 text-[var(--text-muted)]/10 text-[8px] md:text-[10px] lg:text-xs font-black uppercase tracking-[0.5em] rotate-90 origin-left">

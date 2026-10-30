@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Globe,
@@ -129,6 +130,16 @@ const Home = () => {
         return () => clearTimeout(timer);
     }, []);
     const [activeSheet, setActiveSheet] = useState(null);
+    const [activeTooltip, setActiveTooltip] = useState(null);
+    const tooltipTimerRef = useRef(null);
+
+    const triggerTooltip = (id) => {
+        if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+        setActiveTooltip(id);
+        tooltipTimerRef.current = setTimeout(() => {
+            setActiveTooltip(null);
+        }, 2600);
+    };
     const [profileSubView, setProfileSubView] = useState(null); // null, 'account', 'history', 'help'
     const [helpSubView, setHelpSubView] = useState(null); // null, 'chat', 'dsgvo', 'app', 'email', 'delete_account'
     const [serviceDetailView, setServiceDetailView] = useState(null); // null, 'trips', 'tickets', 'rooms', 'order', 'waiter'
@@ -494,8 +505,31 @@ const Home = () => {
     const distanceToNearestOrder = 0.8;
 
     const navItems = [
-        { id: 'greenride', icon: Search, label: 'GreenRide' },
-        { id: 'sharing', icon: Share2, label: 'GreenS' },
+        { 
+            id: 'greenride', 
+            icon: Car, 
+            label: 'GRIENRIDE',
+            status: 'coming_soon',
+            title: 'GRIENRIDE FLOTTE',
+            description: 'Unsere Premium-Fahrzeugflotte wird derzeit kalibriert und für den offiziellen Fahrbetrieb vorbereitet. Um dir maximalen Komfort & Sicherheit zu bieten, schalten wir die Fahrtenbuchung in Kürze frei.',
+            targetUrl: '/green-ride'
+        },
+        { 
+            id: 'shop', 
+            icon: ShoppingBag, 
+            label: 'GRIENSHOP',
+            status: 'active',
+            isPrimary: true
+        },
+        { 
+            id: 'sharing', 
+            icon: Share2, 
+            label: 'GRIENS',
+            status: 'coming_soon',
+            title: 'GRIENS PARTNER NETWORK',
+            description: 'Das exklusive Grien Partnernetzwerk mit ausgewählten Hotels, Stadien & Premium-Locations befindet sich in der finalen Anbindungsphase. Exklusive Partner-Vorteile und Community-Sharing starten in Kürze.',
+            targetUrl: '/greens'
+        },
     ];
 
     const { isFTDOnly, setIsFTDOnly } = useRide();
@@ -623,15 +657,6 @@ const Home = () => {
                 </div>
                 
                 <div className="flex items-center gap-3 relative z-50">
-                    {/* Notch / Header Height Fit Controller */}
-                    <button 
-                        onClick={() => setIsNotchPanelOpen(!isNotchPanelOpen)}
-                        className={`w-12 h-12 rounded-2xl bg-[var(--bg-secondary)] border flex items-center justify-center relative shadow-lg hover:scale-105 active:scale-95 transition-all ${notchAdjustment > 0 || useSafeArea ? 'border-brand/40 text-brand shadow-[0_0_15px_rgba(52,211,153,0.1)]' : 'border-[var(--border-main)] text-[var(--accent-primary)]'}`}
-                        title="Notch & Safe Area Alignment"
-                    >
-                        <Smartphone size={20} className={notchAdjustment > 0 ? 'text-brand animate-pulse' : ''} />
-                    </button>
-
                     {/* Inbox / Messages Button */}
                     <button
                         onClick={() => navigate('/messages')}
@@ -650,98 +675,7 @@ const Home = () => {
                         <Globe size={20} className="group-hover:rotate-12 transition-transform" />
                     </button>
 
-                    {/* Notch Panel Dropdown - anchored to right edge of button group to prevent left cutoff */}
-                    <AnimatePresence>
-                        {isNotchPanelOpen && (
-                            <motion.div 
-                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                className="absolute right-0 w-72 bg-[#0B121E]/95 backdrop-blur-2xl border border-brand/20 rounded-3xl p-5 shadow-[0_20px_50px_rgba(0,0,0,0.6)]"
-                                style={{ zIndex: 9999, top: 'calc(100% + 12px)' }}
-                            >
-                                <div className="flex items-center justify-between pb-3 border-b border-white/5 mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <Smartphone size={14} className="text-brand" />
-                                        <span className="text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-[0.2em] text-brand">Notch & Safe-Fit</span>
-                                    </div>
-                                    <button onClick={() => setIsNotchPanelOpen(false)} className="text-secondary hover:text-primary">
-                                        <X size={14} />
-                                    </button>
-                                </div>
-                                
-                                <div className="space-y-4 text-left">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[9px] md:text-[11px] lg:text-xs font-black uppercase text-secondary">Auto Safe Area</span>
-                                        <button 
-                                            onClick={() => setUseSafeArea(!useSafeArea)}
-                                            className={`w-9 h-5 rounded-full transition-colors relative flex items-center p-0.5 ${useSafeArea ? 'bg-brand' : 'bg-white/10'}`}
-                                        >
-                                            <div className={`w-4 h-4 bg-dark-950 rounded-full transition-transform ${useSafeArea ? 'translate-x-4' : 'translate-x-0'}`} />
-                                        </button>
-                                    </div>
-                                    
-                                    <div className="space-y-1.5">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[9px] md:text-[11px] lg:text-xs font-black uppercase text-secondary">Custom Offset</span>
-                                            <span className="text-xs md:text-sm lg:text-base font-black text-brand italic">{notchAdjustment}px</span>
-                                        </div>
-                                        
-                                        <div className="flex items-center gap-3">
-                                            <button 
-                                                onClick={() => setNotchAdjustment(Math.max(0, notchAdjustment - 2))}
-                                                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-primary font-black"
-                                            >
-                                                -
-                                            </button>
-                                            <input 
-                                                type="range" 
-                                                min="0" 
-                                                max="60" 
-                                                value={notchAdjustment}
-                                                onChange={(e) => setNotchAdjustment(parseInt(e.target.value, 10))}
-                                                className="flex-1 accent-brand h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                                            />
-                                            <button 
-                                                onClick={() => setNotchAdjustment(Math.min(60, notchAdjustment + 2))}
-                                                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-primary font-black"
-                                            >
-                                                +
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-3 gap-2 pt-2">
-                                        <button 
-                                            onClick={() => setNotchAdjustment(0)}
-                                            className={`py-1.5 rounded-lg border text-[8px] md:text-[10px] lg:text-xs font-black uppercase tracking-wider transition-all ${notchAdjustment === 0 ? 'bg-brand/10 border-brand text-brand' : 'bg-white/5 border-white/5 text-secondary hover:text-primary'}`}
-                                        >
-                                            0px
-                                            <span className="block text-[6px] opacity-40">Desktop</span>
-                                        </button>
-                                        <button 
-                                            onClick={() => setNotchAdjustment(20)}
-                                            className={`py-1.5 rounded-lg border text-[8px] md:text-[10px] lg:text-xs font-black uppercase tracking-wider transition-all ${notchAdjustment === 20 ? 'bg-brand/10 border-brand text-brand' : 'bg-white/5 border-white/5 text-secondary hover:text-primary'}`}
-                                        >
-                                            20px
-                                            <span className="block text-[6px] opacity-40">Compact</span>
-                                        </button>
-                                        <button 
-                                            onClick={() => setNotchAdjustment(44)}
-                                            className={`py-1.5 rounded-lg border text-[8px] md:text-[10px] lg:text-xs font-black uppercase tracking-wider transition-all ${notchAdjustment === 44 ? 'bg-brand/10 border-brand text-brand' : 'bg-white/5 border-white/5 text-secondary hover:text-primary'}`}
-                                        >
-                                            44px
-                                            <span className="block text-[6px] opacity-40">Sim Notch</span>
-                                        </button>
-                                    </div>
-                                    
-                                    <p className="text-[7px] text-gray-500 leading-normal uppercase tracking-wider">
-                                        Fits UI automatically to notches, status bars, and custom cases. Live syncing active.
-                                    </p>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    
                 </div>
             </header>
 
@@ -763,53 +697,87 @@ const Home = () => {
 
 
             {/* Main Action Area */}
-            <main className="flex-1 relative z-10 flex flex-col items-center justify-end pb-48 px-8">
-
-                {/* Dash content shifted up slightly */}
-                <div className="h-12" />
-
-                <button
-                    onClick={() => navigate('/green-ride')}
-                    className="w-full py-7 rounded-[2rem] bg-[var(--text-primary)] text-[var(--bg-primary)] font-black uppercase tracking-[0.3em] italic flex items-center justify-center gap-4 active:scale-[0.98] transition-all text-xl group relative overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-[var(--border-main)]"
-                >
-                    <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-[200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-                    <span className="relative z-10 flex items-center gap-4">
-                        {t('initiate')}
-                        <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-all">
-                            <ArrowRight size={22} className={`${dir === 'rtl' ? 'rotate-180' : ''} group-hover:translate-x-1 transition-transform`} />
-                        </div>
-                    </span>
-                </button>
-            </main>
+            <main className="flex-1 relative z-10 pointer-events-none" />
 
 
-            <div className="fixed safe-bottom-inset left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-sm">
-                <nav className="backdrop-blur-3xl px-10 py-5 flex justify-between items-center rounded-[2.5rem] shadow-[0_30px_60px_-12px_rgba(0,0,0,0.15)] border-2"
+            <div className="fixed safe-bottom-inset left-1/2 -translate-x-1/2 z-40 w-[94%] max-w-md">
+                <nav className="backdrop-blur-3xl px-6 py-3 flex justify-around items-center rounded-[2.5rem] shadow-[0_30px_60px_-12px_rgba(0,0,0,0.18)] border-2"
                     style={{ background: 'var(--glass-bg)', borderColor: 'var(--glass-border)', backdropFilter: 'blur(40px)' }}>
-                    {navItems.map(item => (
-                        <button
-                            key={item.id}
-                            onClick={() => {
-                                if (item.id === 'sharing') {
-                                    navigate('/greens');
-                                } else if (item.id === 'greenride') {
-                                    navigate('/green-ride');
-                                } else {
-                                    setActiveSheet(item.id);
-                                }
-                            }}
-                            className="relative flex flex-col items-center gap-1.5 transition-all group"
-                        >
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${activeSheet === item.id ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] scale-110 shadow-lg' : 'text-[var(--text-primary)] opacity-70 hover:opacity-100 hover:bg-[var(--text-primary)]/5'}`}>
-                                <item.icon size={22} strokeWidth={2.5} />
+                    {navItems.map(item => {
+                        if (item.isPrimary) {
+                            return (
+                                <motion.button
+                                    key={item.id}
+                                    onClick={() => navigate('/shop')}
+                                    animate={{
+                                        x: [0, -2.5, 2.5, -2, 2, -1, 1, 0],
+                                        rotate: [0, -2, 2, -1.5, 1.5, 0]
+                                    }}
+                                    transition={{
+                                        duration: 0.45,
+                                        repeat: Infinity,
+                                        repeatDelay: 2.5,
+                                        ease: "easeInOut"
+                                    }}
+                                    className="relative flex flex-col items-center -translate-y-2 group focus:outline-none cursor-pointer z-10 active:scale-95"
+                                >
+                                    {/* Clean Green Button with White Icon */}
+                                    <div className="w-13 h-13 md:w-14 md:h-14 rounded-2xl bg-gradient-to-tr from-[#059669] via-[#10B981] to-[#00E575] border-2 border-white/40 text-white flex items-center justify-center shadow-[0_4px_16px_rgba(16,185,129,0.35)] transition-all group-hover:scale-105 group-hover:shadow-[0_6px_22px_rgba(16,185,129,0.5)]">
+                                        <item.icon size={24} strokeWidth={2.4} className="text-white drop-shadow-sm" />
+                                    </div>
+
+                                    <span className="mt-1 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] italic text-emerald-500 dark:text-emerald-400 transition-colors">
+                                        {item.label}
+                                    </span>
+                                </motion.button>
+                            );
+                        }
+
+                        // Inactive / Coming Soon items (GRIENRIDE & GRIENS)
+                        const isTooltipOpen = activeTooltip === item.id;
+                        return (
+                            <div key={item.id} className="relative flex flex-col items-center">
+                                {/* Sleek Floating Micro-Toast directly above the button */}
+                                <AnimatePresence>
+                                    {isTooltipOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 6, scale: 0.9 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                                            transition={{ duration: 0.18 }}
+                                            className="absolute -top-11 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 rounded-full bg-zinc-950/95 border border-white/20 text-white shadow-2xl backdrop-blur-xl flex items-center gap-1.5 whitespace-nowrap pointer-events-none"
+                                        >
+                                            <Lock size={10} className="text-amber-400 shrink-0" />
+                                            <span className="text-[10px] font-bold tracking-wide">
+                                                {item.id === 'greenride' ? 'Aktuell nicht aktiv · Flotte im Aufbau' : 'Aktuell nicht aktiv · Partner im Aufbau'}
+                                            </span>
+                                            {/* Tiny down pointer arrow */}
+                                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-zinc-950 border-r border-b border-white/20 rotate-45" />
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
+                                <button
+                                    onClick={() => triggerTooltip(item.id)}
+                                    className="relative flex flex-col items-center gap-1 transition-all opacity-40 hover:opacity-75 group focus:outline-none cursor-pointer"
+                                    title={`${item.label} - Demnächst`}
+                                >
+                                    <div className="relative w-11 h-11 rounded-2xl flex items-center justify-center bg-black/5 dark:bg-white/5 border border-dashed border-gray-400/40 text-[var(--text-primary)] transition-all group-hover:border-gray-400">
+                                        <item.icon size={20} strokeWidth={2} />
+                                        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-600 flex items-center justify-center shadow">
+                                            <Lock size={9} />
+                                        </div>
+                                    </div>
+                                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.16em] italic text-[var(--text-primary)] opacity-70">
+                                        {item.label}
+                                    </span>
+                                    <span className="text-[7.5px] font-bold text-gray-400 uppercase tracking-widest -mt-0.5">
+                                        Demnächst
+                                    </span>
+                                </button>
                             </div>
-                            <span className={`text-[9px] md:text-[11px] lg:text-xs font-black uppercase tracking-[0.2em] italic transition-all ${activeSheet === item.id ? 'text-[var(--text-primary)]' : 'text-[var(--text-primary)] opacity-60'}`}>{item.label}</span>
-                            {activeSheet === item.id && (
-                                <motion.div layoutId="nav-glow" className="absolute -bottom-2 w-1.5 h-1.5 rounded-full bg-[var(--text-primary)] shadow-[0_0_10px_var(--text-primary)]" />
-                            )}
-                        </button>
-                    ))}
+                        );
+                    })}
                 </nav>
             </div>
 

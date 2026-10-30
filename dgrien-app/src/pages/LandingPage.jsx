@@ -41,12 +41,7 @@ const LandingPage = () => {
                 
                 <div className="flex items-center gap-3">
                     <ThemeToggle />
-                    <button 
-                        onClick={() => navigate('/signup?mode=partner')}
-                        className="icon-button w-10 h-10 rounded-xl flex items-center justify-center transition-all"
-                    >
-                        <Building2 size={16} />
-                    </button>
+                    
                 </div>
             </header>
 

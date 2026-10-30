@@ -33,6 +33,8 @@ import ResolutionCenterPage from './pages/ResolutionCenterPage';
 import SecurityRecovery from './pages/SecurityRecovery';
 import UXLab from './pages/UXLab';
 import StadiumBoxOffice from './pages/StadiumBoxOffice';
+import GrienShopPage from './pages/GrienShopPage';
+import AdminProductHub from './components/AdminProductHub';
 import PaymentHub from './pages/PaymentHub';
 import RideHistoryHub from './pages/RideHistoryHub';
 import AccountHub from './pages/AccountHub';
@@ -67,6 +69,9 @@ function App() {
                             <Route path="/privacy" element={<Privacy />} />
                             <Route path="/suspension" element={<SuspensionPage />} />
                             <Route path="/ux-lab" element={<UXLab />} />
+                            <Route path="/shop" element={<GrienShopPage />} />
+                            <Route path="/shop-hub" element={<AdminProductHub />} />
+                            <Route path="/products" element={<AdminProductHub />} />
                             
                             {/* New Verification Gate */}
                             <Route path="/verify" element={<VerificationGateway />} />
@@ -81,6 +86,9 @@ function App() {
                             {/* Passenger Routes */}
                             <Route element={<ProtectedRoute roles={['passenger']} />}>
                                 <Route path="/home" element={<Home />} />
+                                <Route path="/shop" element={<GrienShopPage />} />
+                            <Route path="/shop-hub" element={<AdminProductHub />} />
+                            <Route path="/products" element={<AdminProductHub />} />
                                 <Route path="/green-ride" element={<GreenRidePage />} />
                                 <Route path="/greens" element={<DiscoveryGallery />} />
                                 <Route path="/venue/menu" element={<VenueMenuPage />} />
