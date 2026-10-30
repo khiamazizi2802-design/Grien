@@ -53,8 +53,9 @@ jobs:
     - name: Set dynamic build version
       run: |
         BUILD_VER=$((100 + ${{ github.run_number }}))
-        echo "Updating iOS build version in project.pbxproj to $BUILD_VER"
+        echo "Updating iOS build version in project.pbxproj to $BUILD_VER and marketing version to 1.3"
         sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*/CURRENT_PROJECT_VERSION = $BUILD_VER/g" ios/App/App.xcodeproj/project.pbxproj
+        sed -i '' "s/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = 1.3;/g" ios/App/App.xcodeproj/project.pbxproj
 
     - name: Install Apple Certificate and Provisioning Profile
       env:
