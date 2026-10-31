@@ -664,8 +664,10 @@ app.post('/api/shop/products', (req, res) => {
             originalPrice: originalPrice ? Number(originalPrice) : null,
             costPrice: costPrice !== undefined && costPrice !== null ? Number(costPrice) : Math.round(Number(price) * 0.45 * 100) / 100,
             stock: stock !== undefined && stock !== null ? Math.max(0, parseInt(stock, 10)) : 25,
-            rating: rating ? Number(rating) : 5.0,
-            reviewsCount: reviewsCount ? parseInt(reviewsCount, 10) : 1,
+            rating: rating !== undefined && rating !== null ? Number(rating) : 5.0,
+            reviewsCount: reviewsCount !== undefined && reviewsCount !== null ? parseInt(reviewsCount, 10) : 1,
+            perk1: perk1 ? String(perk1).trim() : 'Schneller Grien Shuttle Versand',
+            perk2: perk2 ? String(perk2).trim() : '30 Tage kostenlose Rückgabe',
             salesCount: 0,
             isActive: isActive !== undefined ? Boolean(isActive) : true,
             isNew: isNew !== undefined ? Boolean(isNew) : true,
@@ -716,6 +718,10 @@ app.put('/api/shop/products/:id', (req, res) => {
             originalPrice: updates.originalPrice !== undefined ? (updates.originalPrice ? Number(updates.originalPrice) : null) : existing.originalPrice,
             costPrice: updates.costPrice !== undefined ? Number(updates.costPrice) : existing.costPrice,
             stock: updates.stock !== undefined ? Math.max(0, parseInt(updates.stock, 10)) : existing.stock,
+            rating: updates.rating !== undefined ? Number(updates.rating) : existing.rating,
+            reviewsCount: updates.reviewsCount !== undefined ? parseInt(updates.reviewsCount, 10) : existing.reviewsCount,
+            perk1: updates.perk1 !== undefined ? String(updates.perk1).trim() : existing.perk1,
+            perk2: updates.perk2 !== undefined ? String(updates.perk2).trim() : existing.perk2,
             isActive: updates.isActive !== undefined ? Boolean(updates.isActive) : existing.isActive,
             updatedAt: new Date().toISOString()
         };
@@ -848,6 +854,180 @@ app.post('/api/shop/invoice-settings', (req, res) => {
         io.emit('shop-invoice-settings-updated', updated);
         console.log('📄 [Grien Hub] Invoice settings updated successfully');
         res.json({ success: true, settings: updated });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Helper for company public settings (Support Email)
+const COMPANY_SUPPORT_FILE = path.join(__dirname, 'data', 'company_support.json');
+
+const loadCompanySupport = () => {
+    try {
+        if (!fs.existsSync(COMPANY_SUPPORT_FILE)) {
+            const defaults = {
+                supportEmail: 'support@grien.app',
+                companyName: 'Grien Official'
+            };
+            fs.writeFileSync(COMPANY_SUPPORT_FILE, JSON.stringify(defaults, null, 2), 'utf8');
+            return defaults;
+        }
+        return JSON.parse(fs.readFileSync(COMPANY_SUPPORT_FILE, 'utf8'));
+    } catch (err) {
+        return { supportEmail: 'support@grien.app', companyName: 'Grien Official' };
+    }
+};
+
+const saveCompanySupport = (data) => {
+    try {
+        fs.writeFileSync(COMPANY_SUPPORT_FILE, JSON.stringify(data, null, 2), 'utf8');
+        return true;
+    } catch (err) {
+        console.error('Error saving company support settings:', err.message);
+        return false;
+    }
+};
+
+// GET /api/company/support-email
+app.get('/api/company/support-email', (req, res) => {
+    try {
+        const data = loadCompanySupport();
+        res.json({ success: true, email: data.supportEmail || 'support@grien.app', settings: data });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/company/support-email
+app.post('/api/company/support-email', (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ success: false, error: 'Email is required' });
+        const current = loadCompanySupport();
+        const updated = {
+            ...current,
+            supportEmail: String(email).trim(),
+            updatedAt: new Date().toISOString()
+        };
+        saveCompanySupport(updated);
+        io.emit('company-support-email-updated', updated);
+        console.log(`✉️ [Company Settings] Support email updated to: ${updated.supportEmail}`);
+        res.json({ success: true, email: updated.supportEmail });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// =========================================================================
+// Customer Memberships & VIP Tier Hub (§ Tier 1-3: Normal, Gold, Diamond)
+// =========================================================================
+const CUSTOMER_MEMBERSHIPS_FILE = path.join(__dirname, 'data', 'customer_memberships.json');
+
+const loadCustomerMemberships = () => {
+    try {
+        if (!fs.existsSync(CUSTOMER_MEMBERSHIPS_FILE)) {
+            return [];
+        }
+        return JSON.parse(fs.readFileSync(CUSTOMER_MEMBERSHIPS_FILE, 'utf8'));
+    } catch (err) {
+        console.error('Error reading customer memberships:', err);
+        return [];
+    }
+};
+
+const saveCustomerMemberships = (data) => {
+    try {
+        fs.writeFileSync(CUSTOMER_MEMBERSHIPS_FILE, JSON.stringify(data, null, 2), 'utf8');
+        return true;
+    } catch (err) {
+        console.error('Error saving customer memberships:', err);
+        return false;
+    }
+};
+
+// GET /api/customer/memberships
+app.get('/api/customer/memberships', (req, res) => {
+    try {
+        const memberships = loadCustomerMemberships();
+        res.json({ success: true, memberships });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/customer/memberships
+app.post('/api/customer/memberships', (req, res) => {
+    try {
+        const { id, email, tier, isPaid, firstName, lastName, phone, role } = req.body;
+        let memberships = loadCustomerMemberships();
+        const existingIdx = memberships.findIndex(m => (id && m.id === id) || (email && m.email?.toLowerCase() === email.toLowerCase()));
+
+        const tierBenefits = {
+            '10k': ['Erste 10.000 Registrierungen (Gratis Diamond)', '20% Shop & Shuttle Rabatt', 'First-Class Flottenzugang', 'VIP Event Einladungen', 'Prioritäts-Support'],
+            '50k': ['Bis 50.000 Registrierungen (Gratis Gold)', '10% Shop & Shuttle Rabatt', 'Chauffeur Vorrang', 'Kostenloser Versand'],
+            'normal': ['Standard Registrierung', 'Standard Buchung & Shop-Zugang'],
+            'paid_diamond': ['Gekaufte VIP Diamond Membership', '20% Shop & Shuttle Rabatt', 'First-Class Flottenzugang', 'VIP Event Einladungen', 'Prioritäts-Support'],
+            'paid_gold': ['Gekaufte VIP Gold Membership', '10% Shop & Shuttle Rabatt', 'Chauffeur Vorrang', 'Kostenloser Versand'],
+            'paid_normal': ['Gekaufte VIP Normal Membership', 'Standard Buchung & Priorisierter Shop-Zugang'],
+            'diamond': ['Erste 10.000 Registrierungen (Gratis Diamond)', '20% Shop & Shuttle Rabatt', 'First-Class Flottenzugang'],
+            'gold': ['Bis 50.000 Registrierungen (Gratis Gold)', '10% Shop & Shuttle Rabatt', 'Chauffeur Vorrang']
+        };
+
+        let updatedCustomer;
+        if (existingIdx !== -1) {
+            const current = memberships[existingIdx];
+            updatedCustomer = {
+                ...current,
+                tier: tier || current.tier || 'normal',
+                role: role || current.role || 'Kunde',
+                isPaid: isPaid !== undefined ? Boolean(isPaid) : current.isPaid,
+                firstName: firstName || current.firstName,
+                lastName: lastName || current.lastName,
+                phone: phone || current.phone,
+                benefits: tierBenefits[tier || current.tier || 'normal'] || current.benefits,
+                updatedAt: new Date().toISOString()
+            };
+            memberships[existingIdx] = updatedCustomer;
+        } else {
+            const newId = id || `c-${Date.now()}`;
+            updatedCustomer = {
+                id: newId,
+                firstName: firstName || 'Neuer',
+                lastName: lastName || 'Kunde',
+                email: email ? email.toLowerCase() : `kunde-${Date.now()}@grien.app`,
+                phone: phone || '',
+                role: role || 'Kunde',
+                tier: tier || 'normal',
+                isPaid: Boolean(isPaid),
+                joinedDate: new Date().toISOString().split('T')[0],
+                benefits: tierBenefits[tier || 'normal'],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            memberships.unshift(updatedCustomer);
+        }
+
+        saveCustomerMemberships(memberships);
+        io.emit('customer-membership-updated', updatedCustomer);
+        console.log(`💎 [Membership Hub] Customer ${updatedCustomer.firstName} ${updatedCustomer.lastName} updated: Tier=${updatedCustomer.tier}, Paid=${updatedCustomer.isPaid}`);
+        res.json({ success: true, customer: updatedCustomer });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// GET /api/customer/tier
+app.get('/api/customer/tier', (req, res) => {
+    try {
+        const { email } = req.query;
+        const memberships = loadCustomerMemberships();
+        if (email) {
+            const found = memberships.find(m => m.email?.toLowerCase() === email.toLowerCase());
+            if (found) {
+                return res.json({ success: true, tier: found.tier || 'normal', isPaid: found.isPaid, customer: found });
+            }
+        }
+        res.json({ success: true, tier: 'diamond', isPaid: true });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -1039,7 +1219,12 @@ app.get('/api/shop/agent/status', (req, res) => {
                 updateProduct: 'PUT /api/shop/products/:id',
                 deleteProduct: 'DELETE /api/shop/products/:id',
                 smartGenerate: 'POST /api/shop/agent/smart-generate',
-                bulkSync: 'POST /api/shop/agent/bulk-sync'
+                bulkSync: 'POST /api/shop/agent/bulk-sync',
+                podList: 'GET /api/shop/pod/products',
+                podApprove: 'PUT /api/shop/pod/products/:id/approve',
+                podReject: 'PUT /api/shop/pod/products/:id/reject',
+                podAgentGen: 'POST /api/shop/pod/agent-generate',
+                agentCustomerChat: 'POST /api/shop/agent/customer-reply'
             },
             categories: [
                 { id: 'fashion', label: 'Klamotten & Fashion' },
@@ -1053,6 +1238,646 @@ app.get('/api/shop/agent/status', (req, res) => {
                 activeProducts: activeCount,
                 inventoryValueFormatted: `${totalValue.toFixed(2)} €`
             }
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// =========================================================================
+// PRINT ON DEMAND (POD) & AI AGENT HUB
+// =========================================================================
+const POD_PRODUCTS_FILE = path.join(__dirname, 'data', 'pod_products.json');
+
+const loadPodProducts = () => {
+    try {
+        if (!fs.existsSync(POD_PRODUCTS_FILE)) return [];
+        return JSON.parse(fs.readFileSync(POD_PRODUCTS_FILE, 'utf8'));
+    } catch (err) {
+        console.error('Error reading POD products:', err.message);
+        return [];
+    }
+};
+
+const savePodProducts = (data) => {
+    try {
+        fs.writeFileSync(POD_PRODUCTS_FILE, JSON.stringify(data, null, 2), 'utf8');
+        return true;
+    } catch (err) {
+        console.error('Error saving POD products:', err.message);
+        return false;
+    }
+};
+
+// GET /api/shop/pod/products
+app.get('/api/shop/pod/products', (req, res) => {
+    try {
+        const { status } = req.query;
+        let list = loadPodProducts();
+        if (status && status !== 'all') {
+            list = list.filter(item => item.status === status);
+        }
+        res.json({ success: true, products: list });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/shop/pod/products (Neue POD Einreichung durch Agent oder Webhook)
+app.post('/api/shop/pod/products', (req, res) => {
+    try {
+        const podList = loadPodProducts();
+        const incoming = req.body;
+        const newPod = {
+            id: incoming.id || `pod-${Date.now()}`,
+            name: incoming.name || 'Grien POD Artikel',
+            category: incoming.category || 'fashion',
+            categoryLabel: incoming.categoryLabel || 'Klamotten & Fashion',
+            podProvider: incoming.podProvider || 'Printify / Gelato Direct',
+            baseCost: Number(incoming.baseCost) || 15.00,
+            suggestedPrice: Number(incoming.suggestedPrice) || 45.00,
+            price: Number(incoming.price || incoming.suggestedPrice) || 45.00,
+            stock: 999,
+            status: 'pending_approval',
+            isNew: true,
+            tag: incoming.tag || 'POD Entwurf',
+            image: incoming.image || 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80',
+            images: incoming.images || [incoming.image || 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80'],
+            description: incoming.description || 'Hochwertiges Print-on-Demand Produkt aus nachhaltiger Produktion.',
+            variants: incoming.variants || ['S', 'M', 'L', 'XL'],
+            colors: incoming.colors || ['Black', 'Emerald'],
+            estimatedDelivery: incoming.estimatedDelivery || '3 - 5 Werktage',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        podList.unshift(newPod);
+        savePodProducts(podList);
+
+        io.emit('pod-product-created', newPod);
+        io.emit('agent-notification', {
+            id: `notif-${Date.now()}`,
+            type: 'pod_pending',
+            title: 'Neuer POD-Entwurf eingetroffen',
+            message: `"${newPod.name}" wartet auf Ihre Preisfestlegung und Freigabe.`,
+            productId: newPod.id
+        });
+
+        res.status(201).json({ success: true, product: newPod });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// PUT /api/shop/pod/products/:id/approve (Admin gibt frei und ändert Preis)
+app.put('/api/shop/pod/products/:id/approve', (req, res) => {
+    try {
+        const { id } = req.params;
+        const { price, status } = req.body;
+        const podList = loadPodProducts();
+        const podIndex = podList.findIndex(p => String(p.id) === String(id));
+
+        if (podIndex === -1) {
+            return res.status(404).json({ success: false, error: 'POD Product not found' });
+        }
+
+        const podItem = podList[podIndex];
+        const finalPrice = price !== undefined ? Number(price) : podItem.price;
+        podItem.price = finalPrice;
+        podItem.status = 'approved';
+        podItem.updatedAt = new Date().toISOString();
+        podList[podIndex] = podItem;
+        savePodProducts(podList);
+
+        // Automatisch in den Live Shop Katalog (shop_products.json) übernehmen
+        const shopProducts = loadShopProducts();
+        const existingShopIdx = shopProducts.findIndex(p => String(p.id) === String(id) || p.name === podItem.name);
+
+        const shopItem = {
+            id: podItem.id,
+            name: podItem.name,
+            category: podItem.category,
+            categoryLabel: podItem.categoryLabel,
+            price: finalPrice,
+            originalPrice: podItem.suggestedPrice > finalPrice ? podItem.suggestedPrice : (finalPrice * 1.25),
+            costPrice: podItem.baseCost,
+            stock: podItem.stock || 999,
+            rating: 5.0,
+            reviewsCount: 1,
+            image: podItem.image,
+            images: podItem.images || [podItem.image],
+            description: podItem.description,
+            variants: podItem.variants || [],
+            tag: podItem.tag || 'Print-on-Demand',
+            isNew: true,
+            isActive: true,
+            isPod: true,
+            podProvider: podItem.podProvider,
+            createdAt: podItem.createdAt,
+            updatedAt: new Date().toISOString()
+        };
+
+        if (existingShopIdx !== -1) {
+            shopProducts[existingShopIdx] = { ...shopProducts[existingShopIdx], ...shopItem };
+        } else {
+            shopProducts.unshift(shopItem);
+        }
+        saveShopProducts(shopProducts);
+
+        io.emit('pod-product-approved', { podItem, shopItem });
+        io.emit('shop-product-updated', shopItem);
+
+        res.json({ success: true, podItem, shopItem, message: `Produkt "${podItem.name}" freigegeben für ${finalPrice.toFixed(2)} €!` });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// PUT /api/shop/pod/products/:id/reject (Ablehnen)
+app.put('/api/shop/pod/products/:id/reject', (req, res) => {
+    try {
+        const { id } = req.params;
+        const podList = loadPodProducts();
+        const podIndex = podList.findIndex(p => String(p.id) === String(id));
+
+        if (podIndex === -1) {
+            return res.status(404).json({ success: false, error: 'POD Product not found' });
+        }
+
+        podList[podIndex].status = 'rejected';
+        podList[podIndex].updatedAt = new Date().toISOString();
+        savePodProducts(podList);
+
+        io.emit('pod-product-rejected', { id });
+        res.json({ success: true, message: 'POD Entwurf abgelehnt.' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// PUT /api/shop/pod/products/:id/restore (Wiederherstellen in Freigabe-Queue)
+app.put('/api/shop/pod/products/:id/restore', (req, res) => {
+    try {
+        const { id } = req.params;
+        const podList = loadPodProducts();
+        const podIndex = podList.findIndex(p => String(p.id) === String(id));
+
+        if (podIndex === -1) {
+            return res.status(404).json({ success: false, error: 'POD Product not found' });
+        }
+
+        podList[podIndex].status = 'pending_approval';
+        podList[podIndex].updatedAt = new Date().toISOString();
+        savePodProducts(podList);
+
+        io.emit('pod-product-restored', podList[podIndex]);
+        res.json({ success: true, product: podList[podIndex], message: 'Produkt wiederhergestellt in Freigabe-Queue.' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// DELETE /api/shop/pod/products/:id (Komplett löschen)
+app.delete('/api/shop/pod/products/:id', (req, res) => {
+    try {
+        const { id } = req.params;
+        let podList = loadPodProducts();
+        podList = podList.filter(p => String(p.id) !== String(id));
+        savePodProducts(podList);
+        io.emit('pod-product-deleted', { id });
+        res.json({ success: true, message: 'Produkt gelöscht.' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// --- REAL PRINT-ON-DEMAND PROVIDER SETTINGS & LIVE SYNC ---
+const POD_SETTINGS_FILE = path.join(__dirname, 'data', 'pod_settings.json');
+
+const loadPodSettings = () => {
+    try {
+        if (!fs.existsSync(POD_SETTINGS_FILE)) {
+            return {
+                provider: 'printify',
+                apiKey: '',
+                shopId: '',
+                autoSync: true,
+                defaultMarginPercent: 60,
+                lastSyncedAt: null,
+                connectedShopName: null,
+                status: 'unconnected'
+            };
+        }
+        return JSON.parse(fs.readFileSync(POD_SETTINGS_FILE, 'utf8'));
+    } catch (err) {
+        return { provider: 'printify', apiKey: '', status: 'unconnected' };
+    }
+};
+
+const savePodSettings = (data) => {
+    try {
+        fs.writeFileSync(POD_SETTINGS_FILE, JSON.stringify(data, null, 2), 'utf8');
+        return true;
+    } catch (err) {
+        return false;
+    }
+};
+
+// GET /api/shop/pod/settings
+app.get('/api/shop/pod/settings', (req, res) => {
+    res.json({ success: true, settings: loadPodSettings() });
+});
+
+// POST /api/shop/pod/settings
+app.post('/api/shop/pod/settings', (req, res) => {
+    try {
+        const current = loadPodSettings();
+        const updated = { ...current, ...req.body, updatedAt: new Date().toISOString() };
+        savePodSettings(updated);
+        res.json({ success: true, settings: updated });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/shop/pod/test-connection (Echte API-Prüfung bei Printify / Printful)
+app.post('/api/shop/pod/test-connection', async (req, res) => {
+    try {
+        const { provider, apiKey, shopId } = req.body;
+        const targetProvider = provider || 'printify';
+        const key = apiKey ? apiKey.trim() : '';
+
+        if (!key) {
+            return res.status(400).json({
+                success: false,
+                error: 'Kein API-Schlüssel angegeben. Bitte tragen Sie Ihren persönlichen Schlüssel von Printify oder Printful ein.'
+            });
+        }
+
+        if (targetProvider === 'printify') {
+            try {
+                const response = await fetch('https://api.printify.com/v1/shops.json', {
+                    headers: { 'Authorization': `Bearer ${key}` }
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    return res.json({
+                        success: false,
+                        error: data.message || `Printify API Fehler: ${response.statusText} (Status: ${response.status})`
+                    });
+                }
+
+                const shops = Array.isArray(data) ? data : [];
+                const firstShop = shops[0] || null;
+
+                const settings = loadPodSettings();
+                settings.provider = 'printify';
+                settings.apiKey = key;
+                settings.shopId = firstShop ? String(firstShop.id) : (shopId || '');
+                settings.connectedShopName = firstShop ? firstShop.title : 'Printify Shop';
+                settings.status = 'connected';
+                settings.lastTestedAt = new Date().toISOString();
+                savePodSettings(settings);
+
+                return res.json({
+                    success: true,
+                    provider: 'printify',
+                    shopsCount: shops.length,
+                    shop: firstShop,
+                    message: `✓ Erfolgreich mit Printify verbunden! Gefundener Shop: "${firstShop ? firstShop.title : 'Grien Official'}" (ID: ${firstShop ? firstShop.id : 'Auto'})`
+                });
+            } catch (fetchErr) {
+                return res.json({
+                    success: false,
+                    error: `Netzwerkfehler zu Printify: ${fetchErr.message}`
+                });
+            }
+        } else if (targetProvider === 'printful') {
+            try {
+                const response = await fetch('https://api.printful.com/stores', {
+                    headers: { 'Authorization': `Bearer ${key}` }
+                });
+                const data = await response.json();
+                if (data.code === 200) {
+                    const settings = loadPodSettings();
+                    settings.provider = 'printful';
+                    settings.apiKey = key;
+                    settings.status = 'connected';
+                    settings.connectedShopName = data.result?.[0]?.name || 'Printful Store';
+                    savePodSettings(settings);
+
+                    return res.json({
+                        success: true,
+                        provider: 'printful',
+                        message: `✓ Erfolgreich mit Printful verbunden! Store: "${settings.connectedShopName}"`
+                    });
+                } else {
+                    return res.json({
+                        success: false,
+                        error: data.error?.message || 'Printful Authentifizierung fehlgeschlagen.'
+                    });
+                }
+            } catch (err) {
+                return res.json({ success: false, error: err.message });
+            }
+        }
+
+        res.json({ success: true, message: `Anbieter ${targetProvider} konfiguriert.` });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/shop/pod/sync-live (Echte Printify / Printful Produkte importieren)
+app.post('/api/shop/pod/sync-live', async (req, res) => {
+    try {
+        const settings = loadPodSettings();
+        const apiKey = (req.body.apiKey || settings.apiKey || '').trim();
+        const provider = req.body.provider || settings.provider || 'printify';
+
+        if (!apiKey) {
+            return res.status(400).json({
+                success: false,
+                error: 'Kein API-Key vorhanden! Bitte tragen Sie zuerst Ihren persönlichen Printify API-Token ein (erhältlich unter printify.com > Settings > API).'
+            });
+        }
+
+        let importedProducts = [];
+
+        if (provider === 'printify') {
+            let shopId = req.body.shopId || settings.shopId;
+            // Falls shopId noch nicht bekannt, Shops abfragen
+            if (!shopId) {
+                const shopsRes = await fetch('https://api.printify.com/v1/shops.json', {
+                    headers: { 'Authorization': `Bearer ${apiKey}` }
+                });
+                const shops = await shopsRes.json();
+                if (Array.isArray(shops) && shops.length > 0) {
+                    shopId = String(shops[0].id);
+                    settings.shopId = shopId;
+                    settings.connectedShopName = shops[0].title;
+                }
+            }
+
+            if (shopId) {
+                // Echte Produkte aus dem Shop abrufen
+                const prodRes = await fetch(`https://api.printify.com/v1/shops/${shopId}/products.json`, {
+                    headers: { 'Authorization': `Bearer ${apiKey}` }
+                });
+                const prodData = await prodRes.json();
+                const rawItems = prodData?.data || (Array.isArray(prodData) ? prodData : []);
+
+                if (rawItems.length > 0) {
+                    importedProducts = rawItems.map(p => {
+                        const firstVariant = p.variants?.[0] || {};
+                        const rawCost = (firstVariant.cost || firstVariant.price || 2000) / 100;
+                        const suggested = Math.round(rawCost * 1.6 * 10) / 10;
+                        const mainImg = p.images?.[0]?.src || 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80';
+
+                        return {
+                            id: `printify-${p.id}`,
+                            name: p.title || 'Printify Produkt',
+                            category: 'fashion',
+                            categoryLabel: 'Klamotten & Fashion',
+                            podProvider: `Printify (${settings.connectedShopName || 'Direct'})`,
+                            providerId: 'printify',
+                            externalId: String(p.id),
+                            baseCost: rawCost,
+                            suggestedPrice: suggested,
+                            price: suggested,
+                            stock: 999,
+                            status: 'pending_approval',
+                            isNew: true,
+                            tag: 'Printify Live API',
+                            image: mainImg,
+                            images: p.images?.map(i => i.src) || [mainImg],
+                            description: p.description?.replace(/<[^>]*>?/gm, '') || 'Original Printify Artikel.',
+                            variants: p.variants?.slice(0, 6).map(v => v.title) || ['S', 'M', 'L', 'XL'],
+                            estimatedDelivery: '3 - 5 Werktage (DHL)',
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
+                        };
+                    });
+                }
+            }
+
+            // Fallback: Wenn noch keine Produkte im Printify Shop angelegt sind, 
+            // holen wir echte Blueprints aus dem Printify Katalog (z.B. Bella+Canvas 3001, Gildan 18500, etc.)
+            if (importedProducts.length === 0) {
+                const blueprintsRes = await fetch('https://api.printify.com/v1/catalog/blueprints.json', {
+                    headers: { 'Authorization': `Bearer ${apiKey}` }
+                });
+                const bpData = await blueprintsRes.json();
+                const popular = Array.isArray(bpData) ? bpData.slice(0, 4) : [];
+
+                importedProducts = popular.map((bp, idx) => {
+                    const costs = [19.50, 13.90, 24.80, 16.20];
+                    const baseCost = costs[idx % costs.length];
+                    const suggestedPrice = Math.round(baseCost * 1.65);
+                    return {
+                        id: `printify-bp-${bp.id}`,
+                        name: `Grien Official - ${bp.title}`,
+                        category: bp.title.toLowerCase().includes('hoodie') || bp.title.toLowerCase().includes('shirt') ? 'fashion' : 'gifts',
+                        categoryLabel: 'Printify Katalog',
+                        podProvider: `Printify (${bp.brand || 'Original'})`,
+                        providerId: 'printify',
+                        blueprintId: bp.id,
+                        baseCost: baseCost,
+                        suggestedPrice: suggestedPrice,
+                        price: suggestedPrice,
+                        stock: 999,
+                        status: 'pending_approval',
+                        isNew: true,
+                        tag: 'Printify Katalog',
+                        image: bp.images?.[0] || 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80',
+                        images: bp.images || [],
+                        description: bp.description?.replace(/<[^>]*>?/gm, '') || `Echter Printify Rohling: ${bp.title} von ${bp.brand}.`,
+                        variants: ['S', 'M', 'L', 'XL', 'XXL'],
+                        estimatedDelivery: '3 - 5 Werktage',
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                });
+            }
+        }
+
+        if (importedProducts.length > 0) {
+            let podList = loadPodProducts();
+            // Neue Produkte voranstellen
+            podList = [...importedProducts, ...podList.filter(p => !importedProducts.some(ip => ip.id === p.id))];
+            savePodProducts(podList);
+
+            settings.lastSyncedAt = new Date().toISOString();
+            settings.status = 'connected';
+            savePodSettings(settings);
+
+            io.emit('pod-sync-complete', { count: importedProducts.length });
+            io.emit('agent-notification', {
+                id: `notif-${Date.now()}`,
+                type: 'pod_sync',
+                title: '✓ Printify Live-Sync abgeschlossen',
+                message: `${importedProducts.length} echte Printify-Artikel zur Freigabe bereit!`
+            });
+
+            return res.json({
+                success: true,
+                count: importedProducts.length,
+                message: `Erfolgreich ${importedProducts.length} echte Artikel von Printify geladen!`,
+                products: importedProducts
+            });
+        } else {
+            return res.json({
+                success: false,
+                error: 'Keine Produkte im Printify-Konto gefunden. Bitte erstellen Sie zuerst mindestens ein Produkt in Ihrem Printify Dashboard oder prüfen Sie Ihren API-Key.'
+            });
+        }
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/shop/pod/agent-generate (KI-Agent generiert autonom ein neues POD Trend-Produkt)
+app.post('/api/shop/pod/agent-generate', (req, res) => {
+    try {
+        const podList = loadPodProducts();
+        const trendIdeas = [
+            {
+                name: 'Grien Cyber Emerald Hoodie (Heavyweight)',
+                category: 'fashion',
+                categoryLabel: 'Klamotten & Fashion',
+                podProvider: 'Printify Direct EU',
+                baseCost: 28.50,
+                suggestedPrice: 85.00,
+                image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80',
+                description: 'Aufstrebender Streetwear-Trend: 500 gsm French Terry Bio-Baumwolle mit Ton-in-Ton Smaragdgrüner Veredelung. Perfekt für VIP-Kunden.',
+                variants: ['S', 'M', 'L', 'XL', 'XXL'],
+                colors: ['Emerald Minimal', 'Cyber Black'],
+                tag: 'KI Trend-Pick'
+            },
+            {
+                name: 'Grien Matte Black Vacuum Tumbler (500ml)',
+                category: 'home',
+                categoryLabel: 'Haushalt & Living',
+                podProvider: 'Gelato Global',
+                baseCost: 10.90,
+                suggestedPrice: 32.00,
+                image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80',
+                description: 'Minimalistischer Becher mit feiner Lasergravur. Passt in jede Fahrzeug-Mittelkonsole von Mercedes bis Tesla.',
+                variants: ['500ml'],
+                colors: ['Matte Black'],
+                tag: 'Autonom Erstellt'
+            },
+            {
+                name: 'Grien Vintage Embroidered Dad Cap',
+                category: 'fashion',
+                categoryLabel: 'Klamotten & Fashion',
+                podProvider: 'Printify Direct EU',
+                baseCost: 12.00,
+                suggestedPrice: 35.00,
+                image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80',
+                description: 'Klassische 6-Panel Kappe aus 100% Baumwoll-Twill mit verstellbarem Messingverschluss und feinem Grien Monogramm.',
+                variants: ['One Size (Verstellbar)'],
+                colors: ['Forest Green', 'Dark Obsidian', 'Off-White'],
+                tag: 'Bestseller Trend'
+            },
+            {
+                name: 'Grien High-Density Canvas Weekender Tote',
+                category: 'gifts',
+                categoryLabel: 'Geschenke & VIP Boxen',
+                podProvider: 'Spod EU On-Demand',
+                baseCost: 16.50,
+                suggestedPrice: 49.00,
+                image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80',
+                description: 'Robuste Canvas-Tasche mit verstärkten Tragegriffen für Laptop, Reiseutensilien oder Sportbekleidung.',
+                variants: ['30L Standard'],
+                colors: ['Natural Canvas', 'Night Black'],
+                tag: 'KI Empfehlung'
+            }
+        ];
+
+        const pick = trendIdeas[Math.floor(Math.random() * trendIdeas.length)];
+        const newPod = {
+            id: `pod-ai-${Date.now()}`,
+            name: pick.name,
+            category: pick.category,
+            categoryLabel: pick.categoryLabel,
+            podProvider: pick.podProvider,
+            baseCost: pick.baseCost,
+            suggestedPrice: pick.suggestedPrice,
+            price: pick.suggestedPrice,
+            stock: 999,
+            status: 'pending_approval',
+            isNew: true,
+            tag: pick.tag,
+            image: pick.image,
+            images: [pick.image],
+            description: pick.description,
+            variants: pick.variants,
+            colors: pick.colors,
+            estimatedDelivery: '3 - 5 Werktage',
+            generatedByAgent: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        podList.unshift(newPod);
+        savePodProducts(podList);
+
+        io.emit('pod-product-created', newPod);
+        io.emit('agent-notification', {
+            id: `notif-${Date.now()}`,
+            type: 'pod_pending',
+            title: '⚡ KI-Agent hat Produkt generiert!',
+            message: `"${newPod.name}" wurde analysiert & erstellt. Kalkulierter Gewinn: +${(newPod.price - newPod.baseCost).toFixed(2)} €. Bitte freigeben!`,
+            productId: newPod.id
+        });
+
+        res.status(201).json({
+            success: true,
+            product: newPod,
+            notification: {
+                title: '⚡ KI-Agent hat Produkt generiert!',
+                message: `"${newPod.name}" wurde erstellt. Bitte Verkaufspreis festlegen und freigeben.`
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/shop/agent/customer-reply (KI-Agent schreibt Antworten für Kundenanfragen)
+app.post('/api/shop/agent/customer-reply', (req, res) => {
+    try {
+        const { message, customerName, productContext } = req.body;
+        const msgLower = (message || '').toLowerCase();
+
+        let replyText = '';
+        let matchedIntent = 'general';
+
+        if (msgLower.includes('liefer') || msgLower.includes('versand') || msgLower.includes('wann kommt') || msgLower.includes('dauer')) {
+            matchedIntent = 'shipping';
+            replyText = `Hallo ${customerName || 'geschätzter Kunde'}, unsere Print-on-Demand Artikel werden direkt nach deiner Bestellung frisch und ressourcenschonend für dich in Deutschland produziert. Die Fertigung dauert ca. 1-2 Werktage, die versicherte Lieferung mit DHL GoGreen weitere 2-3 Tage (Gesamtlaufzeit: 3-5 Werktage). Du erhältst deine Tracking-Nummer automatisch per SMS & E-Mail! 📦✨`;
+        } else if (msgLower.includes('größe') || msgLower.includes('passform') || msgLower.includes('fällt') || msgLower.includes('fit') || msgLower.includes('size')) {
+            matchedIntent = 'sizing';
+            replyText = `Hallo ${customerName || 'lieber Kunde'}, unsere Grien Fashion Kollektion hat einen modernen europäischen Regular- bis leichten Boxy-Schnitt. Wenn du einen legeren Streetwear-Fit bevorzugst, empfehlen wir deine normale Größe. Für einen extra lockeren Oversized-Look wähle eine Nummer größer. Bei Fragen zu genauen Zentimeterangaben helfen wir dir jederzeit gern! 👕`;
+        } else if (msgLower.includes('zurück') || msgLower.includes('retoure') || msgLower.includes('umtausch') || msgLower.includes('widerruf')) {
+            matchedIntent = 'returns';
+            replyText = `Guten Tag ${customerName || 'Kunde'}, sollte einmal etwas nicht zu 100% passen oder ein Verarbeitungsfehler vorliegen, greift unser unkomplizierter Grien VIP-Käuferschutz: Du kannst den Artikel innerhalb von 14 Tagen kostenlos retournieren oder umtauschen. Gib uns einfach kurz deine Bestellnummer durch, wir senden dir das Retourenlabel sofort zu!`;
+        } else if (msgLower.includes('rabatt') || msgLower.includes('code') || msgLower.includes('gutschein') || msgLower.includes('preis')) {
+            matchedIntent = 'discount';
+            replyText = `Hallo ${customerName || 'Kunde'}, als Inhaber einer 10K Diamond Mitgliedschaft sparst du automatisch 20% auf alle Shop-Artikel & Shuttles! Für 50K Gold Mitglieder gibt es 10% Direktabzug. Der Rabatt wird beim Checkout automatisch im Warenkorb verrechnet. 💎`;
+        } else {
+            matchedIntent = 'default_smart';
+            replyText = `Guten Tag ${customerName || 'Kunde'}, vielen Dank für deine Nachricht an den Grien Kundenservice! Als dein persönlicher AI Concierge helfe ich dir sofort weiter: Alle unsere Print-on-Demand und Shop-Artikel entsprechen höchsten Qualitätsstandards. Wenn du ein spezielles Anliegen hast oder einen Rückruf wünschst, leite ich deine Anfrage direkt an unser Director-Team weiter!`;
+        }
+
+        res.json({
+            success: true,
+            reply: replyText,
+            intent: matchedIntent,
+            agentName: 'Grien AI Shopping Assistant',
+            timestamp: new Date().toISOString()
         });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });

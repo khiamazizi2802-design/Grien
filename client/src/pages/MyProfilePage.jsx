@@ -18,12 +18,12 @@ const MyProfilePage = () => {
     const { user, setUser } = useAuth();
 
     const [localAvatar, setLocalAvatar] = useState(() => {
-        return user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'Alex'}`;
+        return (user?.avatar && !user.avatar.includes('dicebear')) ? user.avatar : null;
     });
 
     useEffect(() => {
         if (user) {
-            setLocalAvatar(user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name || 'Alex'}`);
+            setLocalAvatar((user?.avatar && !user.avatar.includes('dicebear')) ? user.avatar : null);
         }
     }, [user]);
 

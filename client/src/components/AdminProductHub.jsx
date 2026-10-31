@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
     FileText, Building2, Landmark, Receipt, MapPin,
-    Upload, Star, Image as ImageIcon,
+    Upload, Star, Truck, Image as ImageIcon,
     Sparkles, Shirt, Smartphone, Flame, Home as HomeIcon, Gift,
     Plus, Search, Filter, Edit3, Trash2, CheckCircle2, XCircle,
     Eye, EyeOff, Bot, Key, Copy, Check, ArrowUpRight, TrendingUp,
@@ -260,6 +260,10 @@ const AdminProductHub = () => {
         originalPrice: '',
         costPrice: '',
         stock: '25',
+        rating: '5.0',
+        reviewsCount: '25',
+        perk1: 'Schneller Grien Shuttle Versand',
+        perk2: '30 Tage kostenlose Rückgabe',
         tag: 'Neu',
         description: '',
         image: PRESET_IMAGES[0].url,
@@ -312,6 +316,10 @@ const AdminProductHub = () => {
             originalPrice: '',
             costPrice: '',
             stock: '30',
+            rating: '5.0',
+            reviewsCount: '15',
+            perk1: 'Schneller Grien Shuttle Versand',
+            perk2: '30 Tage kostenlose Rückgabe',
             tag: 'Neu',
             description: '',
             image: PRESET_IMAGES[0].url,
@@ -337,6 +345,10 @@ const AdminProductHub = () => {
             originalPrice: product.originalPrice ? String(product.originalPrice) : '',
             costPrice: product.costPrice !== undefined ? String(product.costPrice) : '',
             stock: product.stock !== undefined ? String(product.stock) : '25',
+            rating: product.rating !== undefined ? String(product.rating) : '5.0',
+            reviewsCount: product.reviewsCount !== undefined ? String(product.reviewsCount) : '25',
+            perk1: product.perk1 || 'Schneller Grien Shuttle Versand',
+            perk2: product.perk2 || '30 Tage kostenlose Rückgabe',
             tag: product.tag || '',
             description: product.description || '',
             image: prodImages[0] || product.image || PRESET_IMAGES[0].url,
@@ -478,6 +490,10 @@ const AdminProductHub = () => {
             originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
             costPrice: formData.costPrice ? parseFloat(formData.costPrice) : null,
             stock: parseInt(formData.stock, 10) || 0,
+            rating: parseFloat(formData.rating) || 5.0,
+            reviewsCount: parseInt(formData.reviewsCount, 10) || 0,
+            perk1: formData.perk1 ? formData.perk1.trim() : 'Schneller Grien Shuttle Versand',
+            perk2: formData.perk2 ? formData.perk2.trim() : '30 Tage kostenlose Rückgabe',
             tag: formData.tag.trim(),
             description: formData.description.trim(),
             image: primaryImage,
@@ -803,6 +819,69 @@ const AdminProductHub = () => {
                                         onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
                                         placeholder="Bestseller / Limitiert / Neu"
                                         className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-sm text-white focus:outline-none focus:border-[#00D084]"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Rating & Reviews Count */}
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                        <Star size={12} className="text-amber-400 fill-amber-400" />
+                                        <span>Bewertung (1.0 - 5.0)</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.05"
+                                        min="1.0"
+                                        max="5.0"
+                                        value={formData.rating}
+                                        onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
+                                        placeholder="5.0"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-sm text-white focus:outline-none focus:border-[#00D084]"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
+                                        Bewertungen Anzahl
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={formData.reviewsCount}
+                                        onChange={(e) => setFormData({ ...formData, reviewsCount: e.target.value })}
+                                        placeholder="77"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-sm text-white focus:outline-none focus:border-[#00D084]"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Service Highlights / Perks */}
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                        <Truck size={12} className="text-[#00D084]" />
+                                        <span>Highlight 1 (Versand)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.perk1}
+                                        onChange={(e) => setFormData({ ...formData, perk1: e.target.value })}
+                                        placeholder="Schneller Grien Shuttle Versand"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-[#00D084]"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                        <RefreshCw size={12} className="text-[#00D084]" />
+                                        <span>Highlight 2 (Rückgabe)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.perk2}
+                                        onChange={(e) => setFormData({ ...formData, perk2: e.target.value })}
+                                        placeholder="30 Tage kostenlose Rückgabe"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-[#00D084]"
                                     />
                                 </div>
                             </div>

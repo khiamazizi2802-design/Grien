@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import {
-    Car, FileText, Search, ChevronRight, LogOut, Star, MessageSquare, Briefcase, 
+    Car, FileText, Crown, Check, Search, ChevronLeft, ChevronRight, LogOut, Star, MessageSquare, Briefcase, 
     DollarSign, Bell, LayoutDashboard, Zap, Users, ShieldCheck, CheckCircle2, 
     Clock, AlertCircle, Menu, X, TrendingUp, Globe, Scale, Calculator, Activity, 
     ArrowUpRight, Building2, Calendar, Settings, Eye, Droplets, Paperclip, Upload, 
@@ -185,7 +185,68 @@ const AdminDashboard = () => {
     const [dossierZip, setDossierZip] = useState(() => localStorage.getItem('green_dossier_zip') || '65933');
     const [dossierIban, setDossierIban] = useState(() => localStorage.getItem('green_dossier_iban') || '');
     const [dossierTaxId, setDossierTaxId] = useState(() => localStorage.getItem('green_dossier_taxId') || '');
+    
     const [dossierEmergency, setDossierEmergency] = useState(() => localStorage.getItem('green_dossier_emergency') || '');
+
+    // --- VIP Membership Tier Hub State (§ 3 Tiers: Normal, Gold, Diamond) ---
+    const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false);
+    const [membershipSearchQuery, setMembershipSearchQuery] = useState('');
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const [membershipTierFilter, setMembershipTierFilter] = useState('all');
+    const [customerMemberships, setCustomerMemberships] = useState([
+        { id: 'c-001', firstName: 'Khiam', lastName: 'Azizi', email: 'khiamazizi2802@gmail.com', phone: '+49 176 62111103', role: 'Chief Director', tier: '10k', isPaid: true, regNumber: 1, joinedDate: '2026-01-15' }
+    ]);
+
+    const fetchCustomerMemberships = async () => {
+        try {
+            const res = await fetch('http://localhost:3001/api/customer/memberships');
+            const data = await res.json();
+            if (data.success && Array.isArray(data.memberships)) {
+                setCustomerMemberships(data.memberships);
+            }
+        } catch (err) {
+            console.warn('Fallback: Customer memberships offline');
+        }
+    };
+
+    useEffect(() => {
+        fetchCustomerMemberships();
+    }, []);
+
+    const handleUpdateCustomerMembership = async (customer, newTier, newIsPaid) => {
+        const updatedTier = newTier !== undefined ? newTier : customer.tier;
+        const updatedIsPaid = newIsPaid !== undefined ? newIsPaid : customer.isPaid;
+
+        setCustomerMemberships(prev => prev.map(c => {
+            if (c.id === customer.id) {
+                return { ...c, tier: updatedTier, isPaid: updatedIsPaid };
+            }
+            return c;
+        }));
+
+        try {
+            const res = await fetch('http://localhost:3001/api/customer/memberships', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: customer.id,
+                    email: customer.email,
+                    firstName: customer.firstName,
+                    lastName: customer.lastName,
+                    phone: customer.phone,
+                    tier: updatedTier,
+                    isPaid: updatedIsPaid
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                triggerNotification('success', 'VIP STATUS AKTUALISIERT', `${customer.firstName} ${customer.lastName} ist jetzt ${updatedTier.toUpperCase()} ${updatedIsPaid ? '(Bezahlt & Aktiv)' : ''}`);
+            }
+        } catch (err) {
+            console.error('Update error:', err);
+            triggerNotification('success', 'VIP STATUS LOKAL AKTUALISIERT', `${customer.firstName} ${customer.lastName} -> ${updatedTier.toUpperCase()}`);
+        }
+    };
 
     const [directorAvatar, setDirectorAvatar] = useState(() => localStorage.getItem('green_director_avatar') || (user?.avatar || ''));
     const avatarFileInputRef = useRef(null);
@@ -8730,7 +8791,7 @@ Grien Security Operations Center (Frankfurt am Main)
 
                         {view === 'customer-service' && (
                             <motion.div key="customer-service" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-10">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                     <div className="p-8 bg-gradient-to-b from-white/[0.05] to-transparent backdrop-blur-xl border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_40px_rgba(0,229,255,0.08)] hover:border-white/20 transition-all duration-500 rounded-3xl border border-white/10 rounded-[3.5rem] space-y-6 group hover:border-white/30 transition-all">
                                         <div className="flex items-center gap-4"><Car size={24} className="text-brand" /><h3 className="text-xl font-black italic uppercase text-white">Partner & Driver Intel</h3></div>
                                         <div className="relative">
@@ -8741,6 +8802,7 @@ Grien Security Operations Center (Frankfurt am Main)
                                             {stripeConnectedPartners.map(p => <span key={p.id} className="px-4 py-2 bg-white/5 rounded-xl text-[8px] md:text-[10px] lg:text-xs font-black text-gray-500 border border-white/5 cursor-pointer hover:text-brand transition-colors whitespace-nowrap">{p.name}</span>)}
                                         </div>
                                     </div>
+
                                     <div className="p-8 bg-gradient-to-b from-white/[0.05] to-transparent backdrop-blur-xl border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_40px_rgba(0,229,255,0.08)] hover:border-white/20 transition-all duration-500 rounded-3xl border border-white/10 rounded-[3.5rem] space-y-6 group hover:border-white/30 transition-all">
                                         <div className="flex items-center gap-4"><UserIcon size={24} className="text-white" /><h3 className="text-xl font-black italic uppercase text-white">Customer Intelligence</h3></div>
                                         <div className="relative">
@@ -8751,8 +8813,65 @@ Grien Security Operations Center (Frankfurt am Main)
                                             <span className="px-4 py-2 bg-white/5 rounded-xl text-[8px] md:text-[10px] lg:text-xs font-black text-gray-600 border border-white/5 italic whitespace-nowrap">No recent searches</span>
                                         </div>
                                     </div>
-                                </div>
 
+                                    {/* DIE 3. KARTE: VIP MEMBERSHIPS BOTTOM SHEET TRIGGER */}
+                                    <div 
+                                        onClick={() => setIsMembershipModalOpen(true)}
+                                        className="p-8 bg-gradient-to-b from-brand/10 via-white/[0.04] to-transparent backdrop-blur-xl border border-brand/40 hover:border-brand shadow-[0_4px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_45px_rgba(0,255,136,0.25)] transition-all duration-300 rounded-[3.5rem] space-y-5 cursor-pointer group flex flex-col justify-between"
+                                    >
+                                        <div>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-12 h-12 rounded-2xl bg-brand/20 border border-brand/40 flex items-center justify-center text-brand group-hover:scale-110 transition-transform shadow-lg shadow-brand/20">
+                                                        <Crown size={26} />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-xl font-black italic uppercase text-white group-hover:text-brand transition-colors">VIP Memberships</h3>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">3 Tiers & Benefit System</p>
+                                                    </div>
+                                                </div>
+                                                <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-brand text-dark-900 shadow-md">
+                                                    MANAGE
+                                                </span>
+                                            </div>
+
+                                            {/* Tier Counts Pill Display */}
+                                            <div className="grid grid-cols-3 gap-2 mt-4">
+                                                <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col items-center justify-center">
+                                                    <div className="flex items-center gap-1.5 mb-1">
+                                                        <span className="w-3.5 h-3.5 rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.9)]" />
+                                                        <span className="text-[9px] font-black uppercase text-white">10K (Weiß)</span>
+                                                    </div>
+                                                    <span className="text-base font-black text-white">{customerMemberships.filter(m => m.tier === '10k' || m.tier === 'diamond').length}</span>
+                                                </div>
+                                                <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col items-center justify-center">
+                                                    <div className="flex items-center gap-1.5 mb-1">
+                                                        <span className="w-2.5 h-2.5 rounded-full bg-[#FFD700] shadow-[0_0_8px_#FFD700]" />
+                                                        <span className="text-[9px] font-black uppercase text-[#FFD700]">50K (Gold)</span>
+                                                    </div>
+                                                    <span className="text-base font-black text-[#FFD700]">{customerMemberships.filter(m => m.tier === '50k' || m.tier === 'gold').length}</span>
+                                                </div>
+                                                <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col items-center justify-center">
+                                                    <div className="flex items-center gap-1.5 mb-1">
+                                                        <span className="w-2.5 h-2.5 rounded-full bg-[#00A3FF] shadow-[0_0_8px_#00A3FF]" />
+                                                        <span className="text-[9px] font-black uppercase text-gray-400">Normal (Blau)</span>
+                                                    </div>
+                                                    <span className="text-base font-black text-white">{customerMemberships.filter(m => m.tier === 'normal').length}</span>
+                                                </div>
+                                            </div>
+                                            {/* Gekaufte Abos Zähler */}
+                                            <div className="mt-2.5 px-3 py-1.5 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-between">
+                                                <span className="text-[9px] font-black uppercase tracking-wider text-brand">💎 Gekaufte VIP-Abos</span>
+                                                <span className="text-xs font-black text-emerald-400">{customerMemberships.filter(m => m.tier?.startsWith('paid_')).length} aktiv</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-2 flex items-center justify-between text-[11px] font-black uppercase tracking-wider text-brand group-hover:translate-x-1 transition-transform">
+                                            <span>Öffnen & Mitglieder Zuweisen</span>
+                                            <ChevronRight size={16} />
+                                        </div>
+                                    </div>
+                                </div>
                                 <div className="flex gap-10 h-[700px]">
                                     <div className="w-[450px] bg-gradient-to-b from-white/[0.05] to-transparent backdrop-blur-xl border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_40px_rgba(0,229,255,0.08)] hover:border-white/20 transition-all duration-500 rounded-3xl border border-white/10 rounded-[3.5rem] flex flex-col overflow-hidden">
                                         <div className="p-8 border-b border-white/5 bg-white/5 flex justify-between items-center">
@@ -10282,6 +10401,375 @@ Grien Security Operations Center (Frankfurt am Main)
                             </div>
                         </motion.div>
                     </div>
+                )}
+            </AnimatePresence>
+
+            {/* ========================================================================= */}
+            {/* VIP MEMBERSHIP & TIER BOTTOM SHEET / MODAL                                */}
+            {/* ========================================================================= */}
+            <AnimatePresence>
+                {isMembershipModalOpen && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end justify-center"
+                        onClick={() => setIsMembershipModalOpen(false)}
+                    >
+                        <motion.div 
+                            initial={{ y: "100%" }}
+                            animate={{ y: 0 }}
+                            exit={{ y: "100%" }}
+                            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+                            className="w-full max-w-5xl max-h-[88vh] bg-[#0c1214] border-t-2 border-brand/40 rounded-t-[3.5rem] p-6 md:p-8 flex flex-col overflow-hidden shadow-2xl"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Modal Header */}
+                            <div className="flex items-center justify-between pb-4 border-b border-white/10">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-brand/10 border border-brand/30 flex items-center justify-center text-brand">
+                                        <Crown size={26} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-3">
+                                            <h2 className="text-xl md:text-2xl font-black italic uppercase text-white tracking-tight">Kunden VIP-Mitgliedschaften</h2>
+                                            <span className="px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-brand/20 text-brand border border-brand/40">
+                                                Registrierungen & Verkaufte Abos
+                                            </span>
+                                        </div>
+                                        <p className="text-xs font-bold text-gray-400 mt-0.5">
+                                            Alle registrierten Konten mit ihren echten Rollen & VIP-Status.
+                                        </p>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => setIsMembershipModalOpen(false)}
+                                    className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all cursor-pointer"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            {/* 1. EXPANDING SEARCH BAR */}
+                            <div className="pt-4 pb-2">
+                                <div className={`relative flex items-center transition-all duration-300 rounded-2xl border ${
+                                    isSearchFocused || membershipSearchQuery 
+                                        ? 'border-brand ring-4 ring-brand/20 bg-white/10 shadow-[0_0_25px_rgba(0,255,136,0.3)]' 
+                                        : 'border-white/10 bg-white/5 hover:border-white/30'
+                                }`}>
+                                    <Search className={`absolute left-5 transition-colors ${
+                                        isSearchFocused || membershipSearchQuery ? 'text-brand' : 'text-gray-400'
+                                    }`} size={18} />
+                                    
+                                    <input 
+                                        type="text"
+                                        value={membershipSearchQuery}
+                                        onFocus={() => setIsSearchFocused(true)}
+                                        onBlur={() => setIsSearchFocused(false)}
+                                        onChange={(e) => setMembershipSearchQuery(e.target.value)}
+                                        placeholder={isSearchFocused ? "Tippe Vorname, Nachname, E-Mail oder Rolle..." : "Kunden suchen (Klick zum Öffnen & Vergrößern)..."}
+                                        className="w-full py-3.5 pl-13 pr-12 text-sm text-white placeholder-gray-400 outline-none bg-transparent font-bold"
+                                    />
+
+                                    {membershipSearchQuery && (
+                                        <button 
+                                            onClick={() => setMembershipSearchQuery('')}
+                                            className="absolute right-4 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* 2. FILTER BAR: BLAU (Aktuelle Registrierungen) & GELB (Verkaufte Abos) */}
+                            {(() => {
+                                const count10k = customerMemberships.filter(m => m.tier === '10k' || m.tier === 'diamond').length;
+                                const count50k = customerMemberships.filter(m => m.tier === '50k' || m.tier === 'gold').length;
+                                const countNormal = customerMemberships.filter(m => m.tier === 'normal' || !m.tier).length;
+                                const countPaid = customerMemberships.filter(m => m.tier?.startsWith('paid_') || (m.isPaid && m.tier !== '10k' && m.tier !== '50k' && m.tier !== 'diamond' && m.tier !== 'gold')).length;
+
+                                return (
+                                    <div className="flex items-center gap-2 py-3 border-b border-white/10">
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                const el = document.getElementById('membership-filter-scroll');
+                                                if (el) el.scrollBy({ left: -220, behavior: 'smooth' });
+                                            }}
+                                            className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-gray-400 hover:text-white border border-white/10 shrink-0 cursor-pointer transition-all"
+                                            title="Nach links scrollen"
+                                        >
+                                            <ChevronLeft size={16} />
+                                        </button>
+
+                                        <div 
+                                            id="membership-filter-scroll"
+                                            className="flex-1 flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-1"
+                                        >
+                                            <button
+                                                onClick={() => setMembershipTierFilter('all')}
+                                                className={`px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                                                    membershipTierFilter === 'all'
+                                                        ? 'bg-white text-dark-900 shadow-md'
+                                                        : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'
+                                                }`}
+                                            >
+                                                Alle ({customerMemberships.length})
+                                            </button>
+
+                                            {/* BLAU MARKIERT: Echte Zahlen der registrierten Kunden */}
+                                            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-blue-500/10 border border-blue-500/30 shrink-0">
+                                                <span className="text-[9px] font-black uppercase tracking-wider text-blue-400 px-1.5">Registrierte Kunden:</span>
+                                                <button
+                                                    onClick={() => setMembershipTierFilter('10k')}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all shrink-0 cursor-pointer ${
+                                                        (membershipTierFilter === '10k' || membershipTierFilter === 'diamond')
+                                                            ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.9)]'
+                                                            : 'bg-white/5 text-gray-300 hover:text-white border border-white/10'
+                                                    }`}
+                                                    title="Diamond Status (Erste 10k Registrierungen)"
+                                                >
+                                                    <span className="w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_6px_white]" />
+                                                    <span>10k ({count10k})</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => setMembershipTierFilter('50k')}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all shrink-0 cursor-pointer ${
+                                                        (membershipTierFilter === '50k' || membershipTierFilter === 'gold')
+                                                            ? 'bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.6)]'
+                                                            : 'bg-white/5 text-gray-300 hover:text-[#FFD700] border border-white/10'
+                                                    }`}
+                                                    title="Gold Status (Bis 50k Registrierungen)"
+                                                >
+                                                    <span className="w-2.5 h-2.5 rounded-full bg-[#FFD700]" />
+                                                    <span>50k ({count50k})</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => setMembershipTierFilter('normal')}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all shrink-0 cursor-pointer ${
+                                                        membershipTierFilter === 'normal'
+                                                            ? 'bg-[#00A3FF] text-white shadow-[0_0_12px_rgba(0,163,255,0.5)]'
+                                                            : 'bg-white/5 text-gray-300 hover:text-white border border-white/10'
+                                                    }`}
+                                                    title="Normal Status (Basis Registrierungen)"
+                                                >
+                                                    <span className="w-2.5 h-2.5 rounded-full bg-[#00A3FF]" />
+                                                    <span>Normal ({countNormal})</span>
+                                                </button>
+                                            </div>
+
+                                            {/* GELB MARKIERT: Aktuelle Zahl der verkauften Abos (nicht Diamond oder Gold) */}
+                                            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-amber-500/10 border border-amber-500/30 shrink-0">
+                                                <span className="text-[9px] font-black uppercase tracking-wider text-amber-400 px-1.5">Verkaufte Abos:</span>
+                                                <button
+                                                    onClick={() => setMembershipTierFilter(membershipTierFilter === 'paid' ? 'all' : 'paid')}
+                                                    className={`px-3.5 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+                                                        membershipTierFilter === 'paid'
+                                                            ? 'bg-[#FFD700] text-black shadow-[0_0_15px_rgba(255,215,0,0.6)] font-black'
+                                                            : 'bg-white/5 text-amber-300 hover:text-white hover:bg-white/10 border border-amber-500/30'
+                                                    }`}
+                                                    title="Klick zum Filtern aller verkauften VIP-Abos"
+                                                >
+                                                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_#FFD700]" />
+                                                    <span>{countPaid} {countPaid === 1 ? 'Abo gekauft' : 'Abos gekauft'}</span>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                const el = document.getElementById('membership-filter-scroll');
+                                                if (el) el.scrollBy({ left: 220, behavior: 'smooth' });
+                                            }}
+                                            className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-gray-400 hover:text-white border border-white/10 shrink-0 cursor-pointer transition-all"
+                                            title="Nach rechts scrollen"
+                                        >
+                                            <ChevronRight size={16} />
+                                        </button>
+                                    </div>
+                                );
+                            })()}
+
+                            {/* 3. KUNDENLISTE: ALLE BEREITS REGISTRIERTEN KONTEN MIT IHREN ECHTEN ROLLEN */}
+                            <div className="flex-1 overflow-y-auto no-scrollbar py-3 space-y-2.5">
+                                {(() => {
+                                    const filtered = customerMemberships.filter(c => {
+                                        const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
+                                        const query = membershipSearchQuery.toLowerCase().trim();
+                                        const matchesQuery = !query || 
+                                            fullName.includes(query) || 
+                                            c.email?.toLowerCase().includes(query) || 
+                                            c.role?.toLowerCase().includes(query);
+
+                                        let matchesTier = true;
+                                        if (membershipTierFilter === '10k') {
+                                            matchesTier = c.tier === '10k' || c.tier === 'diamond';
+                                        } else if (membershipTierFilter === '50k') {
+                                            matchesTier = c.tier === '50k' || c.tier === 'gold';
+                                        } else if (membershipTierFilter === 'normal') {
+                                            matchesTier = c.tier === 'normal' || !c.tier;
+                                        } else if (membershipTierFilter === 'paid') {
+                                            matchesTier = c.tier?.startsWith('paid_') || (c.isPaid && c.tier !== '10k' && c.tier !== '50k' && c.tier !== 'diamond' && c.tier !== 'gold');
+                                        } else if (membershipTierFilter !== 'all') {
+                                            matchesTier = c.tier === membershipTierFilter;
+                                        }
+                                        return matchesQuery && matchesTier;
+                                    });
+
+                                    if (filtered.length === 0) {
+                                        return (
+                                            <div className="py-14 text-center text-gray-500 space-y-2">
+                                                <Search size={28} className="mx-auto opacity-30 mb-2" />
+                                                <p className="font-black text-sm uppercase">Keine passenden Konten gefunden</p>
+                                                <p className="text-xs text-gray-600">Prüfe Name, E-Mail oder Rolle</p>
+                                            </div>
+                                        );
+                                    }
+
+                                    return filtered.map(customer => {
+                                        const is10k = customer.tier === '10k' || customer.tier === 'diamond';
+                                        const is50k = customer.tier === '50k' || customer.tier === 'gold';
+                                        const isNormal = customer.tier === 'normal' || !customer.tier;
+                                        const isPaidDiamond = customer.tier === 'paid_diamond';
+                                        const isPaidGold = customer.tier === 'paid_gold';
+                                        const isPaidNormal = customer.tier === 'paid_normal';
+
+                                        // Role badge styling
+                                        const role = customer.role || 'Kunde';
+                                        const isDirector = role.toLowerCase().includes('director') || role.toLowerCase().includes('admin');
+                                        const isDriver = role.toLowerCase().includes('driver') || role.toLowerCase().includes('chauffeur');
+                                        const isManager = role.toLowerCase().includes('manager') || role.toLowerCase().includes('partner');
+
+                                        return (
+                                            <div 
+                                                key={customer.id}
+                                                className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                            >
+                                                {/* Left: Avatar with Glowing Dot + Customer Info + Rolle + Tier Badge */}
+                                                <div className="flex items-center gap-3.5">
+                                                    <div className="relative shrink-0">
+                                                        <div className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm text-white">
+                                                            {customer.firstName?.[0]}{customer.lastName?.[0]}
+                                                        </div>
+                                                        {/* Glowing Tier Dot */}
+                                                        {(is10k || isPaidDiamond) && (
+                                                            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,1)] border-2 border-[#0c1214]" />
+                                                        )}
+                                                        {(is50k || isPaidGold) && (
+                                                            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#FFD700] shadow-[0_0_10px_#FFD700] border-2 border-[#0c1214]" />
+                                                        )}
+                                                        {(isNormal || isPaidNormal) && (
+                                                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#00A3FF] shadow-[0_0_8px_#00A3FF] border-2 border-[#0c1214]" />
+                                                        )}
+                                                    </div>
+
+                                                    <div>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <h4 className="text-sm md:text-base font-black uppercase text-white tracking-tight">
+                                                                {customer.firstName} {customer.lastName}
+                                                            </h4>
+
+                                                            {/* ROLLE DES KONTOS */}
+                                                            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border ${
+                                                                isDirector
+                                                                    ? 'bg-brand/20 text-brand border-brand/40 shadow-sm'
+                                                                    : isDriver
+                                                                    ? 'bg-blue-500/20 text-blue-400 border-blue-500/40'
+                                                                    : isManager
+                                                                    ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                                                                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                                            }`}>
+                                                                {role}
+                                                            </span>
+                                                            
+                                                            {/* Tier Badge (Diamond, Gold, Normal) */}
+                                                            {is10k && (
+                                                                <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-white text-black shadow-[0_0_10px_rgba(255,255,255,0.7)]">
+                                                                    Diamond
+                                                                </span>
+                                                            )}
+                                                            {is50k && (
+                                                                <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-[#FFD700] text-black shadow-[0_0_8px_rgba(255,215,0,0.5)]">
+                                                                    Gold
+                                                                </span>
+                                                            )}
+                                                            {isNormal && (
+                                                                <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-[#00A3FF]/20 text-[#00A3FF] border border-[#00A3FF]/30">
+                                                                    Normal
+                                                                </span>
+                                                            )}
+                                                            {isPaidDiamond && (
+                                                                <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-white text-black border border-white">
+                                                                    Diamond (Gekauft)
+                                                                </span>
+                                                            )}
+                                                            {isPaidGold && (
+                                                                <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-[#FFD700] text-black border border-[#FFD700]">
+                                                                    Gold (Gekauft)
+                                                                </span>
+                                                            )}
+                                                            {isPaidNormal && (
+                                                                <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase bg-[#00A3FF] text-white">
+                                                                    Normal (Gekauft)
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Contact & Reg Info */}
+                                                        <p className="text-xs text-gray-400 font-bold mt-0.5">
+                                                            <span>{customer.email}</span>
+                                                            {customer.regNumber && <span className="ml-2 text-gray-500 font-mono">#Reg {customer.regNumber.toLocaleString('de-DE')}</span>}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Right: Paid Status + GRÜN MARKIERT: Stufen-Dropdown mit DIAMOND oder GOLD */}
+                                                <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-auto">
+                                                    {/* Toggle Paid Button */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleUpdateCustomerMembership(customer, customer.tier, !customer.isPaid)}
+                                                        className={`px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+                                                            customer.isPaid
+                                                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30'
+                                                                : 'bg-white/5 text-gray-500 hover:text-gray-300 border border-white/10'
+                                                        }`}
+                                                        title="Als bezahltes VIP-Mitglied markieren"
+                                                    >
+                                                        {customer.isPaid ? <Check size={14} className="text-emerald-400" /> : <Zap size={14} />}
+                                                        <span>{customer.isPaid ? 'Bezahlt Aktiv' : 'Aktivieren'}</span>
+                                                    </button>
+
+                                                    {/* GRÜN MARKIERT: Stufen-Dropdown mit sauberen Namen: Diamond, Gold, Normal */}
+                                                    <div className="relative">
+                                                        <select
+                                                            value={customer.tier || 'normal'}
+                                                            onChange={(e) => handleUpdateCustomerMembership(customer, e.target.value, customer.isPaid)}
+                                                            className="appearance-none bg-black/60 border border-white/20 hover:border-brand/50 text-white font-black text-xs uppercase rounded-xl py-2 pl-3 pr-8 outline-none cursor-pointer transition-all"
+                                                        >
+                                                            <optgroup label="Früh-Registrierung">
+                                                                <option value="10k">⚪ Diamond (10k)</option>
+                                                                <option value="50k">🟡 Gold (50k)</option>
+                                                                <option value="normal">🔵 Normal</option>
+                                                            </optgroup>
+                                                            <optgroup label="Verkaufte VIP-Abos">
+                                                                <option value="paid_diamond">💎 Diamond (Gekauft)</option>
+                                                                <option value="paid_gold">🟡 Gold (Gekauft)</option>
+                                                                <option value="paid_normal">🔵 Normal (Gekauft)</option>
+                                                            </optgroup>
+                                                        </select>
+                                                        <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    });
+                                })()}
+                            </div>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
 

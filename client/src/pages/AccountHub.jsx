@@ -35,7 +35,7 @@ const AccountHub = () => {
         age: ''
     });
 
-    const [profilePic, setProfilePic] = useState("https://api.dicebear.com/7.x/avataaars/svg?seed=Alex");
+    const [profilePic, setProfilePic] = useState(null);
 
     useEffect(() => {
         if (user) {
@@ -50,10 +50,12 @@ const AccountHub = () => {
                 phone: user.phone || '',
                 age: user.age || ''
             });
-            if (user.avatar) {
-                setProfilePic(user.avatar);
+            const localSaved = user.email ? localStorage.getItem(`green_user_avatar_${user.email.toLowerCase()}`) : null;
+            const effectiveAvatar = user.avatar || localSaved;
+            if (effectiveAvatar && !effectiveAvatar.includes('dicebear')) {
+                setProfilePic(effectiveAvatar);
             } else {
-                setProfilePic(`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name || 'Alex'}`);
+                setProfilePic(null);
             }
         }
     }, [user]);
@@ -108,49 +110,43 @@ const AccountHub = () => {
         setConfirmPassword('');
     };
 
-    const handleImageChange = async (e) => {
-        const file = e.target.files[0];
-        if (file && user?.email) {
-            setIsUploading(true);
-            setUploadProgress(0);
-            try {
-                let avatarUrl;
-                if (!user?.isDemo) {
-                    const storageRef = ref(fbStorage, `avatars/${user.email.toLowerCase()}/profile`);
-                    const task = uploadBytesResumable(storageRef, file);
-                    
-                    await new Promise((resolve, reject) => {
-                        task.on(
-                            'state_changed',
-                            (snap) => {
-                                const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-                                setUploadProgress(pct);
-                            },
-                            reject,
-                            async () => {
-                                avatarUrl = await getDownloadURL(task.snapshot.ref);
-                                resolve();
-                            }
-                        );
-                    });
-                } else {
-                    // Demo fallback: use object URL
-                    avatarUrl = URL.createObjectURL(file);
+    const handleImageChange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        setUploadProgress(25);
+
+        const reader = new FileReader();
+        reader.onload = async (uploadEvent) => {
+            const dataUrl = uploadEvent.target.result;
+            setUploadProgress(100);
+            setProfilePic(dataUrl);
+
+            if (user) {
+                setUser({ ...user, avatar: dataUrl });
+                if (user.email) {
+                    localStorage.setItem(`green_user_avatar_${user.email.toLowerCase()}`, dataUrl);
+                    try {
+                        const userDocRef = doc(fbDb, 'users', user.email.toLowerCase());
+                        await updateDoc(userDocRef, { avatar: dataUrl });
+                    } catch (fbErr) {
+                        console.warn('Firestore optional sync error:', fbErr);
+                    }
                 }
-                
-                setProfilePic(avatarUrl);
-                const userDocRef = doc(fbDb, 'users', user.email.toLowerCase());
-                await updateDoc(userDocRef, { avatar: avatarUrl });
-                setUser({ ...user, avatar: avatarUrl });
-                triggerNotification("PROFILE IMAGE SECURED", "SUCCESS");
-            } catch (err) {
-                console.error("Failed to upload avatar:", err);
-                triggerNotification("AVATAR UPDATE FAILED", "ERROR");
-            } finally {
-                setIsUploading(false);
-                setUploadProgress(null);
             }
-        }
+            setIsUploading(false);
+            setUploadProgress(null);
+            triggerNotification('PROFILBILD ERFOLGREICH GESPEICHERT', 'SUCCESS');
+        };
+
+        reader.onerror = () => {
+            setIsUploading(false);
+            setUploadProgress(null);
+            triggerNotification('BILDDATEI KONNTE NICHT GELESEN WERDEN', 'ERROR');
+        };
+
+        reader.readAsDataURL(file);
     };
 
     const triggerInput = (id) => {
@@ -300,8 +296,10 @@ const AccountHub = () => {
                         {/* Profile Customization */}
                         <section className="bg-dark-900 border border-main p-8 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] space-y-8 relative overflow-hidden group">
                             <div className="flex items-center gap-8 relative z-10">
-                                <div className="w-28 h-28 rounded-full bg-dark-950 border-4 border-brand/20 p-1 overflow-hidden shrink-0 shadow-[0_0_30px_rgba(52,211,153,0.25)] group-hover:scale-105 transition-transform duration-500 relative">
-                                    <img src={profilePic} alt="Me" className="w-full h-full rounded-full object-cover" />
+                                <div className="w-28 h-28 rounded-full bg-dark-950 border-4 border-brand/20 p-1 overflow-hidden shrink-0 shadow-[0_0_30px_rgba(52,211,153,0.25)] group-hover:scale-105 transition-transform duration-500 relative flex items-center justify-center">
+                                    {profilePic && !profilePic.includes('dicebear') ? (
+                                        <img src={profilePic} alt="Me" className="w-full h-full rounded-full object-cover" />
+                                    ) : null}
                                 </div>
                                 <div className="flex flex-col gap-3 flex-1 text-left">
                                     <p className="text-[8px] md:text-[10px] lg:text-xs font-black uppercase tracking-[0.2em] text-secondary">Update Profile Picture</p>

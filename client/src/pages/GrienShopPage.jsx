@@ -392,6 +392,12 @@ export default function GrienShopPage() {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [selectedProductImgIdx, setSelectedProductImgIdx] = useState(0);
+
+    const handleOpenProductDetail = (prod) => {
+        setSelectedProduct(prod);
+        setSelectedProductImgIdx(0);
+        setSelectedVariant(prod?.variants?.[0] || '');
+    };
     const [selectedVariant, setSelectedVariant] = useState('');
     const [addedFeedback, setAddedFeedback] = useState(null);
 
@@ -1008,19 +1014,25 @@ export default function GrienShopPage() {
             
             {/* SLIM STICKY NAVIGATION BAR (Only Back + Title + Orders/Cart stay pinned) */}
             <header 
-                className="sticky top-0 z-40 backdrop-blur-2xl px-4 md:px-6 py-3 shadow-sm border-b"
+                className="sticky top-0 z-40 backdrop-blur-2xl px-4 md:px-6 shadow-sm border-b"
                 style={{ 
-                    backgroundColor: isDark ? 'rgba(11, 15, 12, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                    borderColor: C.borderMain
+                    backgroundColor: isDark ? 'rgba(11, 15, 12, 0.96)' : 'rgba(255, 255, 255, 0.96)',
+                    borderColor: C.borderMain,
+                    paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)',
+                    paddingBottom: '0.75rem',
+                    paddingLeft: 'max(1rem, env(safe-area-inset-left, 0px))',
+                    paddingRight: 'max(1rem, env(safe-area-inset-right, 0px))',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    backdropFilter: 'blur(20px)'
                 }}
             >
                 <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
                     
-                    {/* Back Button & Brand - Clean without Official badge or subtitle */}
+                    {/* Back Button & Brand - Safe touch target for iPhone 16 Pro Max & all mobile */}
                     <div className="flex items-center gap-3">
                         <button 
                             onClick={() => navigate('/home')}
-                            className="w-10 h-10 rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
+                            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
                             style={{ 
                                 backgroundColor: isDark ? '#161B17' : '#F1F5F9',
                                 border: `1.5px solid ${C.borderMain}`,
@@ -1028,7 +1040,7 @@ export default function GrienShopPage() {
                             }}
                             aria-label="Zurück zur Home"
                         >
-                            <ArrowLeft size={19} strokeWidth={2.5} />
+                            <ArrowLeft size={20} strokeWidth={2.5} />
                         </button>
                         <div>
                             <span 
@@ -1045,7 +1057,7 @@ export default function GrienShopPage() {
                         {/* ORDERS & INVOICES BUTTON */}
                         <button
                             onClick={() => setIsOrdersOpen(true)}
-                            className="relative w-10 h-10 rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
+                            className="relative w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
                             style={{ 
                                 backgroundColor: isDark ? '#161B17' : '#F1F5F9',
                                 border: `1.5px solid ${C.borderMain}`,
@@ -1054,7 +1066,7 @@ export default function GrienShopPage() {
                             title="Meine Bestellungen & Rechnungen"
                             aria-label="Meine Bestellungen & Rechnungen"
                         >
-                            <Receipt size={18} strokeWidth={2.4} style={{ color: C.textPrimary }} />
+                            <Receipt size={19} strokeWidth={2.4} style={{ color: C.textPrimary }} />
                             {orders.length > 0 && (
                                 <motion.span 
                                     initial={{ scale: 0 }}
@@ -1076,7 +1088,7 @@ export default function GrienShopPage() {
                                 setCartStep('cart');
                                 setIsCartOpen(true);
                             }}
-                            className="relative w-10 h-10 rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg cursor-pointer"
+                            className="relative w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg cursor-pointer"
                             style={{ 
                                 backgroundColor: isDark ? '#FFFFFF' : '#0F172A',
                                 border: `1.5px solid ${isDark ? '#FFFFFF' : '#0F172A'}`,
@@ -1084,7 +1096,7 @@ export default function GrienShopPage() {
                             }}
                             aria-label="Warenkorb öffnen"
                         >
-                            <ShoppingBag size={19} strokeWidth={2.5} style={{ color: isDark ? '#0F172A' : '#FFFFFF' }} />
+                            <ShoppingBag size={20} strokeWidth={2.5} style={{ color: isDark ? '#0F172A' : '#FFFFFF' }} />
                             {totalItemsCount > 0 ? (
                                 <motion.span 
                                     initial={{ scale: 0 }}
@@ -1282,7 +1294,7 @@ export default function GrienShopPage() {
                                 <div 
                                     className="relative aspect-square w-full overflow-hidden cursor-pointer"
                                     style={{ backgroundColor: '#0B0F0C' }}
-                                    onClick={() => setSelectedProduct(product)}
+                                    onClick={() => handleOpenProductDetail(product)}
                                 >
                                     <img 
                                         src={product.image} 
@@ -1316,7 +1328,7 @@ export default function GrienShopPage() {
 
                                 {/* DETAILS */}
                                 <div className="p-4 flex-1 flex flex-col justify-between">
-                                    <div onClick={() => setSelectedProduct(product)} className="cursor-pointer">
+                                    <div onClick={() => handleOpenProductDetail(product)} className="cursor-pointer">
                                         <span 
                                             className="text-[10px] font-black uppercase tracking-wider"
                                             style={{ color: isDark ? C.brandGreen : C.emeraldAccent }}
@@ -1426,13 +1438,13 @@ export default function GrienShopPage() {
                             {/* Close button */}
                             <button
                                 onClick={() => setSelectedProduct(null)}
-                                className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-black/70 text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                                className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-black/80 hover:bg-black text-white flex items-center justify-center hover:scale-110 active:scale-95 transition-all cursor-pointer border border-white/20 shadow-lg"
                             >
                                 <X size={18} />
                             </button>
 
-                            {/* Image Header with Multi-Image Support */}
-                            <div className="relative h-64 md:h-72 w-full overflow-hidden bg-slate-900 group">
+                            {/* Image Header with Multi-Image Support & High-Clarity Ambient Display */}
+                            <div className="relative h-80 sm:h-96 md:h-[400px] w-full overflow-hidden flex items-center justify-center bg-gradient-to-b from-[#0e1610] via-[#050806] to-[#0B0F0C] group select-none">
                                 {(() => {
                                     const pImages = (Array.isArray(selectedProduct.images) && selectedProduct.images.length > 0)
                                         ? selectedProduct.images
@@ -1440,11 +1452,21 @@ export default function GrienShopPage() {
                                     const currImg = pImages[selectedProductImgIdx] || selectedProduct.image;
                                     return (
                                         <>
+                                            {/* Ambient blurred glow in the background */}
+                                            <img 
+                                                src={currImg} 
+                                                alt=""
+                                                aria-hidden="true"
+                                                className="absolute inset-0 w-full h-full object-cover filter blur-3xl opacity-30 scale-125 pointer-events-none"
+                                            />
+
+                                            {/* Foreground crisp uncropped product image */}
                                             <img 
                                                 src={currImg} 
                                                 alt={selectedProduct.name}
-                                                className="w-full h-full object-cover transition-all duration-300"
+                                                className="relative z-10 max-h-full max-w-full object-contain p-5 drop-shadow-[0_16px_35px_rgba(0,0,0,0.9)] transition-all duration-300 mx-auto"
                                             />
+
                                             {pImages.length > 1 && (
                                                 <>
                                                     <button
@@ -1453,7 +1475,7 @@ export default function GrienShopPage() {
                                                             e.stopPropagation();
                                                             setSelectedProductImgIdx(prev => (prev > 0 ? prev - 1 : pImages.length - 1));
                                                         }}
-                                                        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center transition-all cursor-pointer shadow"
+                                                        className="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/80 hover:bg-black text-white flex items-center justify-center transition-all cursor-pointer shadow-xl border border-white/10"
                                                     >
                                                         <ChevronLeft size={18} />
                                                     </button>
@@ -1463,11 +1485,11 @@ export default function GrienShopPage() {
                                                             e.stopPropagation();
                                                             setSelectedProductImgIdx(prev => (prev < pImages.length - 1 ? prev + 1 : 0));
                                                         }}
-                                                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/70 hover:bg-black text-white flex items-center justify-center transition-all cursor-pointer shadow"
+                                                        className="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/80 hover:bg-black text-white flex items-center justify-center transition-all cursor-pointer shadow-xl border border-white/10"
                                                     >
                                                         <ChevronRight size={18} />
                                                     </button>
-                                                    <span className="absolute bottom-3 right-3 z-10 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-black/80 text-white border border-white/20 backdrop-blur-sm">
+                                                    <span className="absolute bottom-3 right-3 z-30 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-black/85 text-white border border-white/20 backdrop-blur-md shadow">
                                                         {selectedProductImgIdx + 1} / {pImages.length}
                                                     </span>
                                                 </>
@@ -1476,7 +1498,7 @@ export default function GrienShopPage() {
                                     );
                                 })()}
                                 <div 
-                                    className="absolute inset-0 bg-gradient-to-t via-transparent to-transparent pointer-events-none" 
+                                    className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t to-transparent pointer-events-none z-10" 
                                     style={{ backgroundImage: `linear-gradient(to top, ${C.cardBg}, transparent)` }}
                                 />
                             </div>
@@ -1589,11 +1611,11 @@ export default function GrienShopPage() {
                                 >
                                     <div className="flex items-center gap-2">
                                         <Truck size={14} style={{ color: C.brandGreen }} />
-                                        <span>Schneller Grien Shuttle Versand</span>
+                                        <span>{selectedProduct.perk1 || 'Schneller Grien Shuttle Versand'}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <RefreshCw size={14} style={{ color: C.brandGreen }} />
-                                        <span>30 Tage kostenlose Rückgabe</span>
+                                        <span>{selectedProduct.perk2 || '30 Tage kostenlose Rückgabe'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -1816,7 +1838,7 @@ export default function GrienShopPage() {
                                                     <span className="font-bold" style={{ color: C.textPrimary }}>{subtotal.toFixed(2)} €</span>
                                                 </div>
                                                 <div className="flex justify-between" style={{ color: C.textSecondary }}>
-                                                    <span>Chauffeur Express-Lieferung:</span>
+                                                    <span>Versandkosten:</span>
                                                     <span className="font-bold" style={{ color: C.brandGreen }}>Kostenlos</span>
                                                 </div>
                                                 <div 
@@ -2424,12 +2446,14 @@ export default function GrienShopPage() {
                                 borderLeft: `1.5px solid ${C.borderMain}`
                             }}
                         >
-                            {/* Drawer Header */}
+                            {/* Drawer Header with Safe Area for Mobile */}
                             <div 
-                                className="px-6 py-5 flex items-center justify-between shrink-0"
+                                className="px-6 flex items-center justify-between shrink-0"
                                 style={{ 
                                     borderBottom: `1px solid ${C.borderMain}`,
-                                    backgroundColor: isDark ? '#080C0A' : '#F8FAFC'
+                                    backgroundColor: isDark ? '#080C0A' : '#F8FAFC',
+                                    paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1.25rem)',
+                                    paddingBottom: '1.25rem'
                                 }}
                             >
                                 <div className="flex items-center gap-3">
@@ -2757,7 +2781,7 @@ export default function GrienShopPage() {
                                         <span className="font-semibold">{((selectedInvoiceOrder.total || selectedInvoiceOrder.subtotal || 0) - ((selectedInvoiceOrder.total || selectedInvoiceOrder.subtotal || 0) / 1.19)).toFixed(2)} €</span>
                                     </div>
                                     <div className="flex justify-between text-slate-600">
-                                        <span>Grien Chauffeur Expressversand:</span>
+                                        <span>Versandkosten:</span>
                                         <span className="font-semibold text-emerald-600">Kostenlos (0,00 €)</span>
                                     </div>
                                     <div className="flex justify-between text-base font-black text-slate-950 pt-2 border-t border-slate-200">

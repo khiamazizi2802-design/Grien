@@ -49,6 +49,7 @@ import {
     Bell,
     Heart,
     ShoppingBag,
+    Gift,
     Users,
     Trophy,
     Car,
@@ -83,6 +84,33 @@ const RenderIcon = ({ icon, size }) => {
 
 const Home = () => {
     const { logout, login, user } = useAuth();
+    const [publicSupportEmail, setPublicSupportEmail] = useState(() => localStorage.getItem('grien_public_support_email') || 'support@grien.app');
+    const [customerTier, setCustomerTier] = useState(() => localStorage.getItem('grien_customer_tier') || 'diamond');
+
+    useEffect(() => {
+        const email = user?.email || 'khiamazizi2802@gmail.com';
+        fetch(`http://localhost:3001/api/customer/tier?email=${encodeURIComponent(email)}`)
+            .then(r => r.json())
+            .then(d => {
+                if (d.success && d.tier) {
+                    setCustomerTier(d.tier);
+                    localStorage.setItem('grien_customer_tier', d.tier);
+                }
+            })
+            .catch(() => {});
+    }, [user?.email]);
+
+    useEffect(() => {
+        fetch('http://localhost:3001/api/company/support-email')
+            .then(r => r.json())
+            .then(d => {
+                if (d.success && d.email) {
+                    setPublicSupportEmail(d.email);
+                    localStorage.setItem('grien_public_support_email', d.email);
+                }
+            })
+            .catch(() => {});
+    }, []);
     const navigate = useNavigate();
     const { t, setLang, lang, dir } = useLanguage();
     
@@ -535,17 +563,10 @@ const Home = () => {
     const { isFTDOnly, setIsFTDOnly } = useRide();
 
     const safeNotch = isNaN(notchAdjustment) ? 0 : notchAdjustment;
-    const safeTopStyle = useSafeArea ? `calc(var(--safe-top, 0px) + ${safeNotch}px)` : `${safeNotch}px`;
-    const safeHeightStyle = useSafeArea ? `calc(100% - (var(--safe-top, 0px) + ${safeNotch}px))` : `calc(100% - ${safeNotch}px)`;
 
     return (
         <div 
-            className="absolute left-0 right-0 bottom-0 overflow-hidden font-sans text-[var(--text-primary)] flex flex-col bg-[var(--bg-primary)] transition-all duration-300"
-            style={{
-                top: safeTopStyle,
-                height: safeHeightStyle,
-                minHeight: '100%'
-            }}
+            className="fixed inset-0 overflow-hidden font-sans text-[var(--text-primary)] flex flex-col bg-[var(--bg-primary)] select-none overscroll-none"
         >
             {/* Account Deletion Protocol Grace Period Lockdown Screen */}
             <AnimatePresence>
@@ -634,25 +655,41 @@ const Home = () => {
                 )}
             </div>
 
-            {/* UI Overlay - Top Column */}
+            {/* UI Overlay - Top Column (Fixed and Locked in Place on iPhone 16 Pro Max & All Mobile) */}
             <header 
-                className="relative z-20 px-8 pb-8 flex justify-between items-start"
+                className="fixed top-0 left-0 right-0 z-40 px-6 sm:px-8 flex justify-between items-center pointer-events-auto"
                 style={{
-                    paddingTop: `calc(${useSafeArea ? 'env(safe-area-inset-top, 0px)' : '0px'} + ${notchAdjustment}px + 1.25rem)`
+                    paddingTop: `calc(${useSafeArea ? 'env(safe-area-inset-top, 0px)' : '0px'} + ${safeNotch}px + 0.75rem)`,
+                    paddingBottom: '0.75rem',
+                    paddingLeft: 'max(1.5rem, env(safe-area-inset-left, 0px))',
+                    paddingRight: 'max(1.5rem, env(safe-area-inset-right, 0px))',
+                    background: 'linear-gradient(180deg, rgba(8, 10, 9, 0.96) 0%, rgba(8, 10, 9, 0.75) 65%, rgba(8, 10, 9, 0) 100%)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)'
                 }}
             >
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => setActiveSheet('profile')}
-                        className="w-14 h-14 rounded-2xl border-2 border-[var(--accent-primary)] flex flex-col items-center justify-center p-0 overflow-hidden shadow-xl hover:scale-105 active:scale-95 transition-all"
+                        className="w-14 h-14 min-w-[56px] min-h-[56px] rounded-2xl border-2 border-[var(--accent-primary)] flex flex-col items-center justify-center p-0 overflow-hidden shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                        aria-label="Profil öffnen"
                     >
-                        <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'Alex'}`} alt="Profile" className="w-full h-full object-cover relative z-10" />
+                        {user?.avatar && !user.avatar.includes("dicebear") ? (
+                            <img src={user.avatar} alt="Profile" className="w-full h-full object-cover relative z-10" />
+                        ) : null}
                     </button>
 
-                    <div>
+                    <div className="flex items-center gap-2">
                         <h1 className="text-2xl font-black italic tracking-tighter text-[var(--text-primary)] uppercase">
                             {user?.name ? user.name.split(' ')[0] : userInfo.firstName}
                         </h1>
+                        {(customerTier === '10k' || customerTier === 'diamond' || customerTier === 'paid_diamond') ? (
+                            <span className="w-3.5 h-3.5 rounded-full bg-white shadow-[0_0_16px_rgba(255,255,255,0.95)] border-2 border-white/80 shrink-0" title="10K Founder / Diamond Member" />
+                        ) : (customerTier === '50k' || customerTier === 'gold' || customerTier === 'paid_gold') ? (
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#FFD700] shadow-[0_0_12px_#FFD700] shrink-0" title="50K VIP Member" />
+                        ) : (
+                            <span className="w-2.5 h-2.5 rounded-full bg-[#00A3FF] shadow-[0_0_10px_#00A3FF] shrink-0" title="Normal Member" />
+                        )}
                     </div>
                 </div>
                 
@@ -660,24 +697,33 @@ const Home = () => {
                     {/* Inbox / Messages Button */}
                     <button
                         onClick={() => navigate('/messages')}
-                        className="w-12 h-12 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-main)] flex items-center justify-center relative shadow-lg hover:scale-105 active:scale-95 transition-all text-[var(--accent-primary)]"
+                        className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-main)] flex items-center justify-center relative shadow-lg hover:scale-105 active:scale-95 transition-all text-[var(--accent-primary)] cursor-pointer"
+                        aria-label="Nachrichten öffnen"
                     >
                         <div className="absolute -top-1 -right-1 w-4 h-4 bg-brand rounded-full border-2 border-[var(--bg-primary)] z-20 shadow-md animate-pulse" style={{ backgroundColor: 'var(--brand)' }} />
                         <MessageSquare size={20} className="group-hover:scale-110 transition-transform" />
                     </button>
 
-                    {/* Language Switcher */}
+                    {/* Language Switcher / Posts */}
                     <button
                         onClick={() => setActiveSheet('posts')}
-                        className="w-12 h-12 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-main)] flex items-center justify-center relative shadow-lg hover:scale-105 active:scale-95 transition-all text-[var(--accent-primary)]"
+                        className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-main)] flex items-center justify-center relative shadow-lg hover:scale-105 active:scale-95 transition-all text-[var(--accent-primary)] cursor-pointer"
+                        aria-label="Feed & Posts"
                     >
                         <div className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--accent-primary)] rounded-full border-2 border-[var(--bg-primary)] z-20 shadow-md" />
                         <Globe size={20} className="group-hover:rotate-12 transition-transform" />
                     </button>
-
-                    
                 </div>
             </header>
+
+            {/* Invisible Top Spacer to keep Radar & Sheet alignments balanced */}
+            <div 
+                aria-hidden="true" 
+                className="shrink-0 pointer-events-none" 
+                style={{ 
+                    height: `calc(${useSafeArea ? 'env(safe-area-inset-top, 0px)' : '0px'} + ${safeNotch}px + 4.75rem)` 
+                }} 
+            />
 
             {/* Simulated Matching Overlay */}
             {isSearchingMatch && (
@@ -809,7 +855,7 @@ const Home = () => {
             </Sheet>
 
             <Sheet isOpen={activeSheet === 'profile'} onClose={() => { setActiveSheet(null); setProfileSubView(null); setHelpSubView(null); setServiceDetailView(null); setIsEditingProfile(false); setEditingPaymentId(null); }} className="rounded-t-[3rem]">
-                <div className="space-y-6 pb-12 px-2 overflow-y-auto max-h-[85vh]">
+                <div className="space-y-6 pb-20 px-2">
                     {!profileSubView ? (
                         <>
                             {/* Profile Header */}
@@ -817,14 +863,19 @@ const Home = () => {
                                 <div className="flex items-center gap-6">
                                     <div className="w-20 h-20 rounded-3xl p-1 shadow-xl relative group overflow-hidden"
                                         style={{ background: 'var(--accent-primary)', boxShadow: '0 0 24px var(--accent-primary-glow)' }}>
-                                        <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'Alex'}`} alt="Me" className="w-full h-full rounded-2xl transition-transform group-hover:scale-110" style={{ background: 'var(--bg-secondary)' }} />
+                                        {user?.avatar && !user.avatar.includes("dicebear") ? (
+                                            <img src={user.avatar} alt="Me" className="w-full h-full rounded-2xl transition-transform group-hover:scale-110" style={{ background: 'var(--bg-secondary)' }} />
+                                        ) : null}
                                     </div>
-                                    <div>
-                                        <h3 className="text-2xl font-black italic tracking-tighter uppercase">{userInfo.firstName} <span className="text-[10px] md:text-xs lg:text-sm ml-2 opacity-50 font-bold tracking-widest leading-none align-middle border border-white/10 px-2 py-0.5 rounded-md">#{user?.id || '482X'}</span></h3>
-                                        <div className="flex items-center gap-2">
-                                            <p className="font-black uppercase tracking-[0.2em] text-[10px] md:text-xs lg:text-sm italic" style={{ color: 'var(--accent-primary)' }}>{t('premiumStatus')}</p>
-                                            <div className="w-1 h-1 rounded-full bg-[var(--accent-primary)]" />
-                                        </div>
+                                    <div className="flex items-center gap-3">
+                                        <h3 className="text-2xl font-black italic tracking-tighter uppercase">{userInfo.firstName}</h3>
+                                        {(customerTier === '10k' || customerTier === 'diamond' || customerTier === 'paid_diamond') ? (
+                                            <span className="w-3.5 h-3.5 rounded-full bg-white shadow-[0_0_16px_rgba(255,255,255,0.95)] border-2 border-white/80 shrink-0" title="10K Founder / Diamond Member" />
+                                        ) : (customerTier === '50k' || customerTier === 'gold' || customerTier === 'paid_gold') ? (
+                                            <span className="w-3 h-3 rounded-full bg-[#FFD700] shadow-[0_0_12px_#FFD700] shrink-0" title="50K VIP Member" />
+                                        ) : (
+                                            <span className="w-2.5 h-2.5 rounded-full bg-[#00A3FF] shadow-[0_0_10px_#00A3FF] shrink-0" title="Normal Member" />
+                                        )}
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -1650,7 +1701,7 @@ const Home = () => {
                                             <div className="flex items-center gap-4 mb-2">
                                                 <div className="p-3 bg-brand/20 rounded-2xl text-brand"><Zap size={24} /></div>
                                                 <div>
-                                                    <h4 className="text-sm font-black italic uppercase">Green Services v1.2</h4>
+                                                    <h4 className="text-sm font-black italic uppercase">Green Services v1.3</h4>
                                                     <p className="text-[10px] md:text-xs lg:text-sm font-black uppercase text-[var(--text-muted)] tracking-widest">Premium Core Network</p>
                                                 </div>
                                             </div>
@@ -1662,8 +1713,8 @@ const Home = () => {
                                                     { id: 'trips', label: 'Premium Trips', desc: 'State-of-the-art electric & hybrid rides', icon: Car },
                                                     { id: 'tickets', label: 'VIP Tickets', desc: 'Access to clubs, bars & concert events', icon: Trophy },
                                                     { id: 'rooms', label: 'Luxury Rooms', desc: 'Direct booking of first-class hotel suites', icon: BedDouble },
-                                                    { id: 'order', label: 'Pre-Orders', desc: 'Pre-order food & drinks directly in-app', icon: Utensils },
-                                                    { id: 'waiter', label: 'VIP Waiter Call', desc: 'Call host directly to your table', icon: Bell }
+                                                    { id: 'shop', label: 'Grien Shop', desc: 'Streetwear, innovative Gadgets & Lifestyle', icon: ShoppingBag },
+                                                    { id: 'gifts', label: 'VIP Düfte & Boxen', desc: 'Midnight Emerald Parfüm & VIP Gift Sets', icon: Gift }
                                                 ].map(service => (
                                                     <button 
                                                         key={service.id}
@@ -1737,37 +1788,37 @@ const Home = () => {
                                                     </button>
                                                 </>
                                             )}
-                                            {serviceDetailView === 'order' && (
+                                            {serviceDetailView === 'shop' && (
                                                 <>
-                                                    <div className="w-20 h-20 bg-brand/10 rounded-[2rem] mx-auto flex items-center justify-center text-brand"><Utensils size={40} /></div>
-                                                    <h4 className="text-2xl font-black italic tracking-tighter uppercase text-brand">Pre-Orders</h4>
+                                                    <div className="w-20 h-20 bg-brand/10 rounded-[2rem] mx-auto flex items-center justify-center text-brand"><ShoppingBag size={40} /></div>
+                                                    <h4 className="text-2xl font-black italic tracking-tighter uppercase text-brand">Grien Shop</h4>
                                                     <div className="space-y-4 text-xs md:text-sm lg:text-base font-bold uppercase tracking-widest text-[var(--text-muted)] leading-relaxed text-left max-w-sm mx-auto">
-                                                        <p className="text-[var(--text-primary)]">🍸 Keine Warteschlangen</p>
-                                                        <p className="text-[10px] md:text-xs lg:text-sm pl-6 font-normal">Speisen und Getränke vorab im Club oder direkt am Stadionplatz bestellen und bezahlen.</p>
-                                                        <p className="text-[var(--text-primary)]">⚡ Express Abholung</p>
-                                                        <p className="text-[10px] md:text-xs lg:text-sm pl-6 font-normal">Schnelle Zubereitung an reservierten Terminals ohne Barzahlungs-Stress.</p>
-                                                        <p className="text-[var(--text-primary)]">🔐 Abrechnungsgarantie</p>
-                                                        <p className="text-[10px] md:text-xs lg:text-sm pl-6 font-normal">Storno- und Rückerstattungsanträge werden lückenlos innerhalb von 3 Werktagen abgewickelt.</p>
+                                                        <p className="text-[var(--text-primary)]">🛍️ Offizielle Kollektion</p>
+                                                        <p className="text-[10px] md:text-xs lg:text-sm pl-6 font-normal">Handverlesene Streetwear, innovative Tech-Gadgets und hochwertige Lifestyle-Artikel.</p>
+                                                        <p className="text-[var(--text-primary)]">⚡ Express Shuttle Versand</p>
+                                                        <p className="text-[10px] md:text-xs lg:text-sm pl-6 font-normal">Blitzschnelle Zustellung direkt an deinen Wunschort oder während deiner First-Class Fahrt.</p>
+                                                        <p className="text-[var(--text-primary)]">📄 Offizielle PDF-Rechnung</p>
+                                                        <p className="text-[10px] md:text-xs lg:text-sm pl-6 font-normal">Vollständige deutsche Rechnung nach § 14 UStG mit automatischer MwSt.-Ausweisung.</p>
                                                     </div>
-                                                    <button onClick={() => { setActiveSheet(null); setServiceDetailView(null); navigate('/greens'); }} className="w-full py-5 bg-brand text-dark-900 rounded-[2rem] text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all">
-                                                        Karte Ansehen
+                                                    <button onClick={() => { setActiveSheet(null); setServiceDetailView(null); navigate('/shop'); }} className="w-full py-5 bg-brand text-dark-900 rounded-[2rem] text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all">
+                                                        Zum Grien Shop
                                                     </button>
                                                 </>
                                             )}
-                                            {serviceDetailView === 'waiter' && (
+                                            {serviceDetailView === 'gifts' && (
                                                 <>
-                                                    <div className="w-20 h-20 bg-brand/10 rounded-[2rem] mx-auto flex items-center justify-center text-brand"><Bell size={40} /></div>
-                                                    <h4 className="text-2xl font-black italic tracking-tighter uppercase text-brand">VIP Waiter Call</h4>
+                                                    <div className="w-20 h-20 bg-brand/10 rounded-[2rem] mx-auto flex items-center justify-center text-brand"><Gift size={40} /></div>
+                                                    <h4 className="text-2xl font-black italic tracking-tighter uppercase text-brand">VIP Düfte & Boxen</h4>
                                                     <div className="space-y-4 text-xs md:text-sm lg:text-base font-bold uppercase tracking-widest text-[var(--text-muted)] leading-relaxed text-left max-w-sm mx-auto">
-                                                        <p className="text-[var(--text-primary)]">🛎️ Kellner Rufen</p>
-                                                        <p className="text-[10px] md:text-xs lg:text-sm pl-6 font-normal">Rufe den Tischservice in erstklassigen Partner-Venues mit nur einem Klick zu deinem Tisch.</p>
-                                                        <p className="text-[var(--text-primary)]">🤵 Sofortiger Service</p>
-                                                        <p className="text-[10px] md:text-xs lg:text-sm pl-6 font-normal">Kein Suchen oder Warten – schnelle Orderübermittlung direkt an das Serviceteam.</p>
-                                                        <p className="text-[var(--text-primary)]">🛡️ Qualitätssicherung</p>
-                                                        <p className="text-[10px] md:text-xs lg:text-sm pl-6 font-normal">Unsere Partnergarantie verspricht stets erstklassige Betreuung. Reklamationsprüfungen in 3 Werktagen.</p>
+                                                        <p className="text-[var(--text-primary)]">✨ Signature Düfte</p>
+                                                        <p className="text-[10px] md:text-xs lg:text-sm pl-6 font-normal">Exklusives Parfüm Grien N°1 „Midnight Emerald“ der First-Class Flotte.</p>
+                                                        <p className="text-[var(--text-primary)]">🎁 VIP Geschenkboxen</p>
+                                                        <p className="text-[10px] md:text-xs lg:text-sm pl-6 font-normal">Luxuriöse Präsent-Sets und digitale Gutscheinkarten für besondere Anlässe.</p>
+                                                        <p className="text-[var(--text-primary)]">🛡️ 30 Tage Rückgabegarantie</p>
+                                                        <p className="text-[10px] md:text-xs lg:text-sm pl-6 font-normal">Kostenfreie Rückgabe bei ungeöffneten Artikeln und 100% Original-Garantie.</p>
                                                     </div>
-                                                    <button onClick={() => { setActiveSheet(null); setServiceDetailView(null); navigate('/greens'); }} className="w-full py-5 bg-brand text-dark-900 rounded-[2rem] text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all">
-                                                        Kellner Rufen
+                                                    <button onClick={() => { setActiveSheet(null); setServiceDetailView(null); navigate('/shop'); }} className="w-full py-5 bg-brand text-dark-900 rounded-[2rem] text-[10px] md:text-xs lg:text-sm font-black uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all">
+                                                        Kollektion Ansehen
                                                     </button>
                                                 </>
                                             )}
@@ -1787,21 +1838,19 @@ const Home = () => {
                                         <Mail size={32} />
                                     </div>
                                     <div>
-                                        <h4 className="text-2xl font-black italic tracking-tighter uppercase text-brand">GreenEmail Access</h4>
+                                        <h4 className="text-2xl font-black italic tracking-tighter uppercase text-brand">Grien Email Access</h4>
                                         <p className="text-xs md:text-sm lg:text-base text-[var(--text-muted)] font-black uppercase tracking-widest mt-2 leading-relaxed">
                                             Send your official inquiries to our priority support channel:
                                         </p>
-                                        <div className="mt-4 p-4 bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-main)] group hover:border-brand/50 transition-all cursor-pointer">
-                                            <p className="text-lg font-black italic tracking-tight text-[var(--text-primary)]">support@greenemail.de</p>
-                                        </div>
+                                        <a href={`mailto:${publicSupportEmail}`} className="mt-4 p-4 bg-[var(--bg-primary)] rounded-2xl border border-[var(--border-main)] group hover:border-brand/50 transition-all cursor-pointer block">
+                                            <p className="text-lg font-black italic tracking-tight text-[var(--text-primary)] group-hover:text-brand transition-colors">{publicSupportEmail}</p>
+                                        </a>
                                     </div>
-                                    <p className="text-[8px] md:text-[10px] lg:text-xs text-[var(--text-muted)] font-black uppercase tracking-[0.2em]">Response time: ~15 minutes</p>
+                                    <p className="text-[8px] md:text-[10px] lg:text-xs text-[var(--text-muted)] font-black uppercase tracking-[0.2em]">Response time: 24 hours</p>
                                 </div>
                             )}
 
-                            <p className="text-[8px] md:text-[10px] lg:text-xs text-gray-600 text-center uppercase font-black tracking-widest px-8 mt-auto italic">
-                                Green is committed to secure and transparent passenger transport services across Germany.
-                            </p>
+                            
                         </div>
                     ) : (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -1819,7 +1868,9 @@ const Home = () => {
                             {/* Profile Customization Section */}
                             <div className="flex gap-4 p-4 bg-[var(--bg-secondary)]/50 border border-white/5 rounded-3xl">
                                 <div className="w-20 h-20 rounded-2xl bg-dark-900 border-2 border-brand/20 overflow-hidden shrink-0">
-                                    <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'Alex'}`} alt="Me" className="w-full h-full" />
+                                    {user?.avatar && !user.avatar.includes("dicebear") ? (
+                                        <img src={user.avatar} alt="Me" className="w-full h-full" />
+                                    ) : null}
                                 </div>
                                 <div className="flex flex-col justify-center gap-3 flex-1">
                                     <div className="grid grid-cols-1 gap-2">

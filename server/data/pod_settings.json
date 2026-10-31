@@ -1,0 +1,10 @@
+{
+  "provider": "printify",
+  "apiKey": "",
+  "shopId": "",
+  "autoSync": true,
+  "defaultMarginPercent": 60,
+  "lastSyncedAt": null,
+  "connectedShopName": null,
+  "status": "unconnected"
+}

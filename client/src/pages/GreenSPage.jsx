@@ -353,7 +353,9 @@ const GreenSPage = ({ embedMode = false, onCloseEmbed }) => {
                                 </motion.button>
                             )}
                             <div className="w-12 h-12 rounded-full border-2 border-brand/20 p-1 overflow-hidden">
-                                 <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'Alex'}`} className="w-full h-full rounded-full" alt="profile" />
+                                 {user?.avatar && !user.avatar.includes("dicebear") ? (
+                                     <img src={user.avatar} className="w-full h-full rounded-full" alt="profile" />
+                                 ) : null}
                             </div>
                         </div>
                     </header>

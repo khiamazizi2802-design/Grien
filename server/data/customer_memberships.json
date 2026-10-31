@@ -1,0 +1,22 @@
+[
+  {
+    "id": "c-001",
+    "firstName": "Khiam",
+    "lastName": "Azizi",
+    "email": "khiamazizi2802@gmail.com",
+    "phone": "+49 176 62111103",
+    "role": "Chief Director",
+    "tier": "10k",
+    "isPaid": true,
+    "joinedDate": "2026-01-15",
+    "regNumber": 1,
+    "benefits": [
+      "Erste 10.000 Registrierungen (Gratis Diamond)",
+      "20% Shop & Shuttle Rabatt",
+      "First-Class Flottenzugang",
+      "VIP Event Einladungen",
+      "Prioritäts-Support"
+    ],
+    "updatedAt": "2026-10-30T07:37:00.000Z"
+  }
+]

@@ -2,13 +2,14 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
     FileText, Building2, Landmark, Receipt, MapPin,
-    Upload, Star, Image as ImageIcon,
+    Upload, Star, Truck, Image as ImageIcon,
     Sparkles, Shirt, Smartphone, Flame, Home as HomeIcon, Gift,
     Plus, Search, Filter, Edit3, Trash2, CheckCircle2, XCircle,
     Eye, EyeOff, Bot, Key, Copy, Check, ArrowUpRight, TrendingUp,
     Package, AlertTriangle, RefreshCw, ExternalLink, SlidersHorizontal,
     DollarSign, Percent, Layers, ShieldCheck, Terminal, HelpCircle, X,
-    ChevronLeft, ChevronRight
+    ChevronLeft, ChevronRight, MessageSquare, Send, Zap, CheckCheck, Bell,
+    Link as LinkIcon, Unlink, Globe, Lock, Unlock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -248,6 +249,36 @@ const AdminProductHub = () => {
     const [agentPingStatus, setAgentPingStatus] = useState(null);
     const [isPingingAgent, setIsPingingAgent] = useState(false);
 
+    // --- PRINT ON DEMAND (POD) & AI AGENT HUB STATE ---
+    const [agentModalTab, setAgentModalTab] = useState('pod'); // 'pod' | 'connect' | 'agent_gen' | 'customer_chat' | 'api'
+    const [podProducts, setPodProducts] = useState([]);
+    const [podLoading, setPodLoading] = useState(false);
+    const [podStatusFilter, setPodStatusFilter] = useState('all');
+    const [editingPodPrices, setEditingPodPrices] = useState({});
+    const [isGeneratingPod, setIsGeneratingPod] = useState(false);
+    const [agentNotification, setAgentNotification] = useState(null);
+
+    // POD Provider Settings (Printify / Printful / Gelato)
+    const [podSettings, setPodSettings] = useState({
+        provider: 'printify',
+        apiKey: '',
+        shopId: '',
+        connectedShopName: '',
+        status: 'unconnected'
+    });
+    const [isTestingPodKey, setIsTestingPodKey] = useState(false);
+    const [isSyncingPodLive, setIsSyncingPodLive] = useState(false);
+    const [showApiKey, setShowApiKey] = useState(false);
+    const [podTestResult, setPodTestResult] = useState(null);
+
+    // Customer Support Simulation
+    const [chatMessages, setChatMessages] = useState([
+        { id: 1, role: 'customer', text: 'Hallo, wie fallen die Grien Heavyweight Hoodies aus und wie lange dauert der Versand?', time: 'Gerade eben' },
+        { id: 2, role: 'agent', text: 'Hallo geschätzter Kunde, unsere Heavyweight Hoodies werden per Print-on-Demand frisch und ressourcenschonend gefertigt. Die Passform ist ein moderner Regular/Boxy Schnitt. Die versicherte Lieferung erfolgt mit DHL GoGreen in 3-5 Werktagen!', time: 'Vor 1 Sek.' }
+    ]);
+    const [chatInput, setChatInput] = useState('');
+    const [isChatSending, setIsChatSending] = useState(false);
+
     // Form state
     const fileInputRef = useRef(null);
     const [activePreviewImgIdx, setActivePreviewImgIdx] = useState(0);
@@ -260,6 +291,10 @@ const AdminProductHub = () => {
         originalPrice: '',
         costPrice: '',
         stock: '25',
+        rating: '5.0',
+        reviewsCount: '25',
+        perk1: 'Schneller Grien Shuttle Versand',
+        perk2: '30 Tage kostenlose Rückgabe',
         tag: 'Neu',
         description: '',
         image: PRESET_IMAGES[0].url,
@@ -298,9 +333,253 @@ const AdminProductHub = () => {
         }
     };
 
+    const fetchPodProducts = async () => {
+        setPodLoading(true);
+        try {
+            const res = await fetch('http://localhost:3001/api/shop/pod/products');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && Array.isArray(data.products)) {
+                    setPodProducts(data.products);
+                }
+            }
+        } catch (err) {
+            console.warn('POD fetch offline fallback');
+        } finally {
+            setPodLoading(false);
+        }
+    };
+
+    const handleApprovePod = async (podItem) => {
+        const customPrice = editingPodPrices[podItem.id] !== undefined ? Number(editingPodPrices[podItem.id]) : podItem.price;
+        try {
+            const res = await fetch(`http://localhost:3001/api/shop/pod/products/${podItem.id}/approve`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ price: customPrice })
+            });
+            const data = await res.json();
+            if (data.success) {
+                notify(`✅ "${podItem.name}" freigegeben für ${customPrice.toFixed(2)} €!`, 'success');
+                fetchPodProducts();
+                fetchProducts();
+            } else {
+                notify(data.error || 'Fehler bei der Freigabe', 'error');
+            }
+        } catch (err) {
+            notify('Verbindungsfehler bei Freigabe', 'error');
+        }
+    };
+
+    const handleRejectPod = async (podId) => {
+        try {
+            const res = await fetch(`http://localhost:3001/api/shop/pod/products/${podId}/reject`, {
+                method: 'PUT'
+            });
+            const data = await res.json();
+            if (data.success) {
+                notify('POD Entwurf abgelehnt.', 'success');
+                fetchPodProducts();
+            } else {
+                notify('Fehler beim Ablehnen', 'error');
+            }
+        } catch (err) {
+            notify('Fehler beim Ablehnen', 'error');
+        }
+    };
+
+    const handleAgentGeneratePod = async () => {
+        setIsGeneratingPod(true);
+        try {
+            const res = await fetch('http://localhost:3001/api/shop/pod/agent-generate', {
+                method: 'POST'
+            });
+            const data = await res.json();
+            if (data.success) {
+                setAgentNotification(data.notification || {
+                    title: '⚡ KI-Agent hat Produkt generiert!',
+                    message: `Neues Produkt "${data.product.name}" zur Freigabe bereit.`
+                });
+                notify(`⚡ KI-Agent: "${data.product.name}" generiert!`, 'success');
+                await fetchPodProducts();
+                setAgentModalTab('pod');
+                setPodStatusFilter('pending_approval');
+            } else {
+                notify('Fehler bei KI-Produktgenerierung', 'error');
+            }
+        } catch (err) {
+            notify('Fehler bei KI-Produktgenerierung', 'error');
+        } finally {
+            setIsGeneratingPod(false);
+        }
+    };
+
+    const handleSendCustomerChat = async (customText) => {
+        const textToSend = customText || chatInput;
+        if (!textToSend.trim()) return;
+
+        const userMsg = { id: Date.now(), role: 'customer', text: textToSend, time: 'Gerade eben' };
+        setChatMessages(prev => [...prev, userMsg]);
+        setChatInput('');
+        setIsChatSending(true);
+
+        try {
+            const res = await fetch('http://localhost:3001/api/shop/agent/customer-reply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: textToSend, customerName: 'Kunde' })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setChatMessages(prev => [
+                    ...prev,
+                    { id: Date.now() + 1, role: 'agent', text: data.reply, time: 'Gerade eben', intent: data.intent }
+                ]);
+            }
+        } catch (err) {
+            setChatMessages(prev => [
+                ...prev,
+                { id: Date.now() + 1, role: 'agent', text: 'Entschuldigung, der KI-Dienst ist kurz offline. Unser Support antwortet dir gleich!', time: 'Gerade eben' }
+            ]);
+        } finally {
+            setIsChatSending(false);
+        }
+    };
+
+    const handleRestorePod = async (podId) => {
+        try {
+            const res = await fetch(`http://localhost:3001/api/shop/pod/products/${podId}/restore`, {
+                method: 'PUT'
+            });
+            const data = await res.json();
+            if (data.success) {
+                notify('Produkt in Freigabe-Queue wiederhergestellt!', 'success');
+                fetchPodProducts();
+            } else {
+                notify(data.error || 'Fehler beim Wiederherstellen', 'error');
+            }
+        } catch (err) {
+            notify('Fehler beim Wiederherstellen', 'error');
+        }
+    };
+
+    const handleDeletePod = async (podId) => {
+        try {
+            const res = await fetch(`http://localhost:3001/api/shop/pod/products/${podId}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (data.success) {
+                notify('Produkt gelöscht.', 'success');
+                fetchPodProducts();
+            } else {
+                notify(data.error || 'Fehler beim Löschen', 'error');
+            }
+        } catch (err) {
+            notify('Fehler beim Löschen', 'error');
+        }
+    };
+
+    const fetchPodSettings = async () => {
+        try {
+            const res = await fetch('http://localhost:3001/api/shop/pod/settings');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.settings) {
+                    setPodSettings(data.settings);
+                }
+            }
+        } catch (e) {
+            console.warn('POD settings fetch fallback');
+        }
+    };
+
+    const handleSavePodSettings = async (customSettings) => {
+        const toSave = customSettings || podSettings;
+        try {
+            const res = await fetch('http://localhost:3001/api/shop/pod/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(toSave)
+            });
+            const data = await res.json();
+            if (data.success) {
+                notify('POD Einstellungen erfolgreich gespeichert!', 'success');
+                setPodSettings(data.settings);
+            }
+        } catch (err) {
+            notify('Fehler beim Speichern der POD-Einstellungen', 'error');
+        }
+    };
+
+    const handleTestPodConnection = async () => {
+        setIsTestingPodKey(true);
+        setPodTestResult(null);
+        try {
+            const res = await fetch('http://localhost:3001/api/shop/pod/test-connection', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    provider: podSettings.provider,
+                    apiKey: podSettings.apiKey,
+                    shopId: podSettings.shopId
+                })
+            });
+            const data = await res.json();
+            setPodTestResult({
+                ok: data.success,
+                msg: data.success ? data.message : (data.error || 'Verbindung fehlgeschlagen')
+            });
+            if (data.success) {
+                notify('✓ Verbindung erfolgreich hergestellt!', 'success');
+                fetchPodSettings();
+            } else {
+                notify(data.error || 'Authentifizierung fehlgeschlagen', 'error');
+            }
+        } catch (err) {
+            setPodTestResult({ ok: false, msg: `Netzwerkfehler: ${err.message}` });
+            notify('Netzwerkfehler beim Verbindungstest', 'error');
+        } finally {
+            setIsTestingPodKey(false);
+        }
+    };
+
+    const handleSyncLivePod = async () => {
+        setIsSyncingPodLive(true);
+        try {
+            const res = await fetch('http://localhost:3001/api/shop/pod/sync-live', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    provider: podSettings.provider,
+                    apiKey: podSettings.apiKey,
+                    shopId: podSettings.shopId
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                notify(`✓ ${data.message || 'Echte Artikel von Printify geladen!'}`, 'success');
+                await fetchPodProducts();
+                setAgentModalTab('pod');
+                setPodStatusFilter('pending_approval');
+            } else {
+                notify(data.error || 'Fehler beim Synchronisieren', 'error');
+                if (!podSettings.apiKey) {
+                    setAgentModalTab('connect');
+                }
+            }
+        } catch (err) {
+            notify('Netzwerkfehler beim Synchronisieren', 'error');
+        } finally {
+            setIsSyncingPodLive(false);
+        }
+    };
+
     useEffect(() => {
         fetchProducts();
         fetchInvoiceSettings();
+        fetchPodProducts();
+        fetchPodSettings();
     }, []);
 
     const handleOpenAddModal = (presetCategory = 'fashion') => {
@@ -312,6 +591,10 @@ const AdminProductHub = () => {
             originalPrice: '',
             costPrice: '',
             stock: '30',
+            rating: '5.0',
+            reviewsCount: '15',
+            perk1: 'Schneller Grien Shuttle Versand',
+            perk2: '30 Tage kostenlose Rückgabe',
             tag: 'Neu',
             description: '',
             image: PRESET_IMAGES[0].url,
@@ -337,6 +620,10 @@ const AdminProductHub = () => {
             originalPrice: product.originalPrice ? String(product.originalPrice) : '',
             costPrice: product.costPrice !== undefined ? String(product.costPrice) : '',
             stock: product.stock !== undefined ? String(product.stock) : '25',
+            rating: product.rating !== undefined ? String(product.rating) : '5.0',
+            reviewsCount: product.reviewsCount !== undefined ? String(product.reviewsCount) : '25',
+            perk1: product.perk1 || 'Schneller Grien Shuttle Versand',
+            perk2: product.perk2 || '30 Tage kostenlose Rückgabe',
             tag: product.tag || '',
             description: product.description || '',
             image: prodImages[0] || product.image || PRESET_IMAGES[0].url,
@@ -478,6 +765,10 @@ const AdminProductHub = () => {
             originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
             costPrice: formData.costPrice ? parseFloat(formData.costPrice) : null,
             stock: parseInt(formData.stock, 10) || 0,
+            rating: parseFloat(formData.rating) || 5.0,
+            reviewsCount: parseInt(formData.reviewsCount, 10) || 0,
+            perk1: formData.perk1 ? formData.perk1.trim() : 'Schneller Grien Shuttle Versand',
+            perk2: formData.perk2 ? formData.perk2.trim() : '30 Tage kostenlose Rückgabe',
             tag: formData.tag.trim(),
             description: formData.description.trim(),
             image: primaryImage,
@@ -803,6 +1094,69 @@ const AdminProductHub = () => {
                                         onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
                                         placeholder="Bestseller / Limitiert / Neu"
                                         className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-sm text-white focus:outline-none focus:border-[#00D084]"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Rating & Reviews Count */}
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                        <Star size={12} className="text-amber-400 fill-amber-400" />
+                                        <span>Bewertung (1.0 - 5.0)</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.05"
+                                        min="1.0"
+                                        max="5.0"
+                                        value={formData.rating}
+                                        onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
+                                        placeholder="5.0"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-sm text-white focus:outline-none focus:border-[#00D084]"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
+                                        Bewertungen Anzahl
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={formData.reviewsCount}
+                                        onChange={(e) => setFormData({ ...formData, reviewsCount: e.target.value })}
+                                        placeholder="77"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-sm text-white focus:outline-none focus:border-[#00D084]"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Service Highlights / Perks */}
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                        <Truck size={12} className="text-[#00D084]" />
+                                        <span>Highlight 1 (Versand)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.perk1}
+                                        onChange={(e) => setFormData({ ...formData, perk1: e.target.value })}
+                                        placeholder="Schneller Grien Shuttle Versand"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-[#00D084]"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                        <RefreshCw size={12} className="text-[#00D084]" />
+                                        <span>Highlight 2 (Rückgabe)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.perk2}
+                                        onChange={(e) => setFormData({ ...formData, perk2: e.target.value })}
+                                        placeholder="30 Tage kostenlose Rückgabe"
+                                        className="w-full px-3 py-2 bg-white/[0.04] border border-white/15 rounded-xl text-xs sm:text-sm text-white focus:outline-none focus:border-[#00D084]"
                                     />
                                 </div>
                             </div>
@@ -1372,9 +1726,18 @@ const AdminProductHub = () => {
         return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
     };
 
-    // RENDER AGENT MODAL VIA PORTAL
+    // RENDER AGENT & PRINT-ON-DEMAND MODAL VIA PORTAL
     const renderAgentModal = () => {
         if (!isAgentModalOpen) return null;
+
+        const pendingPodCount = podProducts.filter(p => p.status === 'pending_approval').length;
+        const approvedPodCount = podProducts.filter(p => p.status === 'approved').length;
+        const rejectedPodCount = podProducts.filter(p => p.status === 'rejected').length;
+
+        const filteredPods = podProducts.filter(item => {
+            if (podStatusFilter === 'all') return true;
+            return item.status === podStatusFilter;
+        });
 
         const modalContent = (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-hidden">
@@ -1382,150 +1745,875 @@ const AdminProductHub = () => {
                     initial={{ opacity: 0, scale: 0.95, y: 15 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 15 }}
-                    className="w-full max-w-3xl max-h-[90vh] flex flex-col bg-[#0B1324] border border-purple-500/30 rounded-3xl shadow-2xl overflow-hidden"
+                    className="w-full max-w-5xl max-h-[92vh] flex flex-col bg-[#0B1324] border border-purple-500/30 rounded-3xl shadow-2xl overflow-hidden"
                 >
-                    <div className="shrink-0 p-5 bg-gradient-to-r from-purple-900/30 via-indigo-900/20 to-transparent border-b border-white/10 flex items-center justify-between">
+                    {/* Header */}
+                    <div className="shrink-0 p-5 bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-[#0B1324] border-b border-white/10 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
-                                <Bot className="w-5 h-5 text-purple-400" />
+                            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 border border-purple-400/40 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                                <Bot className="w-5 h-5 text-white animate-pulse" />
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <h2 className="text-lg font-black text-white m-0">AGENT & REST API CONNECTION</h2>
+                                    <h2 className="text-lg font-black text-white m-0 tracking-tight">PRINT-ON-DEMAND & KI-AGENT CONTROL CENTER</h2>
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                                        Active Key
+                                        Autonomous Hub 2.0
                                     </span>
                                 </div>
                                 <p className="text-xs text-slate-400 mt-0.5">
-                                    Docke deinen externen KI-Agenten oder Automations-Bot direkt an den Grien Shop Hub an.
+                                    Verwalte POD-Kataloge (Printify/Gelato), bestimme Margen & lass den KI-Agenten Produkte erstellen und mit Kunden schreiben.
                                 </p>
                             </div>
                         </div>
                         <button
                             onClick={() => setIsAgentModalOpen(false)}
-                            className="p-2 rounded-xl text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 transition"
+                            className="p-2 rounded-xl text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 transition cursor-pointer"
                         >
                             <X className="w-5 h-5" />
                         </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-6 space-y-5 no-scrollbar">
-                        {/* Agent Secret Key Card */}
-                        <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2">
-                            <div className="flex items-center justify-between text-xs">
-                                <span className="font-bold text-slate-300 flex items-center gap-1.5">
-                                    <Key className="w-3.5 h-3.5 text-[#00D084]" />
-                                    Dein Agent Secret API Key
+                    {/* Navigation Tabs */}
+                    <div className="shrink-0 px-6 pt-3 bg-black/40 border-b border-white/10 flex items-center gap-2 overflow-x-auto no-scrollbar">
+                        <button
+                            onClick={() => setAgentModalTab('pod')}
+                            className={`px-4 py-2.5 rounded-t-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer border-b-2 ${
+                                agentModalTab === 'pod'
+                                    ? 'bg-purple-500/20 text-white border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]'
+                                    : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/5'
+                            }`}
+                        >
+                            <Package className="w-4 h-4 text-purple-400" />
+                            <span>POD Freigabe-Center</span>
+                            {pendingPodCount > 0 && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#FFD700] text-black">
+                                    {pendingPodCount} Neu
                                 </span>
-                                <span className="text-[11px] text-[#00D084]">Vollzugriff (CRUD & Bulk)</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="text"
-                                    readOnly
-                                    value={AGENT_DEFAULT_KEY}
-                                    className="flex-1 px-3 py-2 bg-black/50 border border-white/10 rounded-xl font-mono text-xs text-emerald-400 select-all"
-                                />
-                                <button
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(AGENT_DEFAULT_KEY);
-                                        setCopiedKey(true);
-                                        setTimeout(() => setCopiedKey(false), 2000);
-                                    }}
-                                    className="px-3.5 py-2 rounded-xl bg-[#00D084] text-black font-bold text-xs flex items-center gap-1.5 hover:bg-[#00B875] transition"
-                                >
-                                    {copiedKey ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                                    <span>{copiedKey ? 'Kopiert!' : 'Kopieren'}</span>
-                                </button>
-                            </div>
-                        </div>
+                            )}
+                        </button>
 
-                        {/* Interactive Test Trigger */}
-                        <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-between">
-                            <div>
-                                <div className="text-xs font-bold text-white flex items-center gap-2">
-                                    <Terminal className="w-4 h-4 text-purple-400" />
-                                    <span>Live Agent Health-Check</span>
+                        <button
+                            onClick={() => setAgentModalTab('connect')}
+                            className={`px-4 py-2.5 rounded-t-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer border-b-2 ${
+                                agentModalTab === 'connect'
+                                    ? 'bg-purple-500/20 text-white border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]'
+                                    : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/5'
+                            }`}
+                        >
+                            <LinkIcon className="w-4 h-4 text-cyan-400" />
+                            <span>🔌 Echte POD-Partner (Printify API)</span>
+                            <span className={`w-2 h-2 rounded-full ${podSettings.apiKey ? 'bg-emerald-400 shadow-[0_0_8px_#10B981]' : 'bg-amber-400 animate-pulse'}`}></span>
+                        </button>
+
+                        <button
+                            onClick={() => setAgentModalTab('agent_gen')}
+                            className={`px-4 py-2.5 rounded-t-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer border-b-2 ${
+                                agentModalTab === 'agent_gen'
+                                    ? 'bg-purple-500/20 text-white border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]'
+                                    : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/5'
+                            }`}
+                        >
+                            <Zap className="w-4 h-4 text-amber-400" />
+                            <span>⚡ KI-Agent Produkt-Ersteller</span>
+                        </button>
+
+                        <button
+                            onClick={() => setAgentModalTab('customer_chat')}
+                            className={`px-4 py-2.5 rounded-t-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer border-b-2 ${
+                                agentModalTab === 'customer_chat'
+                                    ? 'bg-purple-500/20 text-white border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]'
+                                    : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/5'
+                            }`}
+                        >
+                            <MessageSquare className="w-4 h-4 text-emerald-400" />
+                            <span>💬 KI-Kundenchat Support</span>
+                        </button>
+
+                        <button
+                            onClick={() => setAgentModalTab('api')}
+                            className={`px-4 py-2.5 rounded-t-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer border-b-2 ${
+                                agentModalTab === 'api'
+                                    ? 'bg-purple-500/20 text-white border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)]'
+                                    : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/5'
+                            }`}
+                        >
+                            <Key className="w-4 h-4 text-blue-400" />
+                            <span>🔑 REST API & Secrets</span>
+                        </button>
+                    </div>
+
+                    {/* Agent Notification Toast Bar (if present) */}
+                    {agentNotification && (
+                        <div className="shrink-0 p-3 bg-amber-500/15 border-b border-amber-500/30 flex items-center justify-between px-6">
+                            <div className="flex items-center gap-2.5 text-xs text-amber-200">
+                                <Bell className="w-4 h-4 text-amber-400 animate-bounce" />
+                                <div>
+                                    <strong className="text-white mr-1.5">{agentNotification.title}:</strong>
+                                    <span>{agentNotification.message}</span>
                                 </div>
-                                <p className="text-[11px] text-slate-400 mt-0.5">
-                                    Sendet einen Ping an <code className="text-purple-300">GET /api/shop/agent/status</code>
-                                </p>
                             </div>
                             <button
-                                onClick={handlePingAgent}
-                                disabled={isPingingAgent}
-                                className="px-4 py-2 rounded-xl bg-purple-500 text-white font-bold text-xs hover:bg-purple-600 transition flex items-center gap-1.5"
+                                onClick={() => {
+                                    setAgentModalTab('pod');
+                                    setPodStatusFilter('all');
+                                    setAgentNotification(null);
+                                }}
+                                className="px-3 py-1 bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-[11px] rounded-lg transition cursor-pointer"
                             >
-                                <RefreshCw className={`w-3.5 h-3.5 ${isPingingAgent ? 'animate-spin' : ''}`} />
-                                <span>Testen</span>
+                                Jetzt ansehen & freigeben →
                             </button>
                         </div>
+                    )}
 
-                        {agentPingStatus && (
-                            <div className={`p-3 rounded-xl border text-xs font-mono ${
-                                agentPingStatus.ok
-                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                                    : 'bg-red-500/10 border-red-500/30 text-red-300'
-                            }`}>
-                                {agentPingStatus.ok ? (
-                                    <div>
-                                        ✓ Operational (Latenz: {agentPingStatus.latency}ms) — {agentPingStatus.data.metrics.totalProducts} Produkte synchronisiert
+                    {/* Main Content Area */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+
+                        {/* TAB 1: POD FREIGABE-CENTER */}
+                        {agentModalTab === 'pod' && (
+                            <div className="space-y-5">
+                                {/* Provider Status Header Banner */}
+                                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-purple-950/20 to-black/40 border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${podSettings.apiKey ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
+                                            <Globe className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2 text-xs font-bold text-white">
+                                                <span>POD-Partner: <strong className="text-cyan-400 uppercase">{podSettings.provider}</strong></span>
+                                                <span className={`px-2 py-0.2 rounded-full text-[9px] font-black uppercase ${podSettings.apiKey ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}`}>
+                                                    {podSettings.apiKey ? '✓ Echte Live API verbunden' : 'Demo / Kein Key eingetragen'}
+                                                </span>
+                                            </div>
+                                            <div className="text-[11px] text-slate-400 mt-0.5">
+                                                {podSettings.connectedShopName ? `Verknüpfter Store: "${podSettings.connectedShopName}"` : 'Trage deinen API-Key ein, um echte Produkte direkt aus Printify zu laden.'}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setAgentModalTab('connect')}
+                                            className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-slate-200 transition cursor-pointer flex items-center gap-1.5"
+                                        >
+                                            <LinkIcon className="w-3.5 h-3.5 text-cyan-400" />
+                                            <span>API-Key verwalten</span>
+                                        </button>
+
+                                        <button
+                                            onClick={handleSyncLivePod}
+                                            disabled={isSyncingPodLive}
+                                            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-black font-extrabold text-xs shadow-lg shadow-cyan-500/20 transition cursor-pointer flex items-center gap-1.5"
+                                            title="Echte Artikel direkt aus Printify abrufen"
+                                        >
+                                            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingPodLive ? 'animate-spin' : ''}`} />
+                                            <span>{isSyncingPodLive ? 'Lade echte Artikel...' : 'Printify Live-Sync'}</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Filter Controls */}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.02] p-3 rounded-2xl border border-white/5">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <button
+                                            onClick={() => setPodStatusFilter('all')}
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                                podStatusFilter === 'all'
+                                                    ? 'bg-white/20 text-white shadow-md'
+                                                    : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                                            }`}
+                                        >
+                                            Alle ({podProducts.length})
+                                        </button>
+
+                                        <button
+                                            onClick={() => setPodStatusFilter('pending_approval')}
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                                                podStatusFilter === 'pending_approval'
+                                                    ? 'bg-[#FFD700] text-black shadow-lg shadow-[#FFD700]/20 font-black'
+                                                    : 'bg-white/5 text-slate-300 hover:bg-white/10'
+                                            }`}
+                                        >
+                                            <span>⏳ Wartet auf Freigabe</span>
+                                            <span className="px-1.5 py-0.2 bg-black/20 rounded-full text-[10px] font-black">
+                                                {pendingPodCount}
+                                            </span>
+                                        </button>
+
+                                        <button
+                                            onClick={() => setPodStatusFilter('approved')}
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                                                podStatusFilter === 'approved'
+                                                    ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20 font-black'
+                                                    : 'bg-white/5 text-slate-300 hover:bg-white/10'
+                                            }`}
+                                        >
+                                            <span>✅ Freigegeben</span>
+                                            <span className="px-1.5 py-0.2 bg-black/20 rounded-full text-[10px] font-black">
+                                                {approvedPodCount}
+                                            </span>
+                                        </button>
+
+                                        <button
+                                            onClick={() => setPodStatusFilter('rejected')}
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                                                podStatusFilter === 'rejected'
+                                                    ? 'bg-red-500 text-white shadow-lg shadow-red-500/20 font-black'
+                                                    : 'bg-white/5 text-slate-300 hover:bg-white/10'
+                                            }`}
+                                        >
+                                            <span>❌ Abgelehnt / Archiv</span>
+                                            <span className="px-1.5 py-0.2 bg-black/20 rounded-full text-[10px] font-black">
+                                                {rejectedPodCount}
+                                            </span>
+                                        </button>
+                                    </div>
+
+                                    <button
+                                        onClick={handleAgentGeneratePod}
+                                        disabled={isGeneratingPod}
+                                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-extrabold text-xs shadow-lg shadow-amber-400/20 transition flex items-center gap-2 cursor-pointer self-start sm:self-auto"
+                                    >
+                                        <Zap className={`w-3.5 h-3.5 ${isGeneratingPod ? 'animate-spin' : ''}`} />
+                                        <span>{isGeneratingPod ? 'KI generiert Artikel...' : '⚡ KI-Agent: Neues Produkt generieren'}</span>
+                                    </button>
+                                </div>
+
+                                {/* Product Cards Grid */}
+                                {filteredPods.length === 0 ? (
+                                    <div className="py-12 text-center bg-white/[0.02] border border-white/5 rounded-3xl p-8 space-y-3">
+                                        <Package className="w-10 h-10 text-slate-500 mx-auto" />
+                                        <h3 className="text-base font-bold text-white">Keine POD-Produkte in diesem Filter ({podStatusFilter})</h3>
+                                        <p className="text-xs text-slate-400 max-w-md mx-auto">
+                                            Klicke auf den Filter <strong>„Alle ({podProducts.length})“</strong>, um sämtliche Produkte zu sehen, oder starte den Live-Sync mit Printify!
+                                        </p>
+                                        <div className="flex items-center justify-center gap-3 pt-2">
+                                            <button
+                                                onClick={() => setPodStatusFilter('all')}
+                                                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition cursor-pointer"
+                                            >
+                                                Alle Produkte anzeigen
+                                            </button>
+                                            <button
+                                                onClick={() => setAgentModalTab('connect')}
+                                                className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-xs rounded-xl transition cursor-pointer"
+                                            >
+                                                Echte Printify API verbinden
+                                            </button>
+                                        </div>
                                     </div>
                                 ) : (
-                                    <div>✗ {agentPingStatus.msg}</div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {filteredPods.map((item) => {
+                                            const currentPrice = editingPodPrices[item.id] !== undefined 
+                                                ? Number(editingPodPrices[item.id]) 
+                                                : Number(item.price);
+                                            const profit = currentPrice - item.baseCost;
+                                            const margin = currentPrice > 0 ? ((profit / currentPrice) * 100).toFixed(0) : 0;
+                                            const isPending = item.status === 'pending_approval';
+                                            const isRejected = item.status === 'rejected';
+
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    className={`p-4 rounded-3xl bg-[#0F172A]/90 border transition-all flex flex-col justify-between space-y-3.5 ${
+                                                        isPending 
+                                                            ? 'border-amber-500/40 shadow-[0_0_25px_rgba(245,158,11,0.12)]' 
+                                                            : isRejected
+                                                            ? 'border-red-500/30 opacity-80'
+                                                            : 'border-white/10 hover:border-white/20'
+                                                    }`}
+                                                >
+                                                    {/* Image + Meta Row */}
+                                                    <div className="flex gap-3.5">
+                                                        <div className="relative w-28 h-28 rounded-2xl overflow-hidden bg-black/40 border border-white/10 shrink-0">
+                                                            <img
+                                                                src={item.image}
+                                                                alt={item.name}
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    e.target.onerror = null;
+                                                                    e.target.src = 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=400&q=80';
+                                                                }}
+                                                            />
+                                                            <div className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-sm text-[8px] font-black text-amber-300 uppercase">
+                                                                {item.tag || 'POD'}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex-1 min-w-0 space-y-1">
+                                                            <div className="flex items-center justify-between gap-1">
+                                                                <span className="text-[10px] font-black uppercase text-purple-400">
+                                                                    {item.podProvider || 'Printify / Gelato'}
+                                                                </span>
+                                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                                                                    isPending
+                                                                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
+                                                                        : item.status === 'approved'
+                                                                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                                                        : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                                                                }`}>
+                                                                    {isPending ? '⏳ Wartet auf Freigabe' : item.status === 'approved' ? '✅ Im Shop Aktiv' : '❌ Abgelehnt'}
+                                                                </span>
+                                                            </div>
+
+                                                            <h3 className="text-sm font-extrabold text-white truncate m-0" title={item.name}>
+                                                                {item.name}
+                                                            </h3>
+
+                                                            <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                                                                {item.description}
+                                                            </p>
+
+                                                            {/* Variants */}
+                                                            {item.variants && item.variants.length > 0 && (
+                                                                <div className="flex items-center gap-1 flex-wrap pt-0.5">
+                                                                    <span className="text-[9px] font-semibold text-slate-500">Größen:</span>
+                                                                    {item.variants.slice(0, 5).map(v => (
+                                                                        <span key={v} className="px-1.5 py-0.2 bg-white/5 border border-white/10 rounded text-[9px] text-slate-300 font-mono">
+                                                                            {v}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Financials & Price Setting Box */}
+                                                    <div className="p-3 rounded-2xl bg-black/40 border border-white/10 grid grid-cols-3 gap-2 text-center items-center">
+                                                        {/* Base Cost */}
+                                                        <div>
+                                                            <div className="text-[10px] text-slate-400 uppercase font-bold">POD Einkauf</div>
+                                                            <div className="text-sm font-black text-slate-300 font-mono mt-0.5">
+                                                                {item.baseCost ? Number(item.baseCost).toFixed(2) : '15.00'} €
+                                                            </div>
+                                                            <div className="text-[9px] text-slate-500">Druck & Textil</div>
+                                                        </div>
+
+                                                        {/* Editable Selling Price */}
+                                                        <div className="px-1">
+                                                            <div className="text-[10px] text-amber-400 uppercase font-black">Dein Verkaufspreis</div>
+                                                            <div className="flex items-center justify-center gap-1 mt-0.5">
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.5"
+                                                                    value={editingPodPrices[item.id] !== undefined ? editingPodPrices[item.id] : item.price}
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value;
+                                                                        setEditingPodPrices(prev => ({ ...prev, [item.id]: val }));
+                                                                    }}
+                                                                    className="w-20 px-1.5 py-1 text-center bg-black/70 border border-amber-500/50 rounded-lg text-xs font-black text-white font-mono focus:border-amber-400 focus:outline-none"
+                                                                />
+                                                                <span className="text-xs font-black text-amber-400">€</span>
+                                                            </div>
+                                                            <div className="text-[8px] text-slate-400 truncate">Vorschlag: {item.suggestedPrice}€</div>
+                                                        </div>
+
+                                                        {/* Profit / Margin */}
+                                                        <div>
+                                                            <div className="text-[10px] text-emerald-400 uppercase font-bold">Dein Gewinn</div>
+                                                            <div className="text-sm font-black text-emerald-400 font-mono mt-0.5">
+                                                                +{profit.toFixed(2)} €
+                                                            </div>
+                                                            <div className="text-[9px] font-bold text-emerald-300/80">
+                                                                {margin}% Marge
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Actions Row */}
+                                                    <div className="flex items-center gap-2 pt-1">
+                                                        {isRejected ? (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => handleRestorePod(item.id)}
+                                                                    className="flex-1 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-500/40 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                                                                >
+                                                                    <RefreshCw className="w-3.5 h-3.5" />
+                                                                    <span>Wiederherstellen</span>
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeletePod(item.id)}
+                                                                    className="px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold transition cursor-pointer"
+                                                                    title="Endgültig löschen"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => handleApprovePod(item)}
+                                                                    className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-[#00D084] hover:from-emerald-400 hover:to-[#00B875] text-black font-extrabold text-xs shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-1.5 cursor-pointer transform active:scale-95"
+                                                                >
+                                                                    <CheckCheck className="w-4 h-4 stroke-[3]" />
+                                                                    <span>{isPending ? 'Jetzt freigeben & in den Shop' : 'Preis im Shop aktualisieren'}</span>
+                                                                </button>
+
+                                                                {isPending && (
+                                                                    <button
+                                                                        onClick={() => handleRejectPod(item.id)}
+                                                                        className="px-3 py-2.5 rounded-xl bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-300 border border-white/10 hover:border-red-500/30 text-xs font-bold transition cursor-pointer"
+                                                                        title="Entwurf ablehnen"
+                                                                    >
+                                                                        <X className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 )}
                             </div>
                         )}
 
-                        {/* Endpoints */}
-                        <div>
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
-                                REST API Endpunkte für deinen Agenten
-                            </h4>
-                            <div className="space-y-1.5 text-xs font-mono">
-                                <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between">
-                                    <span className="text-emerald-400 font-bold">GET /api/shop/products?category=...</span>
-                                    <span className="text-slate-400 font-sans text-[11px]">Katalog abfragen</span>
-                                </div>
-                                <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between">
-                                    <span className="text-blue-400 font-bold">POST /api/shop/products</span>
-                                    <span className="text-slate-400 font-sans text-[11px]">Neues Produkt uploaden</span>
-                                </div>
-                                <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between">
-                                    <span className="text-amber-400 font-bold">PUT /api/shop/products/:id</span>
-                                    <span className="text-slate-400 font-sans text-[11px]">Preis/Bestand updaten</span>
-                                </div>
-                                <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between">
-                                    <span className="text-purple-400 font-bold">POST /api/shop/agent/bulk-sync</span>
-                                    <span className="text-slate-400 font-sans text-[11px]">Batch Import (Array)</span>
+                        {/* TAB 2: CONNECT REAL PRINT-ON-DEMAND PARTNER (PRINTIFY / PRINTFUL) */}
+                        {agentModalTab === 'connect' && (
+                            <div className="space-y-6 max-w-3xl mx-auto">
+                                <div className="p-6 rounded-3xl bg-gradient-to-br from-cyan-950/40 via-indigo-950/30 to-black/50 border border-cyan-500/30 space-y-5">
+                                    <div className="flex items-center gap-3.5">
+                                        <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                                            <LinkIcon className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-base font-black text-white m-0">Echte Print-on-Demand Firmen API anbinden</h3>
+                                            <p className="text-xs text-slate-300 mt-0.5">
+                                                Verknüpfe dein Printify- oder Printful-Konto. Der Agent synchronisiert echte Kataloge, Rohstoffpreise und leitet bezahlte Bestellungen automatisch an die Druckerei weiter.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Provider Chooser */}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                                            POD Anbieter auswählen:
+                                        </label>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            {[
+                                                { id: 'printify', name: 'Printify (Empfohlen)', note: 'Größtes Sortiment & EU-Druckereien', url: 'https://printify.com/app/account/api' },
+                                                { id: 'printful', name: 'Printful', note: 'Sehr hohe Textil- & Stickqualität', url: 'https://www.printful.com/dashboard/settings/api' },
+                                                { id: 'gelato', name: 'Gelato', note: 'Lokales Drucknetzwerk in 30+ Ländern', url: 'https://dashboard.gelato.com/developer/api-keys' }
+                                            ].map(p => (
+                                                <button
+                                                    key={p.id}
+                                                    type="button"
+                                                    onClick={() => setPodSettings(prev => ({ ...prev, provider: p.id }))}
+                                                    className={`p-3.5 rounded-2xl border text-left transition cursor-pointer ${
+                                                        podSettings.provider === p.id
+                                                            ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-lg shadow-cyan-500/10'
+                                                            : 'bg-black/40 border-white/10 text-slate-400 hover:text-white hover:bg-white/5'
+                                                    }`}
+                                                >
+                                                    <div className="font-extrabold text-xs text-white flex items-center justify-between">
+                                                        <span>{p.name}</span>
+                                                        {podSettings.provider === p.id && <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-400 mt-1">{p.note}</div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Direct Link to get Token */}
+                                    <div className="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-between text-xs">
+                                        <div className="space-y-0.5">
+                                            <div className="font-bold text-cyan-300 flex items-center gap-1.5">
+                                                <ExternalLink className="w-3.5 h-3.5" />
+                                                <span>Hier erhältst du deinen echten API-Key kostenlos:</span>
+                                            </div>
+                                            <div className="text-[11px] text-slate-400">
+                                                Klicke auf den Link, logge dich ein und kopiere deinen persönlichen API-Token.
+                                            </div>
+                                        </div>
+                                        <a
+                                            href={podSettings.provider === 'printify' ? 'https://printify.com/app/account/api' : podSettings.provider === 'printful' ? 'https://www.printful.com/dashboard/settings/api' : 'https://dashboard.gelato.com/developer/api-keys'}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-xs transition flex items-center gap-1 shrink-0"
+                                        >
+                                            <span>{podSettings.provider.toUpperCase()} API Portal</span>
+                                            <ArrowUpRight className="w-3.5 h-3.5" />
+                                        </a>
+                                    </div>
+
+                                    {/* API Token Input */}
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between text-xs">
+                                            <label className="font-bold text-slate-300 flex items-center gap-1.5">
+                                                <Key className="w-3.5 h-3.5 text-cyan-400" />
+                                                <span>Dein persönlicher {podSettings.provider.toUpperCase()} API Token:</span>
+                                            </label>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowApiKey(!showApiKey)}
+                                                className="text-[11px] text-cyan-400 hover:underline flex items-center gap-1 cursor-pointer"
+                                            >
+                                                {showApiKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                                                <span>{showApiKey ? 'Verbergen' : 'Anzeigen'}</span>
+                                            </button>
+                                        </div>
+                                        <div className="relative">
+                                            <input
+                                                type={showApiKey ? 'text' : 'password'}
+                                                placeholder={`z. B. prnt_live_8a92b... oder ${podSettings.provider}_token`}
+                                                value={podSettings.apiKey || ''}
+                                                onChange={(e) => setPodSettings(prev => ({ ...prev, apiKey: e.target.value }))}
+                                                className="w-full px-4 py-3 bg-black/60 border border-white/10 rounded-2xl font-mono text-xs text-white focus:outline-none focus:border-cyan-400"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                                        <button
+                                            type="button"
+                                            onClick={handleTestPodConnection}
+                                            disabled={isTestingPodKey || !podSettings.apiKey}
+                                            className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-40 text-black font-extrabold text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20"
+                                        >
+                                            <RefreshCw className={`w-3.5 h-3.5 ${isTestingPodKey ? 'animate-spin' : ''}`} />
+                                            <span>{isTestingPodKey ? 'Prüfe Verbindung...' : '🔌 Verbindung live testen'}</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSavePodSettings()}
+                                            className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-extrabold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                                        >
+                                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                            <span>Einstellungen speichern</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={handleSyncLivePod}
+                                            disabled={isSyncingPodLive || !podSettings.apiKey}
+                                            className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-[#00D084] hover:from-emerald-400 hover:to-[#00B875] disabled:opacity-40 text-black font-black text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-emerald-500/20 ml-auto"
+                                        >
+                                            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingPodLive ? 'animate-spin' : ''}`} />
+                                            <span>{isSyncingPodLive ? 'Importiere Artikel...' : '🔄 Echte Artikel jetzt importieren'}</span>
+                                        </button>
+                                    </div>
+
+                                    {/* Connection Test Result */}
+                                    {podTestResult && (
+                                        <div className={`p-4 rounded-2xl border text-xs leading-relaxed ${
+                                            podTestResult.ok
+                                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                                                : 'bg-red-500/10 border-red-500/30 text-red-300'
+                                        }`}>
+                                            <div className="font-bold">{podTestResult.ok ? '✓ Authentifizierung erfolgreich' : '✗ Verbindungsfehler'}</div>
+                                            <div className="mt-0.5">{podTestResult.msg}</div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        </div>
+                        )}
 
-                        {/* Code snippet */}
-                        <div>
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                                Beispiel cURL Befehl für deinen Bot
-                            </h4>
-                            <pre className="p-3 bg-black/60 border border-white/10 rounded-2xl text-[11px] font-mono text-slate-300 overflow-x-auto leading-relaxed">
-{`curl -X POST http://localhost:3001/api/shop/products \\
+                        {/* TAB 3: AUTONOMOUS AI PRODUCT GENERATOR */}
+                        {agentModalTab === 'agent_gen' && (
+                            <div className="space-y-6 max-w-3xl mx-auto">
+                                <div className="p-6 rounded-3xl bg-gradient-to-br from-purple-900/30 via-indigo-900/20 to-black/40 border border-purple-500/30 space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
+                                            <Zap className="w-6 h-6 text-amber-400" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-base font-black text-white m-0">Autonomer KI-Agent für Produkt-Kreation</h3>
+                                            <p className="text-xs text-slate-300 mt-0.5">
+                                                Lass den Agenten die Recherche, Mockup-Auswahl, Textformulierung und Margen-Kalkulation automatisch durchführen.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs pt-2">
+                                        <div className="p-3 rounded-xl bg-black/40 border border-white/10 space-y-1">
+                                            <div className="font-bold text-white flex items-center gap-1.5">
+                                                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                                                <span>1. Trend Analyse</span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-400">
+                                                Analysiert virale Streetwear- und Luxus-Lifestyle Trends für die Marke Grien.
+                                            </p>
+                                        </div>
+                                        <div className="p-3 rounded-xl bg-black/40 border border-white/10 space-y-1">
+                                            <div className="font-bold text-white flex items-center gap-1.5">
+                                                <ImageIcon className="w-3.5 h-3.5 text-emerald-400" />
+                                                <span>2. Mockup & Daten</span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-400">
+                                                Wählt Bio-Rohlinge (Hoodies, Shirts, Flaschen) und formuliert Verkaufsbeschreibungen.
+                                            </p>
+                                        </div>
+                                        <div className="p-3 rounded-xl bg-black/40 border border-white/10 space-y-1">
+                                            <div className="font-bold text-white flex items-center gap-1.5">
+                                                <DollarSign className="w-3.5 h-3.5 text-amber-400" />
+                                                <span>3. Kalkulation & Alert</span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-400">
+                                                Berechnet die Marge (z. B. 65%) und sendet dir eine Benachrichtigung zur Freigabe.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-2">
+                                        <button
+                                            onClick={handleAgentGeneratePod}
+                                            disabled={isGeneratingPod}
+                                            className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-300 text-black font-black text-sm uppercase tracking-wider shadow-xl shadow-amber-400/25 transition flex items-center justify-center gap-2 cursor-pointer transform active:scale-[0.98]"
+                                        >
+                                            <Zap className={`w-4 h-4 fill-black ${isGeneratingPod ? 'animate-spin' : ''}`} />
+                                            <span>{isGeneratingPod ? 'KI-Agent arbeitet (Recherche & Kalkulation)...' : 'Jetzt neues Trend-Produkt generieren & Notification senden'}</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Feature checklist */}
+                                <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3">
+                                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-300">
+                                        Autonome Sicherheitsgarantien für deinen Shop:
+                                    </h4>
+                                    <div className="space-y-2 text-xs text-slate-300">
+                                        <div className="flex items-center gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                            <span><strong>Kein ungeprüfter Live-Gang:</strong> Jedes Produkt landet zwingend im Freigabe-Center, bis Sie Ihr OK geben.</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                            <span><strong>Volle Preishoheit:</strong> Der KI-Preis ist nur ein Vorschlag – Sie können jeden Cent vor der Freigabe ändern.</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                                            <span><strong>Echte POD-Anbindung:</strong> Bestellungen werden nach Zahlung automatisiert an die Druckerei übergeben.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB 4: AI CUSTOMER CHAT SUPPORT */}
+                        {agentModalTab === 'customer_chat' && (
+                            <div className="space-y-5 max-w-3xl mx-auto">
+                                <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-black to-[#0B1324] border border-emerald-500/30 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+                                            <Bot className="w-5 h-5 text-emerald-400" />
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="text-sm font-extrabold text-white m-0">GRIEN AI SHOPPING & SUPPORT AGENT</h3>
+                                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                                                <span className="text-[10px] text-emerald-400 font-bold">24/7 Autonom Aktiv</span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-400 mt-0.5">
+                                                Beantwortet Kundenfragen zu deinen Shop- & POD-Artikeln, Lieferzeiten und Retouren in Echtzeit.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Suggested Quick Prompts */}
+                                <div className="space-y-1.5">
+                                    <div className="text-[11px] font-bold text-slate-400">Typische Kundenfragen simulieren:</div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        {[
+                                            '📦 Wie lange dauert der Versand bei POD-Artikeln?',
+                                            '👕 Wie fallen die Größen bei Hoodies aus?',
+                                            '🔄 Wie läuft ein Umtausch oder Retoure ab?',
+                                            '💎 Gilt mein 10K Diamond VIP-Rabatt auch im Shop?'
+                                        ].map(prompt => (
+                                            <button
+                                                key={prompt}
+                                                onClick={() => handleSendCustomerChat(prompt)}
+                                                className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-emerald-500/20 text-[11px] font-semibold text-slate-300 hover:text-emerald-300 border border-white/10 hover:border-emerald-500/30 transition text-left cursor-pointer"
+                                            >
+                                                {prompt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Chat Window */}
+                                <div className="p-4 rounded-2xl bg-black/50 border border-white/10 space-y-3 h-80 overflow-y-auto no-scrollbar flex flex-col justify-end">
+                                    <div className="space-y-3">
+                                        {chatMessages.map(msg => (
+                                            <div
+                                                key={msg.id}
+                                                className={`flex flex-col ${msg.role === 'customer' ? 'items-end' : 'items-start'}`}
+                                            >
+                                                <div className="text-[9px] font-bold text-slate-500 mb-1 px-1">
+                                                    {msg.role === 'customer' ? 'Kunde' : '🤖 Grien AI Assistant'} • {msg.time}
+                                                </div>
+                                                <div className={`p-3 rounded-2xl max-w-[85%] text-xs leading-relaxed ${
+                                                    msg.role === 'customer'
+                                                        ? 'bg-purple-600/30 border border-purple-500/30 text-white rounded-br-none'
+                                                        : 'bg-emerald-950/40 border border-emerald-500/30 text-emerald-100 rounded-bl-none'
+                                                }`}>
+                                                    {msg.text}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {isChatSending && (
+                                            <div className="flex items-center gap-2 text-xs text-emerald-400 italic">
+                                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                                <span>KI formuliert Antwort mit Shop-Kontext...</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Input Box */}
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Kundenfrage eintippen (z. B. 'Gibt es Expressversand?')..."
+                                        value={chatInput}
+                                        onChange={(e) => setChatInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') handleSendCustomerChat();
+                                        }}
+                                        className="flex-1 px-4 py-2.5 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                                    />
+                                    <button
+                                        onClick={() => handleSendCustomerChat()}
+                                        disabled={isChatSending || !chatInput.trim()}
+                                        className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-extrabold text-xs transition flex items-center gap-1.5 cursor-pointer"
+                                    >
+                                        <Send className="w-3.5 h-3.5" />
+                                        <span>Antworten</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB 5: REST API & SECRETS */}
+                        {agentModalTab === 'api' && (
+                            <div className="space-y-5">
+                                {/* Agent Secret Key Card */}
+                                <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                                            <Key className="w-3.5 h-3.5 text-[#00D084]" />
+                                            Dein Agent Secret API Key
+                                        </span>
+                                        <span className="text-[11px] text-[#00D084]">Vollzugriff (CRUD & Bulk)</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="text"
+                                            readOnly
+                                            value={AGENT_DEFAULT_KEY}
+                                            className="flex-1 px-3 py-2 bg-black/50 border border-white/10 rounded-xl font-mono text-xs text-emerald-400 select-all"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(AGENT_DEFAULT_KEY);
+                                                setCopiedKey(true);
+                                                setTimeout(() => setCopiedKey(false), 2000);
+                                            }}
+                                            className="px-3.5 py-2 rounded-xl bg-[#00D084] text-black font-bold text-xs flex items-center gap-1.5 hover:bg-[#00B875] transition cursor-pointer"
+                                        >
+                                            {copiedKey ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                            <span>{copiedKey ? 'Kopiert!' : 'Kopieren'}</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Interactive Test Trigger */}
+                                <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-between">
+                                    <div>
+                                        <div className="text-xs font-bold text-white flex items-center gap-2">
+                                            <Terminal className="w-4 h-4 text-purple-400" />
+                                            <span>Live Agent Health-Check</span>
+                                        </div>
+                                        <p className="text-[11px] text-slate-400 mt-0.5">
+                                            Sendet einen Ping an <code className="text-purple-300">GET /api/shop/agent/status</code>
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={handlePingAgent}
+                                        disabled={isPingingAgent}
+                                        className="px-4 py-2 rounded-xl bg-purple-500 text-white font-bold text-xs hover:bg-purple-600 transition flex items-center gap-1.5 cursor-pointer"
+                                    >
+                                        <RefreshCw className={`w-3.5 h-3.5 ${isPingingAgent ? 'animate-spin' : ''}`} />
+                                        <span>Testen</span>
+                                    </button>
+                                </div>
+
+                                {agentPingStatus && (
+                                    <div className={`p-3 rounded-xl border text-xs font-mono ${
+                                        agentPingStatus.ok
+                                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                                            : 'bg-red-500/10 border-red-500/30 text-red-300'
+                                    }`}>
+                                        {agentPingStatus.ok ? (
+                                            <div>
+                                                ✓ Operational (Latenz: {agentPingStatus.latency}ms) — {agentPingStatus.data.metrics.totalProducts} Produkte synchronisiert
+                                            </div>
+                                        ) : (
+                                            <div>✗ {agentPingStatus.msg}</div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Endpoints */}
+                                <div>
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+                                        REST API Endpunkte für deinen Agenten & POD
+                                    </h4>
+                                    <div className="space-y-1.5 text-xs font-mono">
+                                        <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between">
+                                            <span className="text-purple-400 font-bold">GET /api/shop/pod/products</span>
+                                            <span className="text-slate-400 font-sans text-[11px]">POD Freigabe-Queue abrufen</span>
+                                        </div>
+                                        <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between">
+                                            <span className="text-amber-400 font-bold">POST /api/shop/pod/agent-generate</span>
+                                            <span className="text-slate-400 font-sans text-[11px]">KI generiert neues POD Produkt</span>
+                                        </div>
+                                        <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between">
+                                            <span className="text-emerald-400 font-bold">PUT /api/shop/pod/products/:id/approve</span>
+                                            <span className="text-slate-400 font-sans text-[11px]">Produkt freigeben & Preis festlegen</span>
+                                        </div>
+                                        <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-center justify-between">
+                                            <span className="text-blue-400 font-bold">POST /api/shop/agent/customer-reply</span>
+                                            <span className="text-slate-400 font-sans text-[11px]">KI schreibt mit Kunden</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Code snippet */}
+                                <div>
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                                        Beispiel cURL: POD Produkt per Bot einreichen
+                                    </h4>
+                                    <pre className="p-3 bg-black/60 border border-white/10 rounded-2xl text-[11px] font-mono text-slate-300 overflow-x-auto leading-relaxed">
+{`curl -X POST http://localhost:3001/api/shop/pod/products \\
   -H "Content-Type: application/json" \\
   -H "x-agent-key: ${AGENT_DEFAULT_KEY}" \\
   -d '{
-    "name": "Grien Quantum Pro ANC",
-    "category": "electronics",
-    "price": 129.00,
-    "stock": 50,
-    "tag": "Agent Deal"
+    "name": "Grien Signature Heavyweight Hoodie",
+    "category": "fashion",
+    "baseCost": 26.50,
+    "suggestedPrice": 79.00,
+    "podProvider": "Printify Direct EU"
   }'`}
-                            </pre>
-                        </div>
+                                    </pre>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="shrink-0 p-4 bg-[#0E172C] border-t border-white/10 flex justify-end">
+                    {/* Footer */}
+                    <div className="shrink-0 p-4 bg-[#0E172C] border-t border-white/10 flex items-center justify-between">
+                        <div className="text-xs text-slate-400 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span>Print-on-Demand Hub • {pendingPodCount} warten auf Freigabe • {podSettings.apiKey ? 'Live mit Printify verbunden' : 'Demo Modus'}</span>
+                        </div>
                         <button
                             onClick={() => setIsAgentModalOpen(false)}
-                            className="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition"
+                            className="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition cursor-pointer"
                         >
                             Schließen
                         </button>
@@ -1590,12 +2678,22 @@ const AdminProductHub = () => {
                     </button>
 
                     <button
-                        onClick={() => setIsAgentModalOpen(true)}
-                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 border border-purple-500/40 text-purple-300 hover:text-white text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-purple-500/10"
+                        onClick={() => {
+                            setAgentModalTab('pod');
+                            setIsAgentModalOpen(true);
+                        }}
+                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500/20 via-indigo-500/20 to-emerald-500/20 hover:from-purple-500/30 hover:to-emerald-500/30 border border-purple-500/40 text-purple-200 hover:text-white text-xs font-bold transition flex items-center gap-2.5 shadow-lg shadow-purple-500/10 cursor-pointer"
+                        title="Print-on-Demand Produkte verwalten, Preise anpassen & KI-Agent starten"
                     >
                         <Bot className="w-4 h-4 text-purple-400" />
-                        <span>Agent & API Hub</span>
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>Print-on-Demand & KI-Agent</span>
+                        {podProducts.filter(p => p.status === 'pending_approval').length > 0 ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#FFD700] text-black shadow-[0_0_10px_#FFD700] animate-pulse">
+                                {podProducts.filter(p => p.status === 'pending_approval').length} zur Freigabe
+                            </span>
+                        ) : (
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        )}
                     </button>
 
                     <button
